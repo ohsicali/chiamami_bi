@@ -28,6 +28,40 @@ dove siamo. Aggiorna a ogni step importante.
 | Home non caricava "aperti nella fascia" / "ultimi aggiunti" | — | ✅ Fix (SQL eseguito) | Vedi sezione "22/09 — GRANT mancante su location_label" sotto. |
 | Audit prestazioni pre-lancio | #276 | 🚧 In review | Home da 4,4 MB a ~2,1 MB. Vedi sezione "22/09 — audit prestazioni" sotto. |
 | Lancio — Supabase saturo, letture in cache CDN | #278, #280, #281 | ✅ Merged | Vedi sezione "22/09 — lancio: Supabase saturo" sotto. |
+| Admin — sconti presi/utilizzati in tempo reale | — | 🚧 In review | Branch: `claude/admin-discount-monitoring-smak5r`. Nessun SQL. Vedi sezione "22/09 — admin: sconti in diretta" sotto. |
+
+## 22/09 — admin: sconti presi e utilizzati in tempo reale
+
+Richiesta: vedere in admin, dal vivo, quali sconti vengono presi, e su ogni
+card della sezione Sconti quanti ne sono stati presi e quanti utilizzati.
+
+- **"Preso"** = una riga in `discount_redemptions` (QR/codice generato).
+  **"Utilizzato"** = la stessa riga con `status = 'redeemed'` (convalidata
+  dal locale).
+- **Pannello "In diretta"** in cima a `/admin/discounts`
+  (`src/components/admin/LiveRedemptionsPanel.jsx`): gli ultimi 40 eventi
+  ("Giulia ha preso lo sconto di Orso", "Orso ha convalidato lo sconto di
+  Giulia"), i contatori di oggi, il pallino verde quando il canale è attivo.
+- **Card**: sempre due contatori, "Presi" e "Utilizzati" (più la % di
+  convalidati), che lampeggiano quando arriva un evento. Se il locale ha più
+  sconti, sotto c'è anche il totale del locale. La barra dei posti ora conta i
+  **presi** su `maxQuantity()`: prima contava gli utilizzati su
+  `max_redemptions` e ignorava il `max_quantity` dei drop, mentre il sito
+  pubblico decide "esaurito" sui presi.
+- **Una sola fonte**: `useAdminRedemptions` carica tutte le righe (paginando:
+  la query di prima si fermava al tetto di 1000 righe di PostgREST) e ascolta
+  `postgres_changes` su `discount_redemptions`. Feed, "oggi" e contatori
+  escono dalla stessa mappa (`src/lib/redemptionsLive.js`, testata in
+  `tests/redemptions-live.test.mjs`), quindi non possono contraddirsi. Dopo
+  una riconnessione o tornando sulla scheda si ricarica tutto, per non perdere
+  eventi.
+- **Niente SQL**: la tabella è già nella publication `supabase_realtime` e la
+  policy "Read redemptions" lascia leggere tutto a `is_admin()` (verificato
+  sul DB il 22/09). Il canale lo apre solo la pagina admin.
+- **Resta da provare dal vivo**: ho verificato con dati finti (Supabase e
+  auth simulati), non con un account admin vero. Prova: apri
+  `/admin/discounts`, sblocca uno sconto da un altro dispositivo e controlla
+  che la riga compaia e la card si aggiorni senza ricaricare.
 
 ## 22/09 — "Metti in una lista" apriva il ristorante su iPhone (terza volta)
 

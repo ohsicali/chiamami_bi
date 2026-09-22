@@ -8,7 +8,9 @@ import PillTab from '../../components/admin/PillTab'
 import EmptyState from '../../components/admin/EmptyState'
 import PrettyDatePicker from '../../components/admin/PrettyDatePicker'
 import { ProductsEditor, ValidityPicker } from '../../components/admin/DiscountRulesFields'
-import { isExpired as isDiscountExpired, discountEndsAt } from '../../lib/discounts'
+import { isExpired as isDiscountExpired, discountEndsAt, maxQuantity } from '../../lib/discounts'
+import { useAdminRedemptions } from '../../lib/hooks/useAdminRedemptions'
+import LiveRedemptionsPanel from '../../components/admin/LiveRedemptionsPanel'
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -76,13 +78,18 @@ function countdown(target) {
   return { label: 'Al termine', value: `${h}h ${m}m` }
 }
 
-function DropCard({ d, selected, notifyLog, notifying, active, onSelect, onEdit, onNotify, onToggleActive, onDelete }) {
+function DropCard({ d, selected, notifyLog, notifying, active, partnerTotal, flash, onSelect, onEdit, onNotify, onToggleActive, onDelete }) {
   const isDrop = d.is_drop
   const isFeatured = d.is_featured && !d.is_drop
   const ttl = countdown(discountEndsAt(d))
-  const pct = d.max_redemptions
-    ? Math.min(100, Math.round(((d.redeemed_count || 0) / d.max_redemptions) * 100))
-    : null
+  // "Presi" = QR/codice generato, "utilizzati" = convalidato dal locale.
+  // La barra dei posti conta i presi: è su quelli che il sito pubblico
+  // decide "esaurito" (vedi `claimedCount` in lib/discounts.js).
+  const taken = d.generated_count || 0
+  const used = d.redeemed_count || 0
+  const limit = maxQuantity(d)
+  const pct = limit ? Math.min(100, Math.round((taken / limit) * 100)) : null
+  const usedPct = taken ? Math.round((used / taken) * 100) : 0
 
   const pillLabel = isDrop ? '🔥 DROP' : isFeatured ? 'EVIDENZA' : 'SCONTO'
   const pillBg = isDrop
@@ -204,7 +211,16 @@ function DropCard({ d, selected, notifyLog, notifying, active, onSelect, onEdit,
           {d.title}
           {d.conditions ? ` · ${d.conditions}` : ''}
         </div>
-        {pct !== null ? (
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginTop: 10 }}>
+          <Counter label="Presi" value={taken} flashKey={flash?.kind === 'taken' ? flash.at : null} />
+          <Counter label="Utilizzati" value={used} tone="green" flashKey={flash?.kind === 'used' ? flash.at : null} />
+          {taken > 0 && (
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
+              {usedPct}% convalidati
+            </span>
+          )}
+        </div>
+        {pct !== null && (
           <div style={{ marginTop: 10 }}>
             <div
               style={{
@@ -235,20 +251,16 @@ function DropCard({ d, selected, notifyLog, notifying, active, onSelect, onEdit,
                 justifyContent: 'space-between',
               }}
             >
-              <span>{d.redeemed_count || 0} / {d.max_redemptions} riscattati</span>
+              <span>{taken} / {limit} posti presi</span>
               <span>{pct}%</span>
             </div>
           </div>
-        ) : (
-          <div
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
-              marginTop: 8,
-            }}
-          >
-            {d.generated_count || 0} presi · {d.redeemed_count || 0} usati · nessun limite
+        )}
+        {partnerTotal?.discounts > 1 && (
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', marginTop: 8 }}>
+            Tutto il locale ({partnerTotal.discounts} sconti):{' '}
+            <b style={{ color: 'var(--color-ink, #22181C)' }}>{partnerTotal.taken} presi</b> ·{' '}
+            <b style={{ color: '#2C7A4A' }}>{partnerTotal.used} utilizzati</b>
           </div>
         )}
       </div>
@@ -328,6 +340,32 @@ function DropCard({ d, selected, notifyLog, notifying, active, onSelect, onEdit,
         </ActionIcon>
       </div>
     </div>
+  )
+}
+
+/* Contatore sulla card. `flashKey` cambia quando il realtime lo alza: la
+   `key` nuova rimonta lo span e fa ripartire l'animazione. */
+function Counter({ label, value, tone, flashKey }) {
+  const green = tone === 'green'
+  return (
+    <span
+      key={flashKey || 'still'}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'baseline',
+        gap: 5,
+        padding: '4px 10px',
+        borderRadius: 999,
+        background: green ? '#E9F8EF' : 'var(--color-cream, #F5F0E4)',
+        fontSize: 11,
+        fontWeight: 700,
+        color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+        animation: flashKey ? 'dm-flash 1.6s ease-out' : 'none',
+      }}
+    >
+      {label}
+      <b style={{ fontSize: 14, fontWeight: 900, color: green ? '#2C7A4A' : 'var(--color-ink, #22181C)' }}>{value}</b>
+    </span>
   )
 }
 
@@ -542,6 +580,10 @@ export default function DiscountManager() {
 
   const [form, setForm] = useState(EMPTY_FORM)
 
+  // Presi / utilizzati, dal vivo: alimenta sia il pannello "In diretta" sia
+  // i contatori di ogni card (vedi `useAdminRedemptions`).
+  const live = useAdminRedemptions({ enabled: !!user && isAdmin })
+
   // Blocca lo scroll del body quando la modal è aperta (impedisce lo "swipe orizzontale" su mobile).
   useEffect(() => {
     if (!showForm) return
@@ -568,26 +610,15 @@ export default function DiscountManager() {
     Promise.all([
       supabase.from('discounts').select('*, products:discount_products(id, name, note, photo_url, thumb_url, sort_order), restaurant:restaurants(id, name)').order('created_at', { ascending: false }),
       supabase.from('restaurants').select('id, name, verify_pin, restaurant_photos(photo_url)').order('name'),
-      supabase.from('discount_redemptions').select('discount_id, status'),
       supabase.from('restaurant_partners').select('restaurant_id, pin_code').eq('is_active', true),
       supabase.from('sponsored_placements').select('id, discount_id').not('discount_id', 'is', null),
-    ]).then(([discRes, restRes, redRes, partRes, adsRes]) => {
-      const genMap = {}
-      const usedMap = {}
-      ;(redRes.data || []).forEach((r) => {
-        genMap[r.discount_id] = (genMap[r.discount_id] || 0) + 1
-        if (r.status === 'redeemed') {
-          usedMap[r.discount_id] = (usedMap[r.discount_id] || 0) + 1
-        }
-      })
+    ]).then(([discRes, restRes, partRes, adsRes]) => {
       const restPhotoMap = {}
       ;(restRes.data || []).forEach((r) => {
         restPhotoMap[r.id] = r.restaurant_photos?.[0]?.photo_url || null
       })
       const enriched = (discRes.data || []).map((d) => ({
         ...d,
-        generated_count: genMap[d.id] || 0,
-        redeemed_count: usedMap[d.id] || 0,
         restaurant_photo: restPhotoMap[d.restaurant_id] || null,
       }))
       setDiscounts(enriched)
@@ -990,21 +1021,44 @@ export default function DiscountManager() {
     if (data) setDiscounts((p) => p.map((d) => (d.id === id ? data : d)))
   }
 
+  // I contatori non stanno in `discounts`: arrivano dal realtime e si
+  // uniscono qui, così una modifica allo sconto non li azzera e un riscatto
+  // non costringe a ricaricare la lista.
+  const counted = useMemo(() => discounts.map((d) => {
+    const c = live.byDiscount[d.id]
+    return { ...d, generated_count: c?.taken || 0, redeemed_count: c?.used || 0 }
+  }), [discounts, live.byDiscount])
+
+  // Totali per locale, mostrati sulla card solo se il locale ha più sconti
+  // (con uno solo coinciderebbero con quelli della card).
+  const partnerTotals = useMemo(() => {
+    const map = {}
+    counted.forEach((d) => {
+      const t = map[d.restaurant_id] || (map[d.restaurant_id] = { discounts: 0, taken: 0, used: 0 })
+      t.discounts += 1
+      t.taken += d.generated_count
+      t.used += d.redeemed_count
+    })
+    return map
+  }, [counted])
+
+  const discountsById = useMemo(() => Object.fromEntries(discounts.map((d) => [d.id, d])), [discounts])
+
   const stats = useMemo(() => {
-    const total = discounts.length
-    const active = discounts.filter((d) => isActive(d)).length
-    const drops = discounts.filter((d) => d.is_drop && isActive(d)).length
-    const redemptions = discounts.reduce((s, d) => s + (d.redeemed_count || 0), 0)
+    const total = counted.length
+    const active = counted.filter((d) => isActive(d)).length
+    const drops = counted.filter((d) => d.is_drop && isActive(d)).length
+    const redemptions = counted.reduce((s, d) => s + (d.redeemed_count || 0), 0)
     return { total, active, drops, redemptions }
-  }, [discounts])
+  }, [counted])
 
   const filteredDiscounts = useMemo(() => {
-    if (filter === 'all') return discounts
-    if (filter === 'active') return discounts.filter((d) => isActive(d))
-    if (filter === 'drops') return discounts.filter((d) => d.is_drop)
-    if (filter === 'expired') return discounts.filter((d) => isExpired(d))
-    return discounts
-  }, [discounts, filter])
+    if (filter === 'all') return counted
+    if (filter === 'active') return counted.filter((d) => isActive(d))
+    if (filter === 'drops') return counted.filter((d) => d.is_drop)
+    if (filter === 'expired') return counted.filter((d) => isExpired(d))
+    return counted
+  }, [counted, filter])
 
   const counts = useMemo(() => ({
     all: discounts.length,
@@ -1030,6 +1084,11 @@ export default function DiscountManager() {
           e azioni sotto, il testo non va più a capo forzato e ne entrano cinque
           o sei per schermata. Sopra i 1100px non cambia niente. */}
       <style>{`
+        @keyframes dm-flash {
+          0% { box-shadow: 0 0 0 0 rgba(232,69,60,0.55); transform: scale(1.12); }
+          60% { box-shadow: 0 0 0 8px rgba(232,69,60,0); transform: scale(1); }
+          100% { box-shadow: 0 0 0 0 rgba(232,69,60,0); }
+        }
         @media (max-width: 1100px) and (min-width: 768px) {
           .dm-row {
             grid-template-columns: 18px 56px minmax(0, 1fr) auto !important;
@@ -1143,6 +1202,17 @@ export default function DiscountManager() {
           <StatCard label="Drop attivi" value={stats.drops} accent="var(--color-oro, #B08954)" />
           <StatCard label="QR utilizzati" value={stats.redemptions} accent="var(--color-corallo, #E8453C)" />
         </div>
+
+        {/* ── In diretta: sconti presi e utilizzati ── */}
+        <LiveRedemptionsPanel
+          events={live.events}
+          today={live.today}
+          status={live.status}
+          loaded={live.loaded}
+          freshKeys={live.freshKeys}
+          now={live.now}
+          discountsById={discountsById}
+        />
 
         {/* ── Filter pills (v4 mockup) ── */}
         <div
@@ -1275,6 +1345,8 @@ export default function DiscountManager() {
                 notifyLog={notifyLogs[`${d.is_drop ? 'drop' : 'discount'}:${d.id}`]}
                 notifying={notifyingId === d.id}
                 active={isActive(d)}
+                partnerTotal={partnerTotals[d.restaurant_id]}
+                flash={live.lastChange?.discount_id === d.id ? live.lastChange : null}
                 onSelect={() => toggleSelect(d.id)}
                 onEdit={() => handleEdit(d)}
                 onNotify={() => handleNotify(d)}
