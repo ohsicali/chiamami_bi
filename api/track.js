@@ -97,10 +97,13 @@ export default async function handler(req, res) {
         region,
         device_type,
       }),
+      // Una visita persa non costa nulla; una funzione appesa 10 s su un
+      // Supabase in affanno sì (il 22/09 erano centinaia in parallelo).
+      signal: AbortSignal.timeout(4000),
     })
 
     if (!dbResponse.ok) {
-      const errText = await dbResponse.text()
+      const errText = (await dbResponse.text()).slice(0, 200)
       console.error('page_views insert failed:', dbResponse.status, errText)
       return res.status(500).json({ error: 'DB insert failed' })
     }

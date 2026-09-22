@@ -60,8 +60,12 @@ export function usePageTracking() {
     // Fire-and-forget — never block navigation or surface errors to the user
     ;(async () => {
       try {
-        const { data: authData } = await supabase.auth.getUser()
-        const userId = authData?.user?.id || null
+        // getSession legge la sessione già in memoria/localStorage; getUser
+        // faceva una richiesta al server auth a OGNI cambio pagina — al lancio
+        // del 22/09 erano centinaia al minuto sullo stesso servizio che gestisce
+        // le registrazioni. Per attribuire una visita basta l'id locale.
+        const { data: sessionData } = await supabase.auth.getSession()
+        const userId = sessionData?.session?.user?.id || null
         const referrer = document.referrer || null
 
         // Try server-side /api/track first — it enriches with Vercel geo headers
@@ -80,9 +84,12 @@ export function usePageTracking() {
             }),
             keepalive: true,
           })
-          tracked = resp.ok
+          // Solo un 404 (endpoint assente: sviluppo locale) giustifica il
+          // ripiego. Un 5xx vuol dire che Supabase è già in affanno: rifare
+          // l'insert dal browser raddoppierebbe il carico proprio quando fa male.
+          tracked = resp.status !== 404
         } catch {
-          // network/404 — fall through to direct insert
+          // network — fall through to direct insert
         }
 
         if (!tracked) {
