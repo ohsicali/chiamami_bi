@@ -27,7 +27,7 @@ dove siamo. Aggiorna a ogni step importante.
 | Sito online — rimosso gate manutenzione/PIN | — | ✅ Done | Vedi sezione "22/09 — sito online" sotto. |
 | Home non caricava "aperti nella fascia" / "ultimi aggiunti" | — | ✅ Fix (SQL eseguito) | Vedi sezione "22/09 — GRANT mancante su location_label" sotto. |
 | Audit prestazioni pre-lancio | #276 | 🚧 In review | Home da 4,4 MB a ~2,1 MB. Vedi sezione "22/09 — audit prestazioni" sotto. |
-| Lancio — Supabase saturo, letture in cache CDN | #278 | ✅ Merged (998683e) | Vedi sezione "22/09 — lancio: Supabase saturo" sotto. |
+| Lancio — Supabase saturo, letture in cache CDN | #278, #280, #281 | ✅ Merged | Vedi sezione "22/09 — lancio: Supabase saturo" sotto. |
 
 ## 22/09 — lancio: Supabase saturo, sito vuoto e registrazioni ferme
 
@@ -69,8 +69,21 @@ l'insert dal browser: più Supabase rallentava, più richieste riceveva.
 a **Micro** (1 GB) alle 17:53 UTC, con riavvio. Dopo: 0 errori 5xx, 4
 registrazioni nei primi 10 minuti, `restaurants` da ~450 letture ogni 40
 minuti a ~8 ogni 5 (quasi tutto servito dalla CDN, `x-vercel-cache: HIT`).
-Se tornano 5xx/timeout sotto picco, il passo successivo è **Small** (2 GB):
-PostgREST, GoTrue e Realtime condividono la RAM della stessa macchina.
+Alle 18:13–18:16 UTC passato a **Small** (2 GB, `max_connections` 90,
+`shared_buffers` 512 MB): su Micro la CPU stava fra il 21 e il 48% e la
+memoria al 56%, troppo vicino al limite per una macchina a CPU condivisa.
+
+**Stesso giorno, dopo**:
+- #280 — su Safari iPhone il bottone di invio del login e il cerchio "Bi"
+  comparivano senza sfondo (testo bianco su crema): con email e password non
+  si entrava né ci si registrava, solo con Google. Il bottone ora è un
+  `<button>` semplice con il colore per esteso; in cima al modulo c'è il
+  selettore "Accedi | Registrati". Verificato in produzione con una
+  registrazione di prova (`delivered@resend.dev`, poi cancellata).
+- #281 — `/api/public` aggiunge `stale-if-error`: durante il riavvio per il
+  cambio compute la CDN rispondeva 502/504 invece dell'ultima copia buona.
+  Limite: un deploy svuota la cache CDN, quindi subito dopo un deploy non
+  c'è copia da servire finché qualcuno non richiede la risorsa.
 
 **Da tenere a mente**: una nuova lettura pubblica fatta a ogni visita va
 aggiunta a `publicQueries.js` e servita da `/api/public`, non chiesta a
