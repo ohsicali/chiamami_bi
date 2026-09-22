@@ -27,7 +27,7 @@ dove siamo. Aggiorna a ogni step importante.
 | Sito online — rimosso gate manutenzione/PIN | — | ✅ Done | Vedi sezione "22/09 — sito online" sotto. |
 | Home non caricava "aperti nella fascia" / "ultimi aggiunti" | — | ✅ Fix (SQL eseguito) | Vedi sezione "22/09 — GRANT mancante su location_label" sotto. |
 | Audit prestazioni pre-lancio | #276 | 🚧 In review | Home da 4,4 MB a ~2,1 MB. Vedi sezione "22/09 — audit prestazioni" sotto. |
-| Lancio — Supabase saturo, letture in cache CDN | — | 🚧 In review | Vedi sezione "22/09 — lancio: Supabase saturo" sotto. |
+| Lancio — Supabase saturo, letture in cache CDN | #278 | ✅ Merged (998683e) | Vedi sezione "22/09 — lancio: Supabase saturo" sotto. |
 
 ## 22/09 — lancio: Supabase saturo, sito vuoto e registrazioni ferme
 
@@ -65,9 +65,12 @@ l'insert dal browser: più Supabase rallentava, più richieste riceveva.
 - `api/track.js`: timeout di 4 s verso Supabase e log dell'errore tagliato
   (prima finiva nei log l'intera pagina HTML di Cloudflare).
 
-**Fuori dal codice (dashboard, solo il titolare)**: alzare il compute del
-progetto (Project Settings → Compute and Disk) e/o "Restart project" per
-sbloccare PostgREST/GoTrue appesi.
+**Fuori dal codice (dashboard, solo il titolare)**: compute passato da Nano
+a **Micro** (1 GB) alle 17:53 UTC, con riavvio. Dopo: 0 errori 5xx, 4
+registrazioni nei primi 10 minuti, `restaurants` da ~450 letture ogni 40
+minuti a ~8 ogni 5 (quasi tutto servito dalla CDN, `x-vercel-cache: HIT`).
+Se tornano 5xx/timeout sotto picco, il passo successivo è **Small** (2 GB):
+PostgREST, GoTrue e Realtime condividono la RAM della stessa macchina.
 
 **Da tenere a mente**: una nuova lettura pubblica fatta a ogni visita va
 aggiunta a `publicQueries.js` e servita da `/api/public`, non chiesta a
