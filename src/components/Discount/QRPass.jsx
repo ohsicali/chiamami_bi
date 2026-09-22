@@ -5,6 +5,12 @@ import ShortCodeCard from './ShortCodeCard'
 import { formatDiscountBadge, formatDiscountValue } from '../../lib/utils/discountFormat'
 import { formatShortCode, isShortCode, normalizeShortCode } from '../../lib/shortCode'
 import { useDiscountPdf } from '../../lib/hooks/useDiscountPdf'
+import {
+  effectiveValidDays,
+  todayDayOfWeek,
+  formatSlots,
+  DAY_SHORT_LABELS,
+} from '../../lib/validity'
 import './QRPass.css'
 
 /**
@@ -19,7 +25,9 @@ import './QRPass.css'
  *
  * È la variante "A · Selettore" scelta il 22/09 fra quattro proposte:
  * - in testa il locale (foto, nome, riga sotto) e la X per chiudere;
- * - una card con badge, vantaggio e pillola del tipo di sconto, e dentro un
+ * - una card con badge e, in piccolo accanto, vantaggio, giorni e fascia in
+ *   cui vale e la prima condizione (poi "Scade tra…" in corallo se è un
+ *   drop); dentro la card un
  *   selettore "QR / Codice": le due strade per farsi riconoscere al banco
  *   stanno a un tocco l'una dall'altra, nello stesso riquadro, che non
  *   cambia altezza passando dall'una all'altra;
@@ -29,9 +37,9 @@ import './QRPass.css'
  * Il QR si tocca per portarlo a tutto schermo su bianco pieno (con lo
  * schermo tenuto acceso), che è quello che serve alla fotocamera del
  * locale. Il badge è verde come in tutto il sito (`--gradient-sconto`); il
- * tipo di sconto lo dice la pillola: corallo col countdown per i drop, oro
- * "sempre valido" per le convenzioni — la stessa regola delle email (vedi
- * CLAUDE.md, "il colore dice il tipo di sconto").
+ * corallo compare solo sui drop, col countdown — la stessa regola delle
+ * email (vedi CLAUDE.md, "il colore dice il tipo di sconto"). Niente più
+ * pillola "Sempre valido": al suo posto i giorni e la fascia in cui vale.
  */
 
 /* ── QR in SVG ─────────────────────────────────────────────────────────── */
@@ -107,6 +115,59 @@ function Icon({ name, size = 18, stroke = 2.2 }) {
   )
 }
 
+/* ── Quando vale, in piccolo accanto al badge ──────────────────────────── */
+/* I sette giorni come lettere (quelli buoni accesi, oggi sottolineato) e la
+   fascia o l'orario. È la domanda che il cliente si fa al tavolo — "vale
+   adesso?" — e prima la risposta stava solo dentro "Info sconto"; al suo
+   posto c'era una pillola "Sempre valido" che non diceva quando. */
+function ValidityLine({ deal }) {
+  const days = effectiveValidDays(deal)
+  const today = todayDayOfWeek()
+  const allDays = days.length === 7
+  const when = windowText(deal) || (allDays ? 'Tutti i giorni' : 'Tutto il giorno')
+  const label = allDays
+    ? `Valido tutti i giorni, ${when.toLowerCase()}`
+    : `Valido ${days.map((d) => DAY_FULL[d - 1]).join(', ')}, ${when.toLowerCase()}`
+
+  return (
+    <p className="qrp-when" aria-label={label}>
+      <span className="qrp-days" aria-hidden="true">
+        {DAY_SHORT_LABELS.map((letter, i) => {
+          const dow = i + 1
+          return (
+            <span
+              key={dow}
+              className={`qrp-day ${days.includes(dow) ? 'is-on' : ''} ${dow === today ? 'is-today' : ''}`}
+            >
+              {letter}
+            </span>
+          )
+        })}
+      </span>
+      <span className="qrp-when-txt" aria-hidden="true">{when}</span>
+    </p>
+  )
+}
+
+const DAY_FULL = ['lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato', 'domenica']
+
+/** "19:00–23:00", "Pranzo · Cena", o null se lo sconto non guarda l'ora. */
+function windowText(deal) {
+  if (deal?.valid_time_from && deal?.valid_time_to) {
+    return `${deal.valid_time_from.slice(0, 5)}–${deal.valid_time_to.slice(0, 5)}`
+  }
+  const slots = Array.isArray(deal?.valid_meal_slots) ? deal.valid_meal_slots : []
+  return slots.length > 0 ? formatSlots(slots) : null
+}
+
+function splitConditions(conditions) {
+  if (!conditions) return []
+  return String(conditions)
+    .split(/\n+|·|•|;/g)
+    .map((t) => t.trim().replace(/^[-–—]\s*/, ''))
+    .filter(Boolean)
+}
+
 /* ── La card: badge, selettore QR / Codice, riquadro ──────────────────── */
 export default function QRPass({ deal, qrValue, shortCode, restaurantName }) {
   const hasCode = isShortCode(shortCode)
@@ -121,6 +182,9 @@ export default function QRPass({ deal, qrValue, shortCode, restaurantName }) {
   const perk = title && ![name, badge].includes(title) ? title : value
   const isDrop = !!deal?.is_drop
   const cd = useDropCountdown(deal)
+  // La prima condizione ("Non cumulabile…"), su una riga: le altre sono in
+  // "Info sconto". Stesso taglio di DiscountRules.
+  const note = splitConditions(deal?.conditions)[0] || null
   const showCode = hasCode && mode === 'code'
 
   return (
@@ -130,9 +194,11 @@ export default function QRPass({ deal, qrValue, shortCode, restaurantName }) {
           {badge && <span className="qrp-badge">{badge}</span>}
           <div className="qrp-top-txt">
             {perk && perk !== badge && <p className="qrp-perk">{perk}</p>}
-            <span className={`qrp-chip ${isDrop ? 'is-drop' : 'is-conv'}`}>
-              {isDrop ? (cd ? `Scade tra ${cd}` : 'Drop live') : 'Sempre valido'}
-            </span>
+            <ValidityLine deal={deal} />
+            {note && <p className="qrp-note">{note}</p>}
+            {isDrop && (
+              <p className="qrp-drop">{cd ? `Scade tra ${cd}` : 'Drop live'}</p>
+            )}
           </div>
         </div>
 
