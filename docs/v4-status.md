@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-22 (Bi Club: si capisce dove finiscono gli sconti sbloccati)
+Ultima modifica: 2026-09-23 (Admin Analytics: numeri calcolati nel DB)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -30,6 +30,52 @@ dove siamo. Aggiorna a ogni step importante.
 | Lancio — Supabase saturo, letture in cache CDN | #278, #280, #281 | ✅ Merged | Vedi sezione "22/09 — lancio: Supabase saturo" sotto. |
 | Admin — sconti presi/utilizzati in tempo reale | #284 | ✅ Merged | Nessun SQL. Vedi sezione "22/09 — admin: sconti in diretta" sotto. |
 | Bi Club — chiarezza "Tutti gli sconti" / "I miei vantaggi" | #285 | ✅ Merged | Nessun SQL. Vedi sezione "22/09 — Bi Club: dove finiscono gli sconti" sotto. |
+| Admin Analytics — numeri veri e più chiari | — | 🚧 In review | SQL `supabase/admin-analytics-2026-09-23.sql` **già eseguito** (connettore Supabase). Vedi sezione "23/09 — admin Analytics" sotto. |
+
+## 23/09 — admin Analytics: numeri calcolati nel DB
+
+Richiesta: in `/admin/analytics` vedere in modo chiaro visite, utenti ecc.
+
+**Fonte**: la tabella `page_views` (il sito registra ogni pagina da
+`api/track.js`, con paese/città/dispositivo dagli header Vercel). **Non**
+Vercel Web Analytics: il componente `<Analytics />` è in `main.jsx` ma sul
+progetto Vercel Web Analytics non è attivo (l'API risponde "Web Analytics not
+found"), e comunque non ha un'API pubblica da leggere dal pannello.
+
+**Il problema di prima**: la pagina scaricava le righe di `page_views` nel
+browser e le contava lì, ma PostgREST ne restituisce al massimo 1000 per
+richiesta. Il 22/09 le visite erano 10.656: "visitatori unici", grafico,
+paesi e città erano calcolati su ~1000 righe. In più contava `/deals` ma non
+`/sconti`, e nella dashboard i "locali più visti" cercavano `/r/<slug>`
+(percorso che non esiste: la lista era sempre vuota).
+
+**Fatto**:
+- `supabase/admin-analytics-2026-09-23.sql` (eseguito il 23/09):
+  `admin_analytics(from, to, prev_from, prev_to, bucket)` restituisce in un
+  solo JSON riepilogo del periodo e del periodo precedente, serie per
+  giorno/ora (ora italiana, secchi vuoti inclusi), sezioni del sito,
+  provenienze, locali più visti con i salvataggi, città, paesi, dispositivi.
+  `admin_analytics_live()` = persone negli ultimi 5 minuti e dove sono.
+  Entrambe SECURITY DEFINER con `is_admin()` in testa (provato: anon →
+  permission denied). I raggruppamenti stanno in `analytics_section(path)` e
+  `analytics_source(referrer)`: una pagina nuova del sito va aggiunta lì.
+- **`page_views.visitor_id`**: id anonimo casuale in `localStorage`
+  (`chiamamibi_visitor_id`), per contare le **persone** e non solo le visite
+  (il `session_id` cambia dopo 30 minuti e a ogni scheda). Prima del 23/09
+  la colonna è vuota e il DB ripiega sul `session_id`: per quei giorni
+  persone = visite.
+- `AnalyticsPage.jsx` rifatta: adesso sul sito, Visite (persone, visite,
+  pagine viste, pagine per visita) con confronto col periodo precedente,
+  grafico a barre con scelta persone / pagine viste / nuovi iscritti, da dove
+  arrivano, cosa guardano, locali più visti, utenti e sconti, città/paesi/
+  dispositivi, e un riquadro "come si contano". "7g" = oggi + 6 giorni interi
+  (`src/lib/analyticsRange.js`, testato in `tests/analytics-range.test.mjs`).
+- `AdminDashboard.jsx`: "persone live" e "locali più visti" usano le stesse
+  due funzioni.
+
+Verificato con screenshot locali (dati reali della settimana, Supabase
+simulato) a 1366px e 390px. **Resta da vedere con l'account admin vero**
+dopo il deploy.
 
 ## 22/09 — Bi Club: dove finiscono gli sconti sbloccati
 

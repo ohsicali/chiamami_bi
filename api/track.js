@@ -45,6 +45,7 @@ export default async function handler(req, res) {
   // arbitrary users).
   const path = typeof body.path === 'string' ? body.path.slice(0, 512) : null
   const session_id = typeof body.session_id === 'string' ? body.session_id.slice(0, 128) : null
+  const visitor_id = typeof body.visitor_id === 'string' ? body.visitor_id.slice(0, 64) : null
   const referrer = typeof body.referrer === 'string' ? body.referrer.slice(0, 512) : null
   const user_id = typeof body.user_id === 'string' && UUID_RE.test(body.user_id) ? body.user_id : null
 
@@ -90,6 +91,7 @@ export default async function handler(req, res) {
         path,
         user_id,
         session_id,
+        visitor_id,
         referrer,
         user_agent: ua || null,
         country,
