@@ -29,6 +29,46 @@ dove siamo. Aggiorna a ogni step importante.
 | Audit prestazioni pre-lancio | #276 | 🚧 In review | Home da 4,4 MB a ~2,1 MB. Vedi sezione "22/09 — audit prestazioni" sotto. |
 | Lancio — Supabase saturo, letture in cache CDN | #278, #280, #281 | ✅ Merged | Vedi sezione "22/09 — lancio: Supabase saturo" sotto. |
 
+## 22/09 — "Metti in una lista" apriva il ristorante su iPhone (terza volta)
+
+Segnalazione: *"il tasto mettilo in una lista non funziona, lo clicco ma non
+succede nulla"*. Terza segnalazione dopo il 14/09 e il 20/09: entrambe le
+volte il giro era stato provato in Chromium e funzionava, e funzionava
+ancora — anche in WebKit (Playwright), con dati finti.
+
+**La prova vera stava nei log di Supabase** (edge logs, account admin da
+iPhone Safari): alle 18:24:19 la pagina Salvati si carica, alle 18:24:22 si
+apre la scheda di **ORSO** — la prima card dei Salvati, l'unica in alto che
+non sta in nessuna lista e quindi mostra "+ Metti in una lista" — e alle
+18:24:24 si torna indietro. Il foglio delle liste (che al montaggio fa la sua
+GET su `saved_lists`) non si è mai aperto, e in 24 ore non c'è un solo POST
+su `saved_lists`/`saved_list_items`. Il tocco sulla riga finiva al
+bottone-lenzuolo che apre la scheda.
+
+**Causa**: nella card `tile` il bottone che apre la scheda copriva l'intera
+card (`absolute; inset: 0`) e la riga delle liste ci stava sopra con uno
+z-index più alto. Per il mouse e per i tocchi sintetici di Playwright basta;
+Safari su iPhone invece "aggiusta" il tocco (touch adjustment) verso
+l'elemento cliccabile più probabile nell'area del dito, e fra una riga alta
+28px e un bottone grande quanto la card sceglieva spesso il secondo. Per
+questo in nessun test si è mai visto: Playwright non passa da
+quell'aggiustamento.
+
+**Fix**:
+- `RestaurantCard.jsx` (variante `tile`): il bottone che apre la scheda copre
+  solo foto e testo; la riga in fondo (`footer`) sta fuori da quella zona,
+  quindi sotto di lei non c'è altro da toccare. In più la riga ferma il
+  `pointerdown` prima della card: il `whileTap` di Framer è sulla card intera
+  e premendo la riga la card si rimpiccioliva come se si aprisse il locale.
+- `SavedListsFooter` (`SavedListsStrip.jsx`): la riga è alta 44px (minimo
+  Apple per un tocco) e arriva fino al bordo della card.
+
+**Verificato** (Chromium e WebKit, telefono emulato, dati finti): il tocco
+sulla riga apre il foglio, il tocco su "Da provare" crea lista e riga, la
+card non si rimpicciolisce premendo la riga, il tocco sulla card apre ancora
+la scheda. `npm test` 136/136, build a posto, lint invariato. **Resta da
+provare su un iPhone vero** dopo il deploy — il touch adjustment esiste solo lì.
+
 ## 22/09 — lancio: Supabase saturo, sito vuoto e registrazioni ferme
 
 **Sintomo** (dalle 17:00 UTC, uscita pubblica): il sito si apriva ma senza
