@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-21 (più sconti attivi per lo stesso locale)
+Ultima modifica: 2026-09-22 (sito online — rimosso gate manutenzione/PIN)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -24,6 +24,30 @@ dove siamo. Aggiorna a ogni step importante.
 | Sedi multiple (due indirizzi per lo stesso locale) | — | ✅ Done | Vedi sezione "21/09 — sedi multiple" sotto. SQL eseguito. |
 | Sconti/drop senza data di fine | — | ✅ Done | Vedi sezione "21/09 — sconti/drop senza data di fine" sotto. SQL eseguito. |
 | Più sconti attivi per lo stesso locale | — | ✅ Done | Vedi sezione "21/09 — più sconti attivi per lo stesso locale" sotto. |
+| Sito online — rimosso gate manutenzione/PIN | — | ✅ Done | Vedi sezione "22/09 — sito online" sotto. |
+
+## 22/09 — sito online
+
+Richiesta: pubblicare il sito, farlo indicizzare, togliere il PIN di
+accesso.
+
+**Rimosso `MaintenanceGate`**: il componente (`src/components/MaintenanceGate.jsx`,
+gate con PIN `4321` fisso, attivabile via `VITE_MAINTENANCE_MODE=true` su
+Vercel) è stato eliminato insieme al wrapper in `App.jsx` — il sito ora è
+sempre pubblicamente raggiungibile, nessun env var da tenere allineato.
+Non avevo permesso di lettura/scrittura sulle env var del progetto Vercel
+dal connettore MCP (403 su `filter_project_envs`), quindi se `VITE_MAINTENANCE_MODE=true`
+è ancora impostato su Vercel è ormai innocuo (nessun codice lo legge più) ma
+va rimosso dal dashboard per pulizia.
+
+**Indicizzazione**: già a posto lato codice, non serviva altro — `index.html`
+ha `<meta name="robots" content="index, follow, ...">`, `public/robots.txt`
+consente tutto tranne le rotte private/admin e referenzia la sitemap
+(`/sitemap.xml` → `api/sitemap.js`). Il `noindex` che il gate iniettava a
+runtime quando la manutenzione era attiva sparisce insieme al gate.
+Resta da fare manualmente (fuori dalla portata di Claude, nessun
+connettore Google Search Console): inviare/aggiornare la sitemap su
+Google Search Console dopo il deploy.
 
 ## 21/09 — più sconti attivi per lo stesso locale
 

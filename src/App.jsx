@@ -5,7 +5,6 @@ import { PageLoader } from './components/UI/LoadingSpinner'
 import MobileTabBar from './components/Layout/MobileTabBar'
 import DesktopNavbar from './components/Layout/DesktopNavbar'
 import { usePageTracking } from './lib/hooks/usePageTracking'
-import MaintenanceGate from './components/MaintenanceGate'
 import AdsProvider from './components/Ads/AdsProvider'
 import { useMediaQuery } from './lib/hooks/useMediaQuery'
 
@@ -227,7 +226,6 @@ export default function App() {
   return (
     <>
     <ErrorBoundary>
-    <MaintenanceGate>
     {/* Campagne pubblicitarie: un fetch per sessione, un'estrazione per pagina.
         Sta qui dentro perché legge la route corrente per riestrarre. */}
     <AdsProvider>
@@ -289,7 +287,6 @@ export default function App() {
     {showTabBar && <MobileTabBar />}
     </Suspense>
     </AdsProvider>
-    </MaintenanceGate>
     </ErrorBoundary>
 
     {/* Cookie Banner GDPR — deferred to idle to protect LCP */}
