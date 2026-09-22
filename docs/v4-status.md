@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-22 (sito online — rimosso gate manutenzione/PIN)
+Ultima modifica: 2026-09-22 (fix GRANT mancante su `location_label` — home non caricava i locali)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -25,8 +25,64 @@ dove siamo. Aggiorna a ogni step importante.
 | Sconti/drop senza data di fine | — | ✅ Done | Vedi sezione "21/09 — sconti/drop senza data di fine" sotto. SQL eseguito. |
 | Più sconti attivi per lo stesso locale | — | ✅ Done | Vedi sezione "21/09 — più sconti attivi per lo stesso locale" sotto. |
 | Sito online — rimosso gate manutenzione/PIN | — | ✅ Done | Vedi sezione "22/09 — sito online" sotto. |
+| Home non caricava "aperti nella fascia" / "ultimi aggiunti" | — | ✅ Fix (SQL eseguito) | Vedi sezione "22/09 — GRANT mancante su location_label" sotto. |
 
-## 22/09 — sito online
+## 22/09 — GRANT mancante su `location_label`: la home non caricava i locali
+
+Segnalazione (screenshot): home lenta, "Pranzo ora · aperti nella fascia"
+fermo a **0 locali** nonostante fosse ora di pranzo, e "Ultimi aggiunti"
+vuoto sotto.
+
+**Causa**: `restaurants` su questo progetto NON ha un GRANT SELECT a
+tabella intera per `anon`/`authenticated` — è per-colonna, apposta, perché
+alcune colonne sono segrete (`verify_pin`, `magic_token`,
+`magic_token_expires_at`, `partner_email`, `onboarding_email_sent_at`: PIN
+di verifica del ristoratore, token magic-link, email interne). Quando
+PostgREST vede anche **una sola** colonna richiesta senza privilegio,
+rifiuta l'INTERA query con `permission denied for table restaurants`
+(42501) — non solo quella colonna, tutta la riga, tutte le righe.
+
+La colonna `location_label` (aggiunta il 21/09,
+`restaurant-location-label-2026-09-21.sql`, il nome della sede principale
+— vedi sezione "21/09 — sedi multiple" più sotto) è pubblica quanto
+`name` o `address`, ma la migration ha fatto solo `ALTER TABLE ADD
+COLUMN`: nessun `GRANT`. Su questo schema una colonna nuova nasce **senza
+alcun privilegio** finché non viene concesso esplicitamente — a differenza
+di un `GRANT SELECT ON restaurants TO anon` a tabella intera, dove le
+colonne nuove sarebbero coperte in automatico.
+
+Da quel momento `useRestaurants.js` include `location_label` nella sua
+`select` (serve a mostrare il nome sede sulla scheda), quindi **ogni**
+query pubblica sui ristoranti falliva — non un sottoinsieme, tutte: home
+(“aperti nella fascia”, “ultimi aggiunti”), mappa, lista, salvati. Solo chi
+aveva già la cache locale (`cb_restaurants_v7` in localStorage) da prima
+del 21/09 vedeva ancora qualcosa; un browser pulito o con cache svuotata
+vedeva 0 locali ovunque tranne dove la card viene da un'altra tabella (il
+drop in home viene da `discounts`, non tocca `restaurants.location_label`
+— per questo restava visibile mentre il resto sotto era vuoto).
+
+**Verificato prima del fix**: query REST dirette con la publishable key —
+la stessa select di `useRestaurants.js` MENO `location_label` → 200 OK,
+97 righe; la stessa select CON `location_label` → 401/42501 su tutta la
+riga. Bisecato colonna per colonna: solo `location_label` (fra le colonne
+lette dal sito pubblico) mancava del privilegio.
+
+**Fix** (`GRANT SELECT (location_label) ON restaurants TO anon,
+authenticated;`, eseguito via connettore Supabase sul progetto
+`Chiamami_bi` il 22/09, migration `grant_location_label_select_20260922`):
+nessuna modifica a RLS, dati o codice — solo il privilegio mancante.
+Riverificato dopo: stessa query con `location_label` incluso → 200 OK, 97
+righe, 60 taggate `pranzo`.
+
+**Da tenere a mente per il futuro**: ogni volta che si aggiunge una
+colonna pubblica a `restaurants` (o a qualunque tabella con permessi
+per-colonna invece che a tabella intera — verificabile con
+`information_schema.column_privileges`), la migration deve includere il
+`GRANT SELECT` per `anon`/`authenticated`, altrimenti l'errore non compare
+finché qualcuno non usa quella colonna in una query pubblica — e quando
+compare, si porta via l'intera tabella, non solo la colonna nuova.
+
+
 
 Richiesta: pubblicare il sito, farlo indicizzare, togliere il PIN di
 accesso.
