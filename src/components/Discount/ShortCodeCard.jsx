@@ -15,9 +15,6 @@ export default function ShortCodeCard({
   code,
   tone = 'light',
   divider = true,
-  // `compact`: dentro il tagliando di QRPass — caselle più basse, niente
-  // riga di spiegazione (la dice già l'etichetta).
-  compact = false,
   label = 'Detta questo codice',
 }) {
   const normalized = normalizeShortCode(code)
@@ -47,7 +44,7 @@ export default function ShortCodeCard({
   }
 
   return (
-    <div className={`shortcode-card shortcode-${tone} ${compact ? 'is-compact' : ''}`}>
+    <div className={`shortcode-card shortcode-${tone}`}>
       {divider && (
         <div className="shortcode-or" aria-hidden="true">
           <span>oppure</span>
@@ -89,11 +86,9 @@ export default function ShortCodeCard({
         )}
       </button>
 
-      {!compact && (
-        <p className="shortcode-hint">
-          Il ristoratore può digitarlo al posto di scansionare il QR.
-        </p>
-      )}
+      <p className="shortcode-hint">
+        Il ristoratore può digitarlo al posto di scansionare il QR.
+      </p>
     </div>
   )
 }

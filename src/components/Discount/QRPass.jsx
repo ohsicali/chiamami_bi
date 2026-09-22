@@ -8,25 +8,30 @@ import { useDiscountPdf } from '../../lib/hooks/useDiscountPdf'
 import './QRPass.css'
 
 /**
- * Il pass dello sconto sbloccato: l'unico modo in cui il sito mostra un QR.
+ * Lo sconto sbloccato: l'unico modo in cui il sito mostra un QR.
  *
  * Prima c'erano tre disegni per la stessa cosa — il popup del Bi Club con
  * il banner corallo e il QR piccolo, il popup della pagina del locale con
  * un titolo e un QR nudo, e il PDF — con badge di colori diversi e il
  * codice da dettare che finiva sotto il bordo dello schermo. Adesso i due
- * popup montano questo componente, e il PDF (api/discount-pdf.js) ne
- * ricopia la forma: intestazione del locale, strappo, QR, strappo, codice.
+ * popup montano `QRPassSheet`, e il PDF (api/discount-pdf.js) ne ricopia
+ * la forma.
  *
- * Tre regole che il disegno tiene:
- * - il QR è la cosa più grande del foglio e si porta a tutto schermo con un
- *   tocco (su bianco pieno e a luminosità piena: è quello che serve alla
- *   fotocamera di chi lo legge, non uno sfondo sfocato);
- * - il codice a sei caratteri sta dentro il pass, nel "tagliando" sotto il
- *   QR, non in fondo alla pagina dove bisogna scorrere per trovarlo;
- * - il badge è verde come in tutto il sito (`--gradient-sconto`), mentre
- *   il tipo di sconto lo dice la pillola sotto il nome: corallo col
- *   countdown per i drop, oro "sempre valido" per le convenzioni — la stessa regola delle
- *   email (vedi CLAUDE.md, "il colore dice il tipo di sconto").
+ * È la variante "A · Selettore" scelta il 22/09 fra quattro proposte:
+ * - in testa il locale (foto, nome, riga sotto) e la X per chiudere;
+ * - una card con badge, vantaggio e pillola del tipo di sconto, e dentro un
+ *   selettore "QR / Codice": le due strade per farsi riconoscere al banco
+ *   stanno a un tocco l'una dall'altra, nello stesso riquadro, che non
+ *   cambia altezza passando dall'una all'altra;
+ * - sotto, due bottoni grandi uguali: "Info sconto" (pannello dal basso) e
+ *   "Scarica PDF". Niente da cercare scorrendo.
+ *
+ * Il QR si tocca per portarlo a tutto schermo su bianco pieno (con lo
+ * schermo tenuto acceso), che è quello che serve alla fotocamera del
+ * locale. Il badge è verde come in tutto il sito (`--gradient-sconto`); il
+ * tipo di sconto lo dice la pillola: corallo col countdown per i drop, oro
+ * "sempre valido" per le convenzioni — la stessa regola delle email (vedi
+ * CLAUDE.md, "il colore dice il tipo di sconto").
  */
 
 /* ── QR in SVG ─────────────────────────────────────────────────────────── */
@@ -85,85 +90,101 @@ function useDropCountdown(deal) {
   return isDrop ? compactCountdown(endIso, now) : null
 }
 
-/* ── Il pass ───────────────────────────────────────────────────────────── */
-export default function QRPass({
-  deal,
-  qrValue,
-  shortCode,
-  restaurantName,
-  subtitle,
-  photoUrl,
-}) {
+/* ── Icone ─────────────────────────────────────────────────────────────── */
+const ICONS = {
+  qr: <><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><path d="M14 14h3v3M21 14v.01M14 21h3M21 18v3" /></>,
+  code: <path d="M9 4L7 20M17 4l-2 16M4 9h17M3 15h17" />,
+  info: <><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7.5v.01" /></>,
+  download: <path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14" />,
+  close: <path d="M6 6l12 12M18 6L6 18" />,
+  check: <path d="M20 6L9 17l-5-5" />,
+}
+function Icon({ name, size = 18, stroke = 2.2 }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {ICONS[name]}
+    </svg>
+  )
+}
+
+/* ── La card: badge, selettore QR / Codice, riquadro ──────────────────── */
+export default function QRPass({ deal, qrValue, shortCode, restaurantName }) {
+  const hasCode = isShortCode(shortCode)
+  const [mode, setMode] = useState('qr')
   const [presenting, setPresenting] = useState(false)
   const badge = formatDiscountBadge(deal)
   const name = restaurantName || deal?.restaurant?.name || deal?.title || ''
-  // Il titolo dello sconto solo se dice qualcosa in più del badge
-  // ("-20%" / "20% sul totale" no, "Menu pranzo -20%" sì).
+  // Il vantaggio in chiaro accanto al badge ("20% sul totale"); il titolo
+  // dello sconto se dice qualcosa in più, se no il valore formattato.
   const title = deal?.title?.trim()
-  const perk = title && ![name, badge, formatDiscountValue(deal)].includes(title) ? title : null
+  const value = formatDiscountValue(deal)
+  const perk = title && ![name, badge].includes(title) ? title : value
   const isDrop = !!deal?.is_drop
   const cd = useDropCountdown(deal)
-  const hasCode = isShortCode(shortCode)
+  const showCode = hasCode && mode === 'code'
 
   return (
     <>
-      <article className={`qrp ${isDrop ? 'is-drop' : 'is-conv'}`} aria-label={`Sconto ${badge} da ${name}`}>
-        <header className="qrp-head">
-          <div className="qrp-thumb">
-            {photoUrl
-              ? <img src={photoUrl} alt="" loading="lazy" decoding="async" />
-              : <span aria-hidden="true">{(name || 'B').charAt(0)}</span>}
-          </div>
-          <div className="qrp-id">
-            <h3 className="qrp-name">{name}</h3>
-            {subtitle && <div className="qrp-meta">{subtitle}</div>}
-          </div>
+      <article className="qrp" aria-label={`Sconto ${badge} da ${name}`}>
+        <div className="qrp-top">
           {badge && <span className="qrp-badge">{badge}</span>}
-        </header>
-        <div className="qrp-sub">
-          <span className={`qrp-chip ${isDrop ? 'is-drop' : 'is-conv'}`}>
-            {isDrop ? (cd ? `Scade tra ${cd}` : 'Drop live') : 'Sempre valido'}
-          </span>
-          {perk && <p className="qrp-perk">{perk}</p>}
-        </div>
-
-        <div className="qrp-tear" aria-hidden="true" />
-
-        <div className="qrp-scan">
-          <button
-            type="button"
-            className="qrp-code"
-            onClick={() => qrValue && setPresenting(true)}
-            disabled={!qrValue}
-            aria-label="Mostra il QR a tutto schermo"
-          >
-            <span className="qrp-corners" aria-hidden="true"><i /><i /><i /><i /></span>
-            {qrValue
-              ? <QRCodeSvg value={qrValue} />
-              : <span className="qrp-svg is-loading" aria-hidden="true" />}
-          </button>
-          <p className="qrp-instr">Mostralo al ristoratore</p>
-          <button
-            type="button"
-            className="qrp-present-btn"
-            onClick={() => setPresenting(true)}
-            disabled={!qrValue}
-          >
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3" /></svg>
-            Tutto schermo
-          </button>
+          <div className="qrp-top-txt">
+            {perk && perk !== badge && <p className="qrp-perk">{perk}</p>}
+            <span className={`qrp-chip ${isDrop ? 'is-drop' : 'is-conv'}`}>
+              {isDrop ? (cd ? `Scade tra ${cd}` : 'Drop live') : 'Sempre valido'}
+            </span>
+          </div>
         </div>
 
         {hasCode && (
-          <>
-            <div className="qrp-tear" aria-hidden="true" />
-            <div className="qrp-stub">
-              <ShortCodeCard code={shortCode} divider={false} compact label="Non legge il QR? Detta il codice" />
-              <p className="qrp-once">Codice valido una sola volta</p>
-            </div>
-          </>
+          <div className="qrp-seg" role="tablist" aria-label="Come mostrarlo al ristoratore">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={!showCode}
+              className={`qrp-seg-btn ${!showCode ? 'is-on' : ''}`}
+              onClick={() => setMode('qr')}
+            >
+              <Icon name="qr" size={17} />QR
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={showCode}
+              className={`qrp-seg-btn ${showCode ? 'is-on' : ''}`}
+              onClick={() => setMode('code')}
+            >
+              <Icon name="code" size={17} />Codice
+            </button>
+          </div>
         )}
-        {!hasCode && <p className="qrp-once qrp-once-solo">Codice valido una sola volta</p>}
+
+        {/* Stessa altezza per QR e codice: passando dall'uno all'altro non
+            salta niente sotto, i bottoni restano dove il pollice li aspetta. */}
+        <div className="qrp-stage" role="tabpanel">
+          {showCode ? (
+            <div className="qrp-stage-in" key="code">
+              <ShortCodeCard code={shortCode} divider={false} />
+            </div>
+          ) : (
+            <div className="qrp-stage-in" key="qr">
+              <button
+                type="button"
+                className="qrp-code"
+                onClick={() => qrValue && setPresenting(true)}
+                disabled={!qrValue}
+                aria-label="Ingrandisci il QR"
+              >
+                <span className="qrp-corners" aria-hidden="true"><i /><i /><i /><i /></span>
+                {qrValue
+                  ? <QRCodeSvg value={qrValue} />
+                  : <span className="qrp-svg is-loading" aria-hidden="true" />}
+              </button>
+              <p className="qrp-instr">Fallo inquadrare al ristoratore</p>
+              <p className="qrp-hint">Tocca il QR per ingrandirlo</p>
+            </div>
+          )}
+        </div>
       </article>
 
       {presenting && qrValue && (
@@ -181,15 +202,10 @@ export default function QRPass({
 
 /* ── La schermata intera ───────────────────────────────────────────────── */
 /**
- * Testa, pass, info e bottoni: quello che si vede dopo "Sblocca sconto" in
- * tutti e due i popup (`DiscountDetailPopup` sul Bi Club,
- * `DiscountQuickPopup` sulla pagina del locale). Il contenitore — bottom
- * sheet o card centrata — resta del popup; da qui in giù è identico.
- *
- * Al posto del vecchio banner corallo a tutta larghezza (che ripeteva il
- * colore dei drop su qualunque sconto e si mangiava lo spazio del QR) una
- * testa leggera: spunta verde se è appena stato sbloccato, e dove ritrovarlo.
- * `children` è il contenuto di "Info sconto", chiuso di default.
+ * Quello che si vede dopo "Sblocca sconto" in tutti e due i popup
+ * (`DiscountDetailPopup` sul Bi Club, `DiscountQuickPopup` sulla pagina del
+ * locale). Il contenitore — bottom sheet o card centrata — resta del popup;
+ * da qui in giù è identico. `children` è il contenuto di "Info sconto".
  */
 export function QRPassSheet({
   deal,
@@ -211,21 +227,17 @@ export function QRPassSheet({
   return (
     <div className="qrp-sheet">
       <div className="qrp-sheet-head">
-        <div className={`qrp-sheet-icon ${justUnlocked ? 'is-new' : ''}`} aria-hidden="true">
-          {justUnlocked ? (
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
-          ) : (
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a3 3 0 0 0 0 6v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a3 3 0 0 0 0-6z" /><path d="M14 5v2M14 11v2M14 17v2" /></svg>
-          )}
+        <div className="qrp-thumb">
+          {photoUrl
+            ? <img src={photoUrl} alt="" loading="lazy" decoding="async" />
+            : <span aria-hidden="true">{(name || 'B').charAt(0)}</span>}
         </div>
         <div className="qrp-sheet-titles">
-          <h2 className="qrp-sheet-title">{justUnlocked ? 'Sconto sbloccato' : 'Il tuo sconto'}</h2>
-          <p className="qrp-sheet-sub">
-            {justUnlocked ? 'Salvato in I miei vantaggi' : 'Da I miei vantaggi'}
-          </p>
+          <h2 className="qrp-sheet-title">{name}</h2>
+          {subtitle && <p className="qrp-sheet-sub">{subtitle}</p>}
         </div>
         <button type="button" className="qrp-sheet-close" aria-label="Chiudi" onClick={onClose}>
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+          <Icon name="close" size={16} stroke={2.4} />
         </button>
       </div>
 
@@ -235,37 +247,66 @@ export function QRPassSheet({
           qrValue={qrValue}
           shortCode={redemption?.short_code}
           restaurantName={name}
-          subtitle={subtitle}
-          photoUrl={photoUrl}
         />
 
-        {children && (
-          <>
-            <button
-              type="button"
-              className={`qrp-more ${showInfo ? 'is-open' : ''}`}
-              aria-expanded={showInfo}
-              onClick={() => setShowInfo((v) => !v)}
-            >
-              {showInfo ? 'Nascondi info sconto' : 'Info sconto e condizioni'}
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
-            </button>
-            {showInfo && <div className="qrp-more-panel">{children}</div>}
-          </>
-        )}
-      </div>
+        <p className={`qrp-once ${justUnlocked ? 'is-new' : ''}`}>
+          {justUnlocked && <span className="qrp-once-ok" aria-hidden="true"><Icon name="check" size={11} stroke={3.4} /></span>}
+          {justUnlocked ? 'Sbloccato e salvato in I miei vantaggi' : 'Valido una sola volta · in I miei vantaggi'}
+        </p>
 
-      <div className="qrp-sheet-foot">
-        {redemption?.id && (
-          <button type="button" className="qrp-pdf-btn" onClick={pdf.download} disabled={pdf.busy}>
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16" /></svg>
-            {pdf.busy ? 'Genero…' : 'PDF'}
-          </button>
-        )}
-        <button type="button" className="qrp-done-btn" onClick={onClose}>Fatto</button>
+        <div className="qrp-actions">
+          {children && (
+            <button type="button" className="qrp-action" onClick={() => setShowInfo(true)}>
+              <Icon name="info" size={19} />Info sconto
+            </button>
+          )}
+          {redemption?.id && (
+            <button type="button" className="qrp-action" onClick={pdf.download} disabled={pdf.busy}>
+              <Icon name="download" size={19} />{pdf.busy ? 'Preparo il PDF…' : 'Scarica PDF'}
+            </button>
+          )}
+        </div>
         {pdf.error && <p className="qrp-pdf-error" role="status">{pdf.error}</p>}
       </div>
+
+      {showInfo && children && (
+        <QRInfoDrawer onClose={() => setShowInfo(false)}>{children}</QRInfoDrawer>
+      )}
     </div>
+  )
+}
+
+/* ── Info sconto: pannello dal basso ───────────────────────────────────── */
+/* Sopra a tutto (portal su <body>, come lo schermo pieno): chi apre le info
+   le legge e torna al QR con un tocco fuori o sulla X, senza perdere il
+   punto in cui era. */
+function QRInfoDrawer({ onClose, children }) {
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        e.stopImmediatePropagation()
+        onClose()
+      }
+    }
+    document.addEventListener('keydown', onKey, true)
+    return () => document.removeEventListener('keydown', onKey, true)
+  }, [onClose])
+
+  return createPortal(
+    <div className="qrp-drawer-wrap" role="dialog" aria-modal="true" aria-label="Info sconto">
+      <button type="button" className="qrp-drawer-scrim" aria-label="Chiudi info" onClick={onClose} />
+      <div className="qrp-drawer">
+        <div className="qrp-drawer-grip" aria-hidden="true" />
+        <div className="qrp-drawer-head">
+          <h3>Info sconto</h3>
+          <button type="button" className="qrp-sheet-close" aria-label="Chiudi" onClick={onClose}>
+            <Icon name="close" size={16} stroke={2.4} />
+          </button>
+        </div>
+        <div className="qrp-drawer-body">{children}</div>
+      </div>
+    </div>,
+    document.body,
   )
 }
 

@@ -442,8 +442,6 @@
 
 /* ============= UNLOCKED state =============
    Il pass del QR sta in QRPass.css (QRPassSheet), lo stesso del popup della
-   pagina del locale. Qui solo il fondo: crema come la pagina, così le tacche
-   dello strappo del pass si leggono come buchi. */
+   pagina del locale. Qui solo il fondo: crema come la pagina, così la card
+   bianca del QR ci si stacca sopra. */
 .ddp-sheet.is-unlocked { background: var(--color-page, #FAF7F2); }
-.ddp-sheet.is-unlocked .ddp-rules { margin-top: 0; }
-.ddp-sheet.is-unlocked .ddp-lead { margin: 0 0 12px; }
