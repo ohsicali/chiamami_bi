@@ -26,7 +26,7 @@ dove siamo. Aggiorna a ogni step importante.
 | Più sconti attivi per lo stesso locale | — | ✅ Done | Vedi sezione "21/09 — più sconti attivi per lo stesso locale" sotto. |
 | Sito online — rimosso gate manutenzione/PIN | — | ✅ Done | Vedi sezione "22/09 — sito online" sotto. |
 | Home non caricava "aperti nella fascia" / "ultimi aggiunti" | — | ✅ Fix (SQL eseguito) | Vedi sezione "22/09 — GRANT mancante su location_label" sotto. |
-| Audit prestazioni pre-lancio | #276 | 🚧 In review | Home da 4,4 MB a ~2,1 MB. Vedi sezione "22/09 — audit prestazioni" sotto. |
+| Audit prestazioni pre-lancio | #276 | ✅ Merged (0ad5081) | Home **4549 → 2337 kB** misurati in produzione dopo il merge. Vedi sezione "22/09 — audit prestazioni" sotto. |
 
 ## 22/09 — GRANT mancante su `location_label`: la home non caricava i locali
 
@@ -150,11 +150,29 @@ lo evitava, lo faceva scoprire un giro di rete piu' tardi.
 Ora resta il solo filtro su `qr-*.js`, l'unico verificato come davvero solo
 suo (qrcode/qr-scanner, zero React).
 
-### Risultato
+### Risultato — misurato in produzione dopo il merge
 
-**~4,4 MB → ~2,1 MB** sulla home da telefono. Test 136/136, lint identico
-alla baseline di `main` (221 preesistenti), tutte le rotte pubbliche girate in
-un Chromium vero su telefono e desktop senza errori.
+Non una stima: `chiamamibi.com` aperto in un Chromium vero da viewport
+telefono, dopo che il deploy di `0ad5081` era live.
+
+| | prima | dopo |
+|---|---|---|
+| immagini | 2786 kB | **713 kB** |
+| JSON | 580 kB | **430 kB** |
+| JS | 1031 kB | 1031 kB (invariato) |
+| CSS + font | 145 kB | 147 kB |
+| **totale home** | **4549 kB** | **2337 kB** (−49%) |
+
+Il file piu' grosso della home non e' piu' un PNG da 2,2 MB ma il JSON dei
+locali (394 kB). Zero immagini che saltano il proxy, zero errori JS, fascia
+oraria a 18 locali come prima del cambio.
+
+Tempi a CDN calda, mediana su 5 giri: **TTFB 136 ms, FCP ~984 ms**. Il primo
+campione subito dopo il deploy dava 845/1908 ms ed era CDN fredda — da non
+confondere con una regressione.
+
+Test 136/136, lint identico alla baseline di `main` (221 preesistenti), tutte
+le rotte pubbliche girate su telefono e desktop senza errori.
 
 ### Cosa NON ho toccato, e perche'
 
