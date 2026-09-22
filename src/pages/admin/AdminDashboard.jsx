@@ -186,9 +186,9 @@ export default function AdminDashboard() {
     let interval
     async function fetchLive() {
       try {
-        const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
-        const { data } = await supabase.from('page_views').select('session_id').gte('created_at', fiveMinAgo)
-        if (!cancelled) setLiveVisitors(new Set((data || []).map((r) => r.session_id)).size)
+        // Stesso conteggio della pagina Analytics (persone negli ultimi 5 minuti).
+        const { data, error } = await supabase.rpc('admin_analytics_live')
+        if (!cancelled && !error) setLiveVisitors(data?.visitors || 0)
       } catch { if (!cancelled) setLiveVisitors(0) }
     }
     fetchLive()
@@ -258,7 +258,14 @@ export default function AdminDashboard() {
           supabase.from('profiles').select('id, full_name, email, created_at').order('created_at', { ascending: false }).limit(6),
           supabase.from('discounts').select('id, title, created_at, restaurants(name)').eq('is_drop', true).order('created_at', { ascending: false }).limit(6),
           supabase.from('partner_applications').select('id, restaurant_name, city, message, created_at').eq('status', 'pending').order('created_at', { ascending: false }).limit(3),
-          supabase.from('page_views').select('path').ilike('path', '/r/%').gte('created_at', sevenDaysAgo).limit(5000),
+          // I conteggi li fa il DB: le righe di page_views in 7 giorni sono
+          // decine di migliaia e PostgREST ne restituisce al massimo 1000.
+          supabase.rpc('admin_analytics', {
+            p_from: sevenDaysAgo,
+            p_to: new Date(now).toISOString(),
+            p_prev_from: new Date(now - 2 * WEEK_MS).toISOString(),
+            p_prev_to: sevenDaysAgo,
+          }),
         ])
 
         if (cancelled) return
@@ -349,16 +356,11 @@ export default function AdminDashboard() {
         setRecentActivity(activity.slice(0, 8))
 
         // ── Top restaurants by views (7d) ──
-        const viewsByPath = {}
-        ;(topViews.data || []).forEach((row) => {
-          const m = row.path.match(/^\/r\/([^?/]+)/)
-          if (!m) return
-          const slug = m[1]
-          viewsByPath[slug] = (viewsByPath[slug] || 0) + 1
-        })
-        const topSlugs = Object.entries(viewsByPath)
-          .sort((a, b) => b[1] - a[1])
+        // Le schede dei locali stanno su /restaurant/<slug>: prima qui si
+        // cercava /r/<slug>, che non esiste, e la lista restava sempre vuota.
+        const topSlugs = (topViews.data?.restaurants || [])
           .slice(0, 5)
+          .map((r) => [r.slug, r.views])
         if (topSlugs.length > 0) {
           const { data: topRest } = await supabase
             .from('restaurants')

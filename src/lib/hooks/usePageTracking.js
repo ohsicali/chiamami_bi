@@ -5,6 +5,7 @@ import { supabase, isSupabaseConfigured } from '../supabase'
 const SESSION_KEY = 'chiamamibi_session_id'
 const SESSION_TIMESTAMP_KEY = 'chiamamibi_session_ts'
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000 // 30 min inactivity = new session
+const VISITOR_KEY = 'chiamamibi_visitor_id'
 
 function generateSessionId() {
   const rand = Math.random().toString(36).slice(2, 12)
@@ -35,6 +36,21 @@ export function getOrCreateSessionId() {
   }
 }
 
+/** Id anonimo e casuale del browser, per contare le persone e non solo le
+ *  visite: il session_id cambia dopo 30 minuti e a ogni scheda nuova. Non è
+ *  legato all'account né ad altro — serve solo a dire "è lo stesso browser". */
+function getOrCreateVisitorId() {
+  try {
+    const existing = localStorage.getItem(VISITOR_KEY)
+    if (existing) return existing
+    const fresh = generateSessionId()
+    localStorage.setItem(VISITOR_KEY, fresh)
+    return fresh
+  } catch {
+    return null
+  }
+}
+
 /**
  * Page tracking hook — inserts a row into page_views on every route change.
  * Skips admin routes (we don't want admin noise polluting visitor metrics).
@@ -56,6 +72,7 @@ export function usePageTracking() {
     lastTrackedPath.current = path
 
     const sessionId = getOrCreateSessionId()
+    const visitorId = getOrCreateVisitorId()
 
     // Fire-and-forget — never block navigation or surface errors to the user
     ;(async () => {
@@ -80,6 +97,7 @@ export function usePageTracking() {
               path,
               user_id: userId,
               session_id: sessionId,
+              visitor_id: visitorId,
               referrer,
             }),
             keepalive: true,
@@ -97,6 +115,7 @@ export function usePageTracking() {
             path,
             user_id: userId,
             session_id: sessionId,
+            visitor_id: visitorId,
             referrer,
             user_agent: navigator.userAgent?.slice(0, 255) || null,
           })

@@ -1,47 +1,19 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, Link } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useRestaurants } from '../../lib/hooks/useRestaurants'
 import AdminLayout from '../../components/Layout/AdminLayout'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
+import { PERIODS, getAnalyticsRange } from '../../lib/analyticsRange'
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Area,
-  AreaChart,
-  Legend,
 } from 'recharts'
-
-/* ------------------------------------------------------------------ */
-/*  Period helpers                                                     */
-/* ------------------------------------------------------------------ */
-const PERIODS = [
-  { key: 'today', label: 'Oggi', days: 1 },
-  { key: '7d', label: '7g', days: 7 },
-  { key: '30d', label: '30g', days: 30 },
-  { key: '90d', label: '90g', days: 90 },
-]
-
-function getDateRange(period, customFrom, customTo) {
-  if (period === 'custom' && customFrom && customTo) {
-    const endDate = new Date(customTo)
-    endDate.setHours(23, 59, 59, 999)
-    const days = Math.max(1, Math.ceil((endDate - customFrom) / (24 * 60 * 60 * 1000)))
-    return { start: customFrom.toISOString(), end: endDate.toISOString(), days }
-  }
-  const p = PERIODS.find((x) => x.key === period)
-  const days = p?.days || 7
-  return {
-    start: new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString(),
-    end: null,
-    days,
-  }
-}
 
 /* ------------------------------------------------------------------ */
 /*  DateRangePicker                                                    */
@@ -289,85 +261,204 @@ function DateRangePicker({ from, to, onApply, onClose }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  StatCard — compact, no animation                                   */
+/*  Formattazione                                                      */
 /* ------------------------------------------------------------------ */
-function StatCard({ label, value, sub, subColor }) {
-  return (
-    <div style={{
-      background: '#fff',
-      border: '1px solid #eee',
-      borderRadius: 10,
-      padding: '12px 14px',
-    }}>
-      <div style={{ fontSize: 10, color: '#999', fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-        {label}
-      </div>
-      <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-ink)', marginTop: 4, lineHeight: 1.1 }}>
-        {value}
-      </div>
-      {sub && (
-        <div style={{ fontSize: 11, color: subColor || '#999', fontWeight: 500, marginTop: 4 }}>
-          {sub}
-        </div>
-      )}
-    </div>
-  )
-}
+const nf = new Intl.NumberFormat('it-IT')
+const fmtNum = (n) => nf.format(Math.round(n || 0))
 
-/* ------------------------------------------------------------------ */
-/*  GeoCard — compact horizontal-bar list (country/city/device)        */
-/* ------------------------------------------------------------------ */
-const COUNTRY_FLAG = (code) => {
+let regionNames = null
+try {
+  regionNames = new Intl.DisplayNames(['it'], { type: 'region' })
+} catch {
+  regionNames = null
+}
+function countryName(code) {
+  if (!code) return '—'
+  try {
+    return regionNames?.of(code.toUpperCase()) || code
+  } catch {
+    return code
+  }
+}
+function countryFlag(code) {
   if (!code || code.length !== 2) return ''
-  const cc = code.toUpperCase()
-  return String.fromCodePoint(...[...cc].map((c) => 0x1f1e6 - 65 + c.charCodeAt(0)))
+  return String.fromCodePoint(...[...code.toUpperCase()].map((c) => 0x1f1e6 - 65 + c.charCodeAt(0)))
 }
-const DEVICE_LABEL = { mobile: 'Mobile', tablet: 'Tablet', desktop: 'Desktop', unknown: 'Sconosciuto' }
 
-function GeoCard({ title, rows, emptyLabel }) {
-  const isDevice = title === 'Dispositivi'
-  const isCountry = title === 'Top paesi'
+// Vercel manda i nomi delle città in inglese.
+const CITY_IT = {
+  Turin: 'Torino', Milan: 'Milano', Rome: 'Roma', Florence: 'Firenze', Genoa: 'Genova',
+  Naples: 'Napoli', Venice: 'Venezia', Padua: 'Padova', Mantua: 'Mantova', Syracuse: 'Siracusa',
+  Leghorn: 'Livorno', 'Reggio Emilia': 'Reggio Emilia',
+}
+const DEVICE_LABEL = { mobile: 'Telefono', tablet: 'Tablet', desktop: 'Computer', unknown: 'Non rilevato' }
+
+const WEEKDAYS = ['dom', 'lun', 'mar', 'mer', 'gio', 'ven', 'sab']
+const MONTHS_SHORT = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic']
+
+// `t` arriva dal DB già in ora italiana ("2026-09-22T14:00"): si legge a
+// pezzi invece di passarlo a new Date(), che lo sposterebbe di fuso.
+function parseBucket(t) {
+  const [d, hm] = t.split('T')
+  const [y, m, day] = d.split('-').map(Number)
+  const [h] = (hm || '00:00').split(':').map(Number)
+  return { y, m, day, h, weekday: new Date(y, m - 1, day).getDay() }
+}
+function bucketTick(t, bucket) {
+  const b = parseBucket(t)
+  return bucket === 'hour' ? `${String(b.h).padStart(2, '0')}` : `${b.day} ${MONTHS_SHORT[b.m - 1]}`
+}
+function bucketTitle(t, bucket) {
+  const b = parseBucket(t)
+  const date = `${WEEKDAYS[b.weekday]} ${b.day} ${MONTHS_SHORT[b.m - 1]}`
+  if (bucket !== 'hour') return date
+  const hh = (n) => `${String(n % 24).padStart(2, '0')}:00`
+  return `${date}, ${hh(b.h)}–${hh(b.h + 1)}`
+}
+
+function deltaOf(cur, prev) {
+  if (!prev) return cur > 0 ? { text: 'prima era 0', dir: 'up' } : null
+  const pct = Math.round(((cur - prev) / prev) * 100)
+  if (pct === 0) return { text: 'invariato', dir: null }
+  // "+10850%" non si legge: oltre il triplo si dice quante volte tanto.
+  if (pct >= 200) {
+    return { text: `×${(cur / prev).toLocaleString('it-IT', { maximumFractionDigits: cur / prev < 10 ? 1 : 0 })}`, dir: 'up' }
+  }
+  return { text: `${pct > 0 ? '+' : ''}${pct}%`, dir: pct > 0 ? 'up' : 'dn' }
+}
+
+function photoOf(r) {
+  const p = Array.isArray(r?.photos) && r.photos.length > 0 ? r.photos[0] : null
+  if (!p) return null
+  return proxyImg(typeof p === 'string' ? p : p.thumb_url || p.photo_url)
+}
+
+/* ------------------------------------------------------------------ */
+/*  Pezzi di interfaccia                                              */
+/* ------------------------------------------------------------------ */
+const card = {
+  background: '#fff',
+  border: '1px solid var(--color-line, #EAE3D7)',
+  borderRadius: 18,
+  padding: 18,
+}
+
+function SectionTitle({ children, hint }) {
   return (
-    <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 10, padding: 16 }}>
-      <h3 style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-ink)', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-        {title}
-      </h3>
-      <div style={{ fontSize: 10, color: '#bbb', marginBottom: 14, fontStyle: 'italic' }}>
-        sessioni uniche nel periodo
+    <div style={{ margin: '8px 0 -4px' }}>
+      <h2 style={{ fontSize: 18, fontWeight: 900, letterSpacing: '-0.01em', margin: 0, color: 'var(--color-ink)' }}>
+        {children}
+      </h2>
+      {hint && (
+        <div style={{ fontSize: 13, color: 'var(--color-ink-55)', marginTop: 2 }}>{hint}</div>
+      )}
+    </div>
+  )
+}
+
+function CardTitle({ title, hint, right }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
+      <div style={{ flex: '1 1 220px' }}>
+        <h3 style={{ fontSize: 15, fontWeight: 800, margin: 0, color: 'var(--color-ink)' }}>{title}</h3>
+        {hint && <div style={{ fontSize: 12, color: 'var(--color-ink-55)', marginTop: 2 }}>{hint}</div>}
       </div>
-      {rows.length === 0 ? (
-        <div style={{ fontSize: 12, color: '#999', textAlign: 'center', padding: 20 }}>
-          {emptyLabel}
-        </div>
+      {right}
+    </div>
+  )
+}
+
+function Stat({ label, value, hint, delta, prevLabel, loading }) {
+  return (
+    <div style={{ ...card, padding: 16, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-ink)' }}>{label}</div>
+      {loading ? (
+        <div className="skeleton" aria-hidden="true" style={{ width: 80, height: 32, borderRadius: 8, marginTop: 8 }} />
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {rows.map((r, i) => {
-            const opacity = 1 - i * 0.12
-            const display = isDevice
-              ? (DEVICE_LABEL[r.label] || r.label)
-              : isCountry
-                ? `${COUNTRY_FLAG(r.label)} ${r.label}`
-                : r.label
-            return (
-              <div key={r.label}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{ fontSize: 11, color: '#444' }}>{display}</span>
-                  <span style={{ fontSize: 11, color: '#999' }}>{r.count}</span>
-                </div>
-                <div style={{ height: 8, background: '#f0f0f0', borderRadius: 4, overflow: 'hidden' }}>
-                  <div style={{ width: `${r.pct}%`, height: '100%', background: `rgba(232, 69, 60,${Math.max(opacity, 0.25)})`, borderRadius: 4 }} />
-                </div>
-              </div>
-            )
-          })}
+        <div style={{ fontWeight: 900, fontSize: 30, letterSpacing: '-0.03em', lineHeight: 1.1, marginTop: 6, color: 'var(--color-ink)' }}>
+          {value}
+        </div>
+      )}
+      {!loading && delta && (
+        <div
+          style={{
+            marginTop: 4,
+            fontSize: 12,
+            fontWeight: 700,
+            color: delta.dir === 'dn' ? '#C0392B' : delta.dir === 'up' ? '#2C7A4A' : 'var(--color-ink-55)',
+          }}
+        >
+          {delta.dir === 'up' ? '▲ ' : delta.dir === 'dn' ? '▼ ' : ''}
+          {delta.text}
+          <span style={{ fontWeight: 500, color: 'var(--color-ink-55)' }}> {prevLabel}</span>
+        </div>
+      )}
+      {hint && (
+        <div style={{ fontSize: 12, color: 'var(--color-ink-55)', marginTop: 'auto', paddingTop: 8, lineHeight: 1.35 }}>
+          {hint}
         </div>
       )}
     </div>
   )
 }
 
+/** Classifica a barre orizzontali: etichetta, numero, quota sul totale. */
+function RankList({ rows, valueKey, total, format = (r) => r.label, extra, empty = 'Nessun dato nel periodo', limit = 8 }) {
+  if (!rows || rows.length === 0) {
+    return <div style={{ fontSize: 13, color: 'var(--color-ink-55)', textAlign: 'center', padding: '24px 0' }}>{empty}</div>
+  }
+  const shown = rows.slice(0, limit)
+  const max = Math.max(...shown.map((r) => r[valueKey]), 1)
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {shown.map((r) => {
+        const v = r[valueKey]
+        const pct = total > 0 ? (v / total) * 100 : null
+        const share = pct == null ? null : pct > 0 && pct < 1 ? '<1' : Math.round(pct)
+        return (
+          <div key={r.label}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 5, fontSize: 13 }}>
+              <span style={{ color: 'var(--color-ink)', fontWeight: 600, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {format(r)}
+              </span>
+              <span style={{ color: 'var(--color-ink)', fontWeight: 700, flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
+                {fmtNum(v)}
+                {share != null && <span style={{ color: 'var(--color-ink-55)', fontWeight: 500 }}> · {share}%</span>}
+                {extra && extra(r)}
+              </span>
+            </div>
+            <div style={{ height: 6, background: 'var(--color-cream-deep, #F1EBE0)', borderRadius: 4, overflow: 'hidden' }}>
+              <div style={{ width: `${(v / max) * 100}%`, height: '100%', background: 'var(--color-corallo, #E8453C)', borderRadius: 4 }} />
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+const CHART_METRICS = [
+  { key: 'visitors', label: 'Persone', unit: ['persona', 'persone'] },
+  { key: 'pageviews', label: 'Pagine viste', unit: ['pagina vista', 'pagine viste'] },
+  { key: 'signups', label: 'Nuovi iscritti', unit: ['nuovo iscritto', 'nuovi iscritti'] },
+]
+
+function ChartTooltip({ active, payload, bucket, metric }) {
+  if (!active || !payload?.length) return null
+  const row = payload[0].payload
+  const v = row[metric.key]
+  return (
+    <div style={{ background: '#fff', border: '1px solid var(--color-line)', borderRadius: 10, padding: '8px 12px', boxShadow: '0 6px 20px rgba(0,0,0,0.08)', fontSize: 12 }}>
+      <div style={{ color: 'var(--color-ink-55)', marginBottom: 2 }}>{bucketTitle(row.t, bucket)}</div>
+      <div style={{ fontWeight: 800, color: 'var(--color-ink)' }}>
+        {fmtNum(v)} {v === 1 ? metric.unit[0] : metric.unit[1]}
+      </div>
+    </div>
+  )
+}
+
 /* ------------------------------------------------------------------ */
-/*  Main Analytics page                                                */
+/*  Pagina                                                             */
 /* ------------------------------------------------------------------ */
 export default function AnalyticsPage() {
   const { user, isAdmin, loading: authLoading } = useAuth()
@@ -377,284 +468,70 @@ export default function AnalyticsPage() {
   const [customTo, setCustomTo] = useState(null)
   const [showDatePicker, setShowDatePicker] = useState(false)
   const datePickerRef = useRef(null)
+  const [chartMetric, setChartMetric] = useState('visitors')
 
-  // Live visitors — distinct session_id from page_views in last 5 minutes
-  const [liveVisitors, setLiveVisitors] = useState(null)
+  // ── Adesso sul sito: una funzione nel DB, ogni 30 secondi ──
+  const [live, setLive] = useState(null)
   useEffect(() => {
-    if (!isSupabaseConfigured() || !user) return
+    if (!isSupabaseConfigured() || !user || !isAdmin) return
     let cancelled = false
-    let interval
-
     async function fetchLive() {
-      try {
-        const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
-        const { data } = await supabase
-          .from('page_views')
-          .select('session_id')
-          .gte('created_at', fiveMinAgo)
-        if (cancelled) return
-        const uniq = new Set((data || []).map((r) => r.session_id))
-        setLiveVisitors(uniq.size)
-      } catch {
-        if (!cancelled) setLiveVisitors(0)
-      }
+      if (document.visibilityState === 'hidden') return
+      const { data, error } = await supabase.rpc('admin_analytics_live')
+      if (!cancelled && !error) setLive(data)
     }
-
     fetchLive()
-    interval = setInterval(fetchLive, 30000)
+    const interval = setInterval(fetchLive, 30000)
+    document.addEventListener('visibilitychange', fetchLive)
     return () => {
       cancelled = true
-      if (interval) clearInterval(interval)
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', fetchLive)
     }
-  }, [user])
+  }, [user, isAdmin])
 
-  // Core metrics (filtered by period)
-  const [metrics, setMetrics] = useState({
-    totalVisits: 0,
-    uniqueSessions: 0,
-    usersTotal: 0,
-    usersInPeriod: 0,
-    qrGenerated: 0,
-    qrRedeemed: 0,
-  })
-  const [activeDiscounts, setActiveDiscounts] = useState([])
-  const [topRestaurants, setTopRestaurants] = useState([])
-  const [pageBreakdown, setPageBreakdown] = useState([])
-  const [countryBreakdown, setCountryBreakdown] = useState([])
-  const [cityBreakdown, setCityBreakdown] = useState([])
-  const [deviceBreakdown, setDeviceBreakdown] = useState([])
+  // ── Tutti i numeri del periodo: una sola chiamata ──
+  // Prima qui c'erano otto query che scaricavano righe e le contavano nel
+  // browser, tagliate a 1000 da PostgREST: con il traffico del lancio i
+  // numeri erano un decimo di quelli veri. Ora conta Postgres
+  // (supabase/admin-analytics-2026-09-23.sql).
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [updatedAt, setUpdatedAt] = useState(null)
+  const [reloadKey, setReloadKey] = useState(0)
+
+  const range = useMemo(
+    () => (period === 'custom' && (!customFrom || !customTo) ? null : getAnalyticsRange(period, customFrom, customTo)),
+    // reloadKey: "Aggiorna" ricalcola anche la fine dell'intervallo (adesso).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [period, customFrom, customTo, reloadKey]
+  )
 
   useEffect(() => {
-    if (!isSupabaseConfigured() || !user) return
-    if (period === 'custom' && (!customFrom || !customTo)) return
+    if (!isSupabaseConfigured() || !user || !isAdmin || !range) return
     let cancelled = false
-
-    async function fetchAll() {
-      const { start, end } = getDateRange(period, customFrom, customTo)
-
-      const rng = (q, field) => {
-        let r = q.gte(field, start)
-        if (end) r = r.lte(field, end)
-        return r
-      }
-
-      try {
-        const [usersTotal, usersInPeriod, qrGen, qrUsed, periodRedemptions, savedTop, pvTotal, pvByPath] = await Promise.all([
-          supabase.from('profiles').select('id', { count: 'exact', head: true }),
-          rng(supabase.from('profiles').select('id', { count: 'exact', head: true }), 'created_at'),
-          rng(supabase.from('discount_redemptions').select('id', { count: 'exact', head: true }), 'generated_at'),
-          rng(supabase.from('discount_redemptions').select('id', { count: 'exact', head: true }).eq('status', 'redeemed'), 'redeemed_at'),
-          rng(supabase.from('discount_redemptions').select('discount_id, status'), 'generated_at'),
-          rng(supabase.from('saved_restaurants').select('restaurant_id'), 'created_at'),
-          rng(supabase.from('page_views').select('id', { count: 'exact', head: true }), 'created_at'),
-          rng(supabase.from('page_views').select('path, session_id, country, city, device_type').limit(50000), 'created_at'),
-        ])
-
+    setLoading(true)
+    setError(null)
+    supabase
+      .rpc('admin_analytics', {
+        p_from: range.from.toISOString(),
+        p_to: range.to.toISOString(),
+        p_prev_from: range.prevFrom.toISOString(),
+        p_prev_to: range.prevTo.toISOString(),
+        p_bucket: range.bucket,
+      })
+      .then(({ data: res, error: err }) => {
         if (cancelled) return
-
-        // Unique sessions count — dedup session_ids from the path rows
-        const allSessions = new Set((pvByPath.data || []).map((r) => r.session_id).filter(Boolean))
-
-        setMetrics({
-          totalVisits: pvTotal.count || 0,
-          uniqueSessions: allSessions.size,
-          usersTotal: usersTotal.count || 0,
-          usersInPeriod: usersInPeriod.count || 0,
-          qrGenerated: qrGen.count || 0,
-          qrRedeemed: qrUsed.count || 0,
-        })
-
-        // Page breakdown: distinct sessions per page category
-        const rows = pvByPath.data || []
-        const buckets = {
-          'Mappa (home)': new Set(),
-          'Scheda ristorante': new Set(),
-          'Pagina sconti': new Set(),
-          'Profilo': new Set(),
-          'Salvati': new Set(),
-          'Lista': new Set(),
+        if (err) setError(err.message)
+        else {
+          setData(res)
+          setUpdatedAt(new Date())
         }
-        rows.forEach((r) => {
-          const p = r.path || ''
-          if (p === '/' || p === '') buckets['Mappa (home)'].add(r.session_id)
-          else if (p.startsWith('/restaurant/')) buckets['Scheda ristorante'].add(r.session_id)
-          else if (p === '/deals') buckets['Pagina sconti'].add(r.session_id)
-          else if (p === '/profile') buckets['Profilo'].add(r.session_id)
-          else if (p === '/saved') buckets['Salvati'].add(r.session_id)
-          else if (p === '/list') buckets['Lista'].add(r.session_id)
-        })
-        const maxCount = Math.max(...Object.values(buckets).map((s) => s.size), 1)
-        const breakdown = Object.entries(buckets)
-          .map(([label, set]) => ({
-            label,
-            count: set.size,
-            pct: Math.round((set.size / maxCount) * 100),
-          }))
-          .filter((b) => b.count > 0)
-          .sort((a, b) => b.count - a.count)
-        setPageBreakdown(breakdown)
-
-        // Geo + device breakdowns — unique sessions per country/city/device
-        const byCountry = {}
-        const byCity = {}
-        const byDevice = {}
-        rows.forEach((r) => {
-          if (!r.session_id) return
-          if (r.country) {
-            if (!byCountry[r.country]) byCountry[r.country] = new Set()
-            byCountry[r.country].add(r.session_id)
-          }
-          if (r.city) {
-            if (!byCity[r.city]) byCity[r.city] = new Set()
-            byCity[r.city].add(r.session_id)
-          }
-          if (r.device_type) {
-            if (!byDevice[r.device_type]) byDevice[r.device_type] = new Set()
-            byDevice[r.device_type].add(r.session_id)
-          }
-        })
-        const toSortedList = (obj, limit = 8) => {
-          const entries = Object.entries(obj).map(([label, set]) => ({ label, count: set.size }))
-          entries.sort((a, b) => b.count - a.count)
-          const max = entries[0]?.count || 1
-          return entries.slice(0, limit).map((e) => ({ ...e, pct: Math.round((e.count / max) * 100) }))
-        }
-        setCountryBreakdown(toSortedList(byCountry))
-        setCityBreakdown(toSortedList(byCity))
-        setDeviceBreakdown(toSortedList(byDevice, 4))
-
-        // Group redemptions by discount_id to compute period counts
-        const discountCounts = {}
-        ;(periodRedemptions.data || []).forEach((r) => {
-          if (!discountCounts[r.discount_id]) {
-            discountCounts[r.discount_id] = { gen: 0, used: 0 }
-          }
-          discountCounts[r.discount_id].gen += 1
-          if (r.status === 'redeemed') {
-            discountCounts[r.discount_id].used += 1
-          }
-        })
-
-        const discountIdsWithActivity = Object.keys(discountCounts)
-        let withCounts = []
-        if (discountIdsWithActivity.length > 0) {
-          // Fetch discount details regardless of is_active/valid_until
-          // (no embed — restaurants joined client-side from useRestaurants hook)
-          const { data: discDetails, error: discErr } = await supabase
-            .from('discounts')
-            .select('id, title, discount_value, discount_type, drop_time, max_redemptions, is_active, valid_until, restaurant_id')
-            .in('id', discountIdsWithActivity)
-
-          if (discErr) {
-            console.warn('Analytics discounts fetch error:', discErr.message)
-          }
-
-          const restMap = {}
-          ;(restaurants || []).forEach((r) => { restMap[r.id] = r })
-
-          withCounts = (discDetails || [])
-            .map((d) => ({
-              ...d,
-              restaurant: restMap[d.restaurant_id] || null,
-              generatedCount: discountCounts[d.id]?.gen || 0,
-              redeemedCount: discountCounts[d.id]?.used || 0,
-            }))
-            .sort((a, b) => b.generatedCount - a.generatedCount)
-
-          // Fallback: if the discounts fetch returned nothing (RLS quirk etc.)
-          // but we do have redemption activity, show minimal rows using only
-          // the redemption data so the admin sees *something*.
-          if (withCounts.length === 0) {
-            withCounts = discountIdsWithActivity.map((id) => ({
-              id,
-              title: 'Sconto',
-              discount_value: '—',
-              restaurant: null,
-              generatedCount: discountCounts[id].gen,
-              redeemedCount: discountCounts[id].used,
-            }))
-          }
-        }
-        if (!cancelled) setActiveDiscounts(withCounts)
-
-        // Top restaurants: by saved count in period
-        const savedMap = {}
-        ;(savedTop.data || []).forEach((row) => {
-          savedMap[row.restaurant_id] = (savedMap[row.restaurant_id] || 0) + 1
-        })
-        const top = restaurants
-          .map((r) => ({ ...r, savedCount: savedMap[r.id] || 0 }))
-          .sort((a, b) => b.savedCount - a.savedCount)
-          .slice(0, 5)
-        if (!cancelled) setTopRestaurants(top)
-      } catch (err) {
-        console.warn('Analytics fetch error:', err?.message || err)
-      }
-    }
-
-    fetchAll()
-  }, [period, customFrom, customTo, user, restaurants])
-
-  // Visits chart data — real page_views bucketed by time
-  const [visitsChartData, setVisitsChartData] = useState([])
-  useEffect(() => {
-    if (!isSupabaseConfigured() || !user) return
-    if (period === 'custom' && (!customFrom || !customTo)) return
-    let cancelled = false
-
-    async function fetchChart() {
-      try {
-        const { start, end, days } = getDateRange(period, customFrom, customTo)
-        const points = days === 1 ? 24 : Math.min(days, 30)
-        const spacing = days === 1 ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000
-
-        const rng = (q, field) => {
-          let r = q.gte(field, start)
-          if (end) r = r.lte(field, end)
-          return r
-        }
-
-        const [pvRes, regsRes] = await Promise.all([
-          rng(supabase.from('page_views').select('created_at'), 'created_at'),
-          rng(supabase.from('profiles').select('created_at'), 'created_at'),
-        ])
-
-        if (cancelled) return
-
-        const pvs = pvRes.data || []
-        const regs = regsRes.data || []
-
-        // Build buckets forward from range start
-        const rangeStart = new Date(start)
-        const buckets = []
-        for (let i = 0; i < points; i++) {
-          const bucketStart = new Date(rangeStart.getTime() + i * spacing)
-          const label =
-            days === 1
-              ? bucketStart.toLocaleTimeString('it-IT', { hour: '2-digit' }) + 'h'
-              : bucketStart.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
-          buckets.push({ key: label, visite: 0, utenti: 0, start: bucketStart.getTime() })
-        }
-
-        pvs.forEach((row) => {
-          const t = new Date(row.created_at).getTime()
-          for (let i = buckets.length - 1; i >= 0; i--) {
-            if (t >= buckets[i].start) { buckets[i].visite += 1; break }
-          }
-        })
-        regs.forEach((row) => {
-          const t = new Date(row.created_at).getTime()
-          for (let i = buckets.length - 1; i >= 0; i--) {
-            if (t >= buckets[i].start) { buckets[i].utenti += 1; break }
-          }
-        })
-        setVisitsChartData(buckets)
-      } catch (err) {
-        console.warn('Visits chart error:', err?.message || err)
-      }
-    }
-    fetchChart()
-  }, [period, customFrom, customTo, user])
+        setLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [range, user, isAdmin])
 
   // Close date picker when clicking outside
   useEffect(() => {
@@ -667,6 +544,12 @@ export default function AnalyticsPage() {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [showDatePicker])
+
+  const restById = useMemo(() => {
+    const m = {}
+    ;(restaurants || []).forEach((r) => { m[r.id] = r })
+    return m
+  }, [restaurants])
 
   function handleCustomApply(from, to) {
     setCustomFrom(from)
@@ -700,15 +583,28 @@ export default function AnalyticsPage() {
   }
   if (!user || !isAdmin) return <Navigate to="/admin/login" replace />
 
-  const conversionRate =
-    metrics.qrGenerated > 0 ? Math.round((metrics.qrRedeemed / metrics.qrGenerated) * 100) : 0
-
-  const hasData = visitsChartData.some((b) => b.visite > 0 || b.utenti > 0)
+  const cur = data?.current || {}
+  const prev = data?.previous || {}
+  const busy = loading && !data
+  const prevLabel =
+    period === 'today' ? 'rispetto a ieri alla stessa ora'
+      : range ? `rispetto ai ${range.days} giorni prima` : ''
+  const pagesPerVisit = cur.visits ? (cur.pageviews / cur.visits) : 0
+  const prevPagesPerVisit = prev.visits ? (prev.pageviews / prev.visits) : 0
+  const bounce = cur.visits ? Math.round((cur.single_page / cur.visits) * 100) : 0
+  const signupRate = cur.visitors ? (cur.signups / cur.visitors) * 100 : 0
+  const usedRate = cur.discounts_taken ? Math.round((cur.discounts_used / cur.discounts_taken) * 100) : 0
+  const metric = CHART_METRICS.find((m) => m.key === chartMetric)
+  const series = data?.series || []
+  const seriesTotal = series.reduce((s, r) => s + (r[chartMetric] || 0), 0)
+  const hasSeries = series.some((r) => r[chartMetric] > 0)
+  const totalVisits = (data?.sources || []).reduce((s, r) => s + r.visits, 0)
+  const totalDeviceVisitors = (data?.devices || []).reduce((s, r) => s + r.visitors, 0)
 
   return (
     <AdminLayout title="Analytics">
       <div style={{ padding: '28px 32px', maxWidth: 1400, margin: '0 auto' }} className="max-md:!p-[18px]">
-        {/* ─── HEADER mockup-aligned ─── */}
+        {/* ─── HEADER ─── */}
         <div
           style={{
             display: 'flex',
@@ -739,30 +635,24 @@ export default function AnalyticsPage() {
                 letterSpacing: '-0.025em',
                 margin: 0,
                 color: 'var(--color-ink, #22181C)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 14,
-                flexWrap: 'wrap',
               }}
             >
               Analytics
-              <span
-                style={{
-                  fontSize: 12,
-                  fontWeight: 800,
-                  letterSpacing: '0.06em',
-                  background: 'var(--color-cream-deep, #F1EBE0)',
-                  color: 'var(--color-ink, #22181C)',
-                  padding: '5px 10px',
-                  borderRadius: 999,
-                  textTransform: 'uppercase',
-                }}
-              >
-                {customPeriodLabel() || PERIODS.find((p) => p.key === period)?.label || 'periodo'}
-              </span>
             </h1>
             <div style={{ marginTop: 6, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', fontSize: 14, fontWeight: 500 }}>
-              Traffico, utenti, redenzioni · i numeri fattuali, non rating.
+              Chi visita il sito, da dove arriva, cosa guarda e quanti si iscrivono.
+              {updatedAt && (
+                <>
+                  {' '}Aggiornato alle {updatedAt.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })} ·{' '}
+                  <button
+                    onClick={() => setReloadKey((k) => k + 1)}
+                    disabled={loading}
+                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--color-corallo, #E8453C)', fontWeight: 700, fontSize: 14, fontFamily: 'inherit' }}
+                  >
+                    {loading ? 'aggiorno…' : 'aggiorna'}
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
@@ -837,496 +727,319 @@ export default function AnalyticsPage() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {/* ─── LIVE BANNER ─── */}
-        <div
-          style={{
-            background: 'var(--color-ink)',
-            borderRadius: 10,
-            padding: '14px 18px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 12,
-            flexWrap: 'wrap',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div
-              style={{
-                width: 10,
-                height: 10,
-                borderRadius: '50%',
-                background: '#4ADE80',
-                boxShadow: '0 0 8px rgba(74,222,128,0.5)',
-                animation: 'pulse 2s ease-in-out infinite',
-              }}
-            />
-            <div
-              style={{
-                fontSize: 14,
-                fontWeight: 600,
-                color: '#fff',
-              }}
-            >
-              {liveVisitors != null ? liveVisitors : '…'}{' '}
-              {liveVisitors === 1 ? 'persona sul sito adesso' : 'persone sul sito adesso'}
-            </div>
-          </div>
-          <div
-            className="hidden md:block"
-            style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}
-          >
-            tracking realtime · aggiornamento ogni 30s
-          </div>
-        </div>
-        <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }`}</style>
-
-        {/* ─── 4 STAT CARDS ─── */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: 8,
-          }}
-          className="md:!grid-cols-4 md:!gap-[10px]"
-        >
-          <StatCard label="Visitatori unici" value={metrics.uniqueSessions} sub={metrics.totalVisits > 0 ? `${metrics.totalVisits} pagine viste` : 'sessioni distinte'} />
-          <StatCard label="Utenti registrati" value={metrics.usersTotal} sub={metrics.usersInPeriod > 0 ? `+${metrics.usersInPeriod} nel periodo` : null} subColor="#059669" />
-          <StatCard label="QR presi" value={metrics.qrGenerated} sub="sconti attivati" />
-          <StatCard label="QR utilizzati" value={metrics.qrRedeemed} sub={`${conversionRate}% conversione`} subColor="#E8453C" />
-        </div>
-
-        {/* ─── VISITS CHART + PAGE BREAKDOWN ─── */}
-        <div
-          className="md:!grid-cols-[3fr_2fr]"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr',
-            gap: 16,
-          }}
-        >
-          {/* Visits line chart */}
+          {/* ─── ADESSO SUL SITO ─── */}
           <div
             style={{
-              background: '#fff',
-              border: '1px solid #eee',
-              borderRadius: 10,
-              padding: 16,
+              background: 'var(--color-ink)',
+              borderRadius: 18,
+              padding: '16px 18px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 16,
+              flexWrap: 'wrap',
             }}
           >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: 12,
-              }}
-            >
-              <h3
-                style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: 'var(--color-ink)',
-                  margin: 0,
-                  textTransform: 'uppercase',
-                  letterSpacing: 0.5,
-                }}
-              >
-                Attività nel periodo
-              </h3>
-              <div style={{ display: 'flex', gap: 12, fontSize: 10 }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <span style={{ width: 8, height: 8, borderRadius: 2, background: '#E8453C' }} />
-                  <span style={{ color: '#666' }}>Visite</span>
-                </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <span style={{ width: 8, height: 8, borderRadius: 2, background: '#B08954' }} />
-                  <span style={{ color: '#666' }}>Nuovi utenti</span>
-                </span>
-              </div>
-            </div>
-            {hasData ? (
-              <ResponsiveContainer width="100%" height={220}>
-                <AreaChart data={visitsChartData}>
-                  <defs>
-                    <linearGradient id="grad1" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#E8453C" stopOpacity={0.18} />
-                      <stop offset="100%" stopColor="#E8453C" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid stroke="#f5f5f5" strokeWidth={0.5} />
-                  <XAxis dataKey="key" tick={{ fontSize: 9, fill: '#ccc' }} stroke="#eee" />
-                  <YAxis tick={{ fontSize: 9, fill: '#ccc' }} stroke="#eee" allowDecimals={false} />
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: 8,
-                      border: '1px solid #eee',
-                      fontSize: 11,
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="visite"
-                    stroke="#E8453C"
-                    strokeWidth={2}
-                    fill="url(#grad1)"
-                    name="Visite"
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="utenti"
-                    stroke="#B08954"
-                    strokeWidth={1.5}
-                    strokeDasharray="4 2"
-                    dot={false}
-                    name="Nuovi utenti"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div
                 style={{
-                  height: 220,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#ccc',
-                  fontSize: 12,
+                  width: 10,
+                  height: 10,
+                  borderRadius: '50%',
+                  background: '#4ADE80',
+                  boxShadow: '0 0 8px rgba(74,222,128,0.5)',
+                  animation: 'pulse 2s ease-in-out infinite',
+                  flexShrink: 0,
                 }}
-              >
-                Nessun dato ancora
+              />
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>
+                {live ? fmtNum(live.visitors) : '…'}{' '}
+                {live?.visitors === 1 ? 'persona sul sito adesso' : 'persone sul sito adesso'}
               </div>
-            )}
-          </div>
-
-          {/* Page breakdown */}
-          <div
-            style={{
-              background: '#fff',
-              border: '1px solid #eee',
-              borderRadius: 10,
-              padding: 16,
-            }}
-          >
-            <h3
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                color: 'var(--color-ink)',
-                margin: '0 0 4px',
-                textTransform: 'uppercase',
-                letterSpacing: 0.5,
-              }}
-            >
-              Visitatori per pagina
-            </h3>
-            <div style={{ fontSize: 10, color: '#bbb', marginBottom: 14, fontStyle: 'italic' }}>
-              sessioni uniche nel periodo
             </div>
-            {pageBreakdown.length === 0 ? (
-              <div style={{ fontSize: 12, color: '#999', textAlign: 'center', padding: 20 }}>
-                Nessun dato ancora
+            {live?.sections?.length > 0 && (
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {live.sections.slice(0, 5).map((s) => (
+                  <span
+                    key={s.label}
+                    style={{ fontSize: 12, fontWeight: 600, color: '#fff', background: 'rgba(255,255,255,0.12)', borderRadius: 999, padding: '4px 10px' }}
+                  >
+                    {s.visitors} {s.label}
+                  </span>
+                ))}
               </div>
+            )}
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginLeft: 'auto' }}>
+              ultimi 5 minuti · si aggiorna ogni 30 s
+            </div>
+          </div>
+          <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }`}</style>
+
+          {error && (
+            <div style={{ ...card, borderColor: '#F3C1BD', background: '#FFF6F5', color: '#8A2A22', fontSize: 14 }}>
+              Non riesco a leggere le statistiche: {error}
+            </div>
+          )}
+
+          {/* ─── TRAFFICO ─── */}
+          <SectionTitle hint="Quante persone hanno aperto il sito nel periodo scelto.">Visite</SectionTitle>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 }} className="md:!grid-cols-4">
+            <Stat
+              label="Persone"
+              value={fmtNum(cur.visitors)}
+              delta={deltaOf(cur.visitors, prev.visitors)}
+              prevLabel={prevLabel}
+              hint="Browser diversi. Chi torna più volte conta una."
+              loading={busy}
+            />
+            <Stat
+              label="Visite"
+              value={fmtNum(cur.visits)}
+              delta={deltaOf(cur.visits, prev.visits)}
+              prevLabel={prevLabel}
+              hint="Ogni volta che qualcuno apre il sito. Dopo 30 minuti fermo è una visita nuova."
+              loading={busy}
+            />
+            <Stat
+              label="Pagine viste"
+              value={fmtNum(cur.pageviews)}
+              delta={deltaOf(cur.pageviews, prev.pageviews)}
+              prevLabel={prevLabel}
+              hint="Tutte le pagine aperte, anche più volte dalla stessa persona."
+              loading={busy}
+            />
+            <Stat
+              label="Pagine per visita"
+              value={pagesPerVisit.toLocaleString('it-IT', { maximumFractionDigits: 1 })}
+              delta={deltaOf(pagesPerVisit, prevPagesPerVisit)}
+              prevLabel={prevLabel}
+              hint={`${bounce}% delle visite si ferma alla prima pagina.`}
+              loading={busy}
+            />
+          </div>
+
+          {/* ─── GRAFICO ─── */}
+          <div style={card}>
+            <CardTitle
+              title={`${metric.label} ${range?.bucket === 'hour' ? 'ora per ora' : 'giorno per giorno'}`}
+              hint={hasSeries ? `${fmtNum(seriesTotal)} in totale · ora italiana` : 'ora italiana'}
+              right={
+                <div style={{ display: 'flex', background: 'var(--color-cream-deep, #F1EBE0)', borderRadius: 999, padding: 3 }}>
+                  {CHART_METRICS.map((m) => (
+                    <button
+                      key={m.key}
+                      onClick={() => setChartMetric(m.key)}
+                      style={{
+                        padding: '6px 12px',
+                        fontSize: 12,
+                        fontWeight: 700,
+                        border: 'none',
+                        borderRadius: 999,
+                        cursor: 'pointer',
+                        background: chartMetric === m.key ? '#fff' : 'transparent',
+                        color: chartMetric === m.key ? 'var(--color-ink)' : 'var(--color-ink-55)',
+                        boxShadow: chartMetric === m.key ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                        fontFamily: 'var(--font-sans)',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+              }
+            />
+            {busy ? (
+              <div className="skeleton" aria-hidden="true" style={{ height: 240, borderRadius: 12 }} />
+            ) : hasSeries ? (
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={series} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
+                  <CartesianGrid vertical={false} stroke="#F1EBE0" />
+                  <XAxis
+                    dataKey="t"
+                    tickFormatter={(t) => bucketTick(t, range?.bucket)}
+                    tick={{ fontSize: 11, fill: 'rgba(34,24,28,0.55)' }}
+                    tickLine={false}
+                    axisLine={{ stroke: '#EAE3D7' }}
+                    interval="preserveStartEnd"
+                    minTickGap={16}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: 'rgba(34,24,28,0.55)' }}
+                    tickLine={false}
+                    axisLine={false}
+                    allowDecimals={false}
+                    tickFormatter={fmtNum}
+                  />
+                  <Tooltip
+                    cursor={{ fill: 'rgba(34,24,28,0.05)' }}
+                    content={<ChartTooltip bucket={range?.bucket} metric={metric} />}
+                  />
+                  <Bar dataKey={chartMetric} fill="#E8453C" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                </BarChart>
+              </ResponsiveContainer>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {pageBreakdown.map((p, i) => {
-                  const opacity = 1 - i * 0.15
-                  return (
-                    <div key={p.label}>
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          marginBottom: 4,
-                        }}
-                      >
-                        <span style={{ fontSize: 11, color: '#444' }}>{p.label}</span>
-                        <span style={{ fontSize: 11, color: '#999' }}>{p.count}</span>
-                      </div>
-                      <div
-                        style={{
-                          height: 8,
-                          background: '#f0f0f0',
-                          borderRadius: 4,
-                          overflow: 'hidden',
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: `${p.pct}%`,
-                            height: '100%',
-                            background: `rgba(232, 69, 60,${Math.max(opacity, 0.25)})`,
-                            borderRadius: 4,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  )
-                })}
+              <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-ink-55)', fontSize: 13 }}>
+                Nessun dato nel periodo
               </div>
             )}
           </div>
-        </div>
 
-        {/* ─── GEO + DEVICE BREAKDOWN ─── */}
-        {(countryBreakdown.length > 0 || cityBreakdown.length > 0 || deviceBreakdown.length > 0) && (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr',
-              gap: 16,
-            }}
-            className="md:!grid-cols-3"
-          >
-            <GeoCard title="Top paesi" rows={countryBreakdown} emptyLabel="In attesa di dati geo" />
-            <GeoCard title="Top città" rows={cityBreakdown} emptyLabel="In attesa di dati geo" />
-            <GeoCard title="Dispositivi" rows={deviceBreakdown} emptyLabel="In attesa di dati" />
+          {/* ─── PROVENIENZA + PAGINE ─── */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 16 }} className="md:!grid-cols-2">
+            <div style={card}>
+              <CardTitle title="Da dove arrivano" hint="Visite per sito di provenienza. «Diretto o link» = indirizzo scritto, preferiti o link condiviso in chat." />
+              <RankList rows={data?.sources} valueKey="visits" total={totalVisits} />
+            </div>
+            <div style={card}>
+              <CardTitle title="Cosa guardano" hint="Persone che hanno aperto almeno una pagina di ogni sezione." />
+              <RankList
+                rows={data?.sections}
+                valueKey="visitors"
+                total={cur.visitors}
+                limit={10}
+                extra={(r) => (
+                  <span style={{ color: 'var(--color-ink-55)', fontWeight: 500 }}> · {fmtNum(r.pageviews)} pag.</span>
+                )}
+              />
+            </div>
           </div>
-        )}
 
-        {/* ─── SCONTI QR + TOP RESTAURANTS ─── */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr',
-            gap: 16,
-          }}
-          className="md:!grid-cols-2"
-        >
-          {/* QR discounts */}
-          <div
-            style={{
-              background: '#fff',
-              border: '1px solid #eee',
-              borderRadius: 10,
-              padding: 16,
-            }}
-          >
-            <h3
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                color: 'var(--color-ink)',
-                margin: '0 0 12px',
-                textTransform: 'uppercase',
-                letterSpacing: 0.5,
-              }}
-            >
-              Sconti — presi vs utilizzati
-            </h3>
-            {activeDiscounts.length === 0 ? (
-              <div style={{ fontSize: 12, color: '#999', textAlign: 'center', padding: 20 }}>
-                Nessuna attività QR nel periodo
-              </div>
+          {/* ─── LOCALI PIÙ VISTI ─── */}
+          <div style={card}>
+            <CardTitle title="Locali più visti" hint="Aperture della scheda del locale nel periodo, con quante volte è stato salvato." />
+            {!data?.restaurants?.length ? (
+              <div style={{ fontSize: 13, color: 'var(--color-ink-55)', textAlign: 'center', padding: '24px 0' }}>Nessun dato nel periodo</div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {activeDiscounts.slice(0, 5).map((d) => {
-                  const gen = d.generatedCount
-                  const used = d.redeemedCount
-                  const max = d.max_redemptions || Math.max(gen, 1)
-                  const taken = gen - used
-                  const remaining = Math.max(max - gen, 0)
-                  const convRate = gen > 0 ? Math.round((used / gen) * 100) : 0
-                  const usedPct = (used / max) * 100
-                  const takenPct = (taken / max) * 100
-                  const remainingPct = (remaining / max) * 100
-                  const isDrop = d.drop_time != null
-                  const photo = proxyImg(
-                    Array.isArray(d.restaurant?.photos) && d.restaurant.photos.length > 0
-                      ? typeof d.restaurant.photos[0] === 'string'
-                        ? d.restaurant.photos[0]
-                        : d.restaurant.photos[0]?.thumb_url || d.restaurant.photos[0]?.photo_url
-                      : null
-                  )
-                  return (
-                    <div
-                      key={d.id}
-                      style={{
-                        padding: '10px 12px',
-                        background: '#fafafa',
-                        borderRadius: 8,
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                        {photo ? (
-                          <img
-                            src={photo}
-                            alt=""
-                            style={{ width: 30, height: 30, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }}
-                          />
-                        ) : (
-                          <div style={{ width: 30, height: 30, borderRadius: 8, background: '#e5e5e5', flexShrink: 0 }} />
-                        )}
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div
-                            style={{
-                              fontSize: 13,
-                              fontWeight: 500,
-                              color: 'var(--color-ink)',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {d.restaurant?.name} {d.discount_value}
-                          </div>
-                          {isDrop && (
-                            <div
-                              style={{
-                                fontSize: 9,
-                                color: '#B08954',
-                                fontWeight: 600,
-                                marginTop: 1,
-                                letterSpacing: 0.5,
-                              }}
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ color: 'var(--color-ink-55)', textAlign: 'right' }}>
+                      <th style={{ textAlign: 'left', fontWeight: 600, padding: '0 8px 8px 0' }}>Locale</th>
+                      <th className="max-md:hidden" style={{ fontWeight: 600, padding: '0 8px 8px' }}>Persone</th>
+                      <th style={{ fontWeight: 600, padding: '0 8px 8px' }}>Aperture</th>
+                      <th style={{ fontWeight: 600, padding: '0 0 8px 8px' }}>Salvati</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.restaurants.map((r, i) => {
+                      const photo = photoOf(restById[r.id])
+                      return (
+                        <tr key={r.slug} style={{ borderTop: '1px solid var(--color-line)' }}>
+                          {/* maxWidth 0 + width 100%: la colonna del nome prende lo
+                              spazio che resta e taglia con i puntini invece di
+                              allargare la tabella oltre lo schermo. */}
+                          <td style={{ padding: '8px 8px 8px 0', maxWidth: 0, width: '100%' }}>
+                            <a
+                              href={`/restaurant/${r.slug}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--color-ink)', textDecoration: 'none', fontWeight: 600 }}
                             >
-                              DROP ATTIVO
-                            </div>
-                          )}
-                        </div>
-                        <div style={{ display: 'flex', gap: 14, flexShrink: 0 }}>
-                          <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-ink)' }}>{gen}</div>
-                            <div style={{ fontSize: 9, color: '#999' }}>Presi</div>
-                          </div>
-                          <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-ink)' }}>{used}</div>
-                            <div style={{ fontSize: 9, color: '#999' }}>Usati</div>
-                          </div>
-                          <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: 14, fontWeight: 600, color: '#E8453C' }}>{convRate}%</div>
-                            <div style={{ fontSize: 9, color: '#999' }}>Conv.</div>
-                          </div>
-                        </div>
-                      </div>
-                      {/* Segmented bar */}
-                      <div
-                        style={{
-                          height: 6,
-                          background: '#eee',
-                          borderRadius: 3,
-                          display: 'flex',
-                          overflow: 'hidden',
-                        }}
-                      >
-                        <div style={{ width: `${usedPct}%`, background: '#4ADE80' }} />
-                        <div style={{ width: `${takenPct}%`, background: '#B08954' }} />
-                      </div>
-                    </div>
-                  )
-                })}
+                              <span style={{ width: 18, flexShrink: 0, textAlign: 'right', color: i === 0 ? 'var(--color-corallo)' : 'var(--color-ink-55)', fontWeight: 800 }}>{i + 1}</span>
+                              {photo ? (
+                                <img src={photo} alt="" style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
+                              ) : (
+                                <span style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--color-cream-deep, #F1EBE0)', flexShrink: 0 }} />
+                              )}
+                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</span>
+                            </a>
+                          </td>
+                          <td className="max-md:hidden" style={{ textAlign: 'right', padding: 8, fontVariantNumeric: 'tabular-nums' }}>{fmtNum(r.visitors)}</td>
+                          <td style={{ textAlign: 'right', padding: 8, fontVariantNumeric: 'tabular-nums', fontWeight: 700 }}>{fmtNum(r.views)}</td>
+                          <td style={{ textAlign: 'right', padding: '8px 0 8px 8px', fontVariantNumeric: 'tabular-nums' }}>{fmtNum(r.saves)}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
 
-          {/* Top restaurants */}
-          <div
-            style={{
-              background: '#fff',
-              border: '1px solid #eee',
-              borderRadius: 10,
-              padding: 16,
-            }}
-          >
-            <h3
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                color: 'var(--color-ink)',
-                margin: '0 0 12px',
-                textTransform: 'uppercase',
-                letterSpacing: 0.5,
-              }}
-            >
-              Ristoranti più popolari
-            </h3>
-            {topRestaurants.length === 0 ? (
-              <div style={{ fontSize: 12, color: '#999', textAlign: 'center', padding: 20 }}>
-                Nessun dato
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {topRestaurants.map((r, i) => {
-                  const photo = proxyImg(
-                    Array.isArray(r.photos) && r.photos.length > 0
-                      ? typeof r.photos[0] === 'string'
-                        ? r.photos[0]
-                        : r.photos[0]?.thumb_url || r.photos[0]?.photo_url
-                      : null
-                  )
-                  const catName =
-                    (Array.isArray(r.category) && r.category[0]) || r.cuisine_type || '—'
-                  return (
-                    <div
-                      key={r.id}
-                      style={{
-                        padding: 10,
-                        background: '#fafafa',
-                        borderRadius: 8,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 12,
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: 16,
-                          fontWeight: 700,
-                          color: i === 0 ? '#E8453C' : '#bbb',
-                          width: 20,
-                          textAlign: 'center',
-                          flexShrink: 0,
-                        }}
-                      >
-                        {i + 1}
-                      </div>
-                      {photo ? (
-                        <img
-                          src={photo}
-                          alt=""
-                          style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }}
-                        />
-                      ) : (
-                        <div style={{ width: 32, height: 32, borderRadius: 8, background: '#e5e5e5', flexShrink: 0 }} />
-                      )}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div
-                          style={{
-                            fontSize: 13,
-                            fontWeight: 500,
-                            color: 'var(--color-ink)',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {r.name}
-                        </div>
-                        <div style={{ fontSize: 10, color: '#999' }}>{catName}</div>
-                      </div>
-                      <div
-                        style={{
-                          fontSize: 11,
-                          color: '#666',
-                          display: 'flex',
-                          gap: 10,
-                          flexShrink: 0,
-                        }}
-                      >
-                        <div style={{ textAlign: 'center' }}>
-                          <div style={{ fontWeight: 600, color: 'var(--color-ink)' }}>{r.savedCount}</div>
-                          <div style={{ fontSize: 9, color: '#999' }}>Salvati</div>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
+          {/* ─── UTENTI ─── */}
+          <SectionTitle hint="Chi ha un account e cosa fa con gli sconti.">Utenti e sconti</SectionTitle>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 }} className="md:!grid-cols-3">
+            <Stat
+              label="Nuovi iscritti"
+              value={fmtNum(cur.signups)}
+              delta={deltaOf(cur.signups, prev.signups)}
+              prevLabel={prevLabel}
+              hint={cur.visitors ? `${signupRate.toLocaleString('it-IT', { maximumFractionDigits: 1 })}% delle persone arrivate si è iscritto.` : null}
+              loading={busy}
+            />
+            <Stat
+              label="Iscritti in totale"
+              value={fmtNum(data?.users_total)}
+              hint={<Link to="/admin/users" style={{ color: 'var(--color-corallo)', fontWeight: 700, textDecoration: 'none' }}>Vedi l'elenco →</Link>}
+              loading={busy}
+            />
+            <Stat
+              label="Utenti attivi"
+              value={fmtNum(cur.logged_users)}
+              delta={deltaOf(cur.logged_users, prev.logged_users)}
+              prevLabel={prevLabel}
+              hint="Iscritti che hanno usato il sito da loggati nel periodo."
+              loading={busy}
+            />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 }} className="md:!grid-cols-3">
+            <Stat
+              label="Sconti presi"
+              value={fmtNum(cur.discounts_taken)}
+              delta={deltaOf(cur.discounts_taken, prev.discounts_taken)}
+              prevLabel={prevLabel}
+              hint="QR o codice generato da un utente."
+              loading={busy}
+            />
+            <Stat
+              label="Sconti utilizzati"
+              value={fmtNum(cur.discounts_used)}
+              delta={deltaOf(cur.discounts_used, prev.discounts_used)}
+              prevLabel={prevLabel}
+              hint={
+                <>
+                  {cur.discounts_taken ? `${usedRate}% di quelli presi, convalidati dal locale. ` : 'Convalidati dal locale. '}
+                  <Link to="/admin/discounts" style={{ color: 'var(--color-corallo)', fontWeight: 700, textDecoration: 'none' }}>Per sconto →</Link>
+                </>
+              }
+              loading={busy}
+            />
+            <Stat
+              label="Locali salvati"
+              value={fmtNum(cur.saves)}
+              delta={deltaOf(cur.saves, prev.saves)}
+              prevLabel={prevLabel}
+              hint="Volte che qualcuno ha messo un locale nei Salvati."
+              loading={busy}
+            />
+          </div>
+
+          {/* ─── LUOGO E DISPOSITIVO ─── */}
+          <SectionTitle hint="Dal numero IP, quindi la città è approssimativa.">Da dove si collegano</SectionTitle>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 16 }} className="md:!grid-cols-3">
+            <div style={card}>
+              <CardTitle title="Città" hint="Persone" />
+              <RankList rows={data?.cities} valueKey="visitors" total={cur.visitors} format={(r) => CITY_IT[r.label] || r.label} />
+            </div>
+            <div style={card}>
+              <CardTitle title="Paesi" hint="Persone" />
+              <RankList rows={data?.countries} valueKey="visitors" total={cur.visitors} format={(r) => `${countryFlag(r.label)} ${countryName(r.label)}`} />
+            </div>
+            <div style={card}>
+              <CardTitle title="Dispositivo" hint="Persone" />
+              <RankList rows={data?.devices} valueKey="visitors" total={totalDeviceVisitors} format={(r) => DEVICE_LABEL[r.label] || r.label} />
+            </div>
+          </div>
+
+          {/* ─── COME SI CONTA ─── */}
+          <div style={{ ...card, background: 'var(--color-cream-deep, #F1EBE0)', border: 'none', fontSize: 13, color: 'var(--color-ink)', lineHeight: 1.55 }}>
+            <b>Come si contano questi numeri.</b> Li raccoglie il sito stesso a ogni pagina aperta, senza
+            servizi esterni; le pagine dell'admin sono escluse. <b>Persone</b> = browser diversi: la stessa
+            persona su telefono e computer conta due, e chi cancella i dati del browser ricomincia da capo.
+            Fino al 23/09 il sito non distingueva le persone dalle visite, quindi per i giorni prima i due
+            numeri coincidono. Orari e giorni sono in ora italiana.
           </div>
         </div>
-      </div>
       </div>
     </AdminLayout>
   )
