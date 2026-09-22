@@ -1,0 +1,25 @@
+-- GRANT mancante su restaurants.location_label — 2026-09-22
+--
+-- La colonna `location_label` (restaurant-location-label-2026-09-21.sql)
+-- è nata senza GRANT SELECT per anon/authenticated. Su questa tabella i
+-- permessi sono per-colonna (alcune colonne sono segrete: verify_pin,
+-- magic_token, magic_token_expires_at, partner_email,
+-- onboarding_email_sent_at), quindi una colonna nuova nasce senza alcun
+-- privilegio finché non viene concesso esplicitamente.
+--
+-- Quando PostgREST incontra anche una sola colonna richiesta senza
+-- privilegio rifiuta l'INTERA query con "permission denied for table
+-- restaurants" (42501) — non solo la colonna, tutte le righe. Da quando
+-- useRestaurants.js include location_label nella sua select, ogni query
+-- pubblica sui ristoranti falliva: home ("aperti nella fascia", "ultimi
+-- aggiunti"), mappa, lista, salvati. Root cause del ticket "non mi carica
+-- i locali sotto la fascia oraria e gli ultimi aggiunti" (22/09).
+--
+-- location_label è un'etichetta pubblica (nome scelto dall'admin per la
+-- sede principale, mostrato sulla scheda) — nessun dato sensibile, stesso
+-- trattamento delle altre colonne pubbliche della tabella.
+--
+-- Vedi docs/v4-status.md — sezione "22/09 — GRANT mancante su
+-- location_label" per dettagli e verifica.
+
+GRANT SELECT (location_label) ON restaurants TO anon, authenticated;
