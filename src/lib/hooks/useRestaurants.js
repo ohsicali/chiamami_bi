@@ -25,17 +25,25 @@ export const PRICE_LABELS = ['', '€', '€€', '€€€', '€€€€']
 // che leggiamo (`regularOpeningHours` + `utcOffsetMinutes`) — senza il bump
 // chi aveva la v7 si terrebbe in localStorage il blob intero.
 
+// Il pannello admin legge anche le bozze (`is_published = false`), quindi
+// tiene una cache sua: se scrivesse nella stessa chiave del sito pubblico, la
+// home e la scheda del locale dipingerebbero per un attimo anche le bozze
+// prima della rivalidazione.
 const RESTAURANTS_CACHE_KEY = 'cb_restaurants_v8'
+const ADMIN_RESTAURANTS_CACHE_KEY = 'cb_admin_restaurants_v8'
+function cacheKey() {
+  return isAdminPath() ? ADMIN_RESTAURANTS_CACHE_KEY : RESTAURANTS_CACHE_KEY
+}
 function readRestaurantsCache() {
   try {
-    const raw = typeof localStorage !== 'undefined' && localStorage.getItem(RESTAURANTS_CACHE_KEY)
+    const raw = typeof localStorage !== 'undefined' && localStorage.getItem(cacheKey())
     if (!raw) return null
     const parsed = JSON.parse(raw)
     return Array.isArray(parsed?.data) ? parsed.data : null
   } catch { return null }
 }
 function writeRestaurantsCache(data) {
-  try { localStorage.setItem(RESTAURANTS_CACHE_KEY, JSON.stringify({ ts: Date.now(), data })) } catch { /* quota / private mode */ }
+  try { localStorage.setItem(cacheKey(), JSON.stringify({ ts: Date.now(), data })) } catch { /* quota / private mode */ }
 }
 
 const MOCK_RESTAURANTS = [
@@ -438,18 +446,20 @@ export function useRestaurants(userPosition = null) {
         // Prima la copia in cache CDN (/api/public, vedi lib/publicQueries.js):
         // è quella che regge il traffico. Se non risponde (sviluppo locale,
         // errore) si ripiega sulla query diretta — stessa select, stessi dati.
-        // Nel pannello admin si va sempre diretti: serve il dato appena salvato.
+        // Nel pannello admin si va sempre diretti: serve il dato appena salvato,
+        // bozze comprese — la lista admin ha il tab "Bozze" e senza di loro un
+        // locale salvato senza pubblicarlo spariva dal pannello (l'RLS le fa
+        // leggere solo a chi passa `is_admin()`).
+        const admin = isAdminPath()
         let data = null
         let dbError = null
-        if (!isAdminPath()) {
+        if (!admin) {
           try { data = await fetchPublic('restaurants') } catch { data = null }
         }
         if (!data) {
-          ;({ data, error: dbError } = await supabase
-            .from('restaurants')
-            .select(RESTAURANTS_SELECT)
-            .eq('is_published', true)
-            .order('name'))
+          let query = supabase.from('restaurants').select(RESTAURANTS_SELECT)
+          if (!admin) query = query.eq('is_published', true)
+          ;({ data, error: dbError } = await query.order('name'))
         }
         if (dbError) {
           // eslint-disable-next-line no-console
