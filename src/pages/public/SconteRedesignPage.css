@@ -95,7 +95,7 @@
    l'header, così le card che ci scorrono sotto non si leggono attraverso. */
 .sc-tabs-sticky {
   position: sticky;
-  top: calc(env(safe-area-inset-top, 0px) + 69px);
+  top: var(--logo-header-h, calc(env(safe-area-inset-top, 0px) + 69px));
   z-index: 40;
   padding: 10px 16px;
   margin-top: 4px;
