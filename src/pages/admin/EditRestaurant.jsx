@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-r
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import { RESTAURANT_READABLE_COLUMNS, fetchRestaurantSecrets } from '../../lib/restaurantColumns'
 import AdminLayout from '../../components/Layout/AdminLayout'
 import DettagliTab from '../../components/admin/tabs/DettagliTab'
 import FotoGalleriaTab from '../../components/admin/tabs/FotoGalleriaTab'
@@ -57,11 +58,20 @@ export default function EditRestaurant() {
     let cancelled = false
     setLoading(true)
     ;(async () => {
-      const { data, error } = await supabase
-        .from('restaurants')
-        .select('*, restaurant_photos(photo_url, thumb_url, caption, sort_order), restaurant_locations(id, label, address, latitude, longitude, sort_order)')
-        .eq('id', restaurantId)
-        .single()
+      const [{ data: row, error }, secrets] = await Promise.all([
+        supabase
+          .from('restaurants')
+          .select(`${RESTAURANT_READABLE_COLUMNS}, restaurant_photos(photo_url, thumb_url, caption, sort_order), restaurant_locations(id, label, address, latitude, longitude, sort_order)`)
+          .eq('id', restaurantId)
+          .single(),
+        // PIN ed email del partner non stanno nella select: la tabella non li
+        // dà più a nessun browser, l'admin li chiede all'RPC.
+        fetchRestaurantSecrets([restaurantId]).catch((err) => {
+          console.error('edit secrets error:', err)
+          return {}
+        }),
+      ])
+      const data = row ? { ...row, ...(secrets[restaurantId] || {}) } : row
       if (cancelled) return
       if (error) {
         setLoadError(error.message || 'Ristorante non trovato')

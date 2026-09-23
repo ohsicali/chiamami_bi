@@ -14,7 +14,9 @@
  * al cap Vercel Hobby di 12 functions).
  */
 
+import { createClient } from '@supabase/supabase-js'
 import { applyCors } from './_cors.js'
+import { rateLimit, maybeCleanup } from './_rate-limit.js'
 
 // SSRF guard: only fetch URLs on these Google-owned hosts. The endpoint
 // purposefully does not accept arbitrary destinations — it's intended for
@@ -38,6 +40,15 @@ function isHostAllowed(host) {
 export default async function handler(req, res) {
   if (applyCors(req, res)) return
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
+
+  // Solo admin: la ricerca per nome consuma la chiave Google Places a
+  // pagamento, e prima chiunque poteva chiamarla in loop senza nemmeno un
+  // account. L'unico chiamante è il form ristorante del pannello admin.
+  maybeCleanup()
+  const limited = rateLimit(req, { key: 'resolve-maps', max: 30, windowMs: 60_000 })
+  if (limited) return res.status(429).json({ error: limited })
+  const auth = await requireAdmin(req)
+  if (auth.error) return res.status(auth.status).json({ error: auth.error })
 
   const { url, query, type } = req.body || {}
 
@@ -389,6 +400,26 @@ async function searchByName(query, apiKey, res) {
 /** Follow redirects one by one. Each hop is re-validated against the
  *  host allowlist so a redirect can't land on an internal or attacker-
  *  controlled target. */
+async function requireAdmin(req) {
+  const header = req.headers.authorization || ''
+  if (!header.startsWith('Bearer ')) return { status: 401, error: 'Accesso admin richiesto' }
+  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
+  const anonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!supabaseUrl || !anonKey || !serviceRoleKey) {
+    return { status: 500, error: 'Server misconfigured: missing Supabase env' }
+  }
+  const anon = createClient(supabaseUrl, anonKey, { auth: { persistSession: false } })
+  const { data: { user } = {} } = await anon.auth.getUser(header.slice(7))
+  if (!user) return { status: 401, error: 'Sessione non valida' }
+  const admin = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+  const { data: profile } = await admin.from('profiles').select('is_admin').eq('id', user.id).maybeSingle()
+  if (profile?.is_admin !== true) return { status: 403, error: 'Accesso admin richiesto' }
+  return { user }
+}
+
 async function followRedirects(url, maxRedirects = 10) {
   let current = url
   for (let i = 0; i < maxRedirects; i++) {
@@ -458,9 +489,14 @@ async function resolveReel(url, res) {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.9',
       },
-      redirect: 'follow',
+      // Niente redirect automatici: portavano il server dove voleva il
+      // redirect, fuori dal controllo sull'host fatto qui sopra.
+      redirect: 'manual',
     })
-    const html = await response.text()
+    if (response.status >= 300 && response.status < 400) {
+      return res.status(200).json({ error: 'Instagram ha risposto con un redirect: apri il reel e copia di nuovo il link.' })
+    }
+    const html = (await response.text()).slice(0, 2_000_000)
 
     const pickMeta = (prop) => {
       const m = html.match(new RegExp(`<meta\\s+(?:property|name)="${prop}"\\s+content="([^"]+)"`, 'i'))

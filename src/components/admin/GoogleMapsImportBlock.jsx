@@ -2,6 +2,17 @@ import { useState } from 'react'
 import { reverseGeocode } from '../../lib/utils/geocoding'
 import { supabase } from '../../lib/supabase'
 
+// /api/resolve-maps consuma la chiave Google Places a pagamento: risponde
+// solo a un admin, e l'admin si riconosce dal token di sessione.
+async function authHeaders() {
+  const { data: sess } = await supabase.auth.getSession()
+  const token = sess?.session?.access_token
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }
+}
+
 /**
  * GoogleMapsImportBlock — shared block for auto-filling restaurant data
  * from a Google Maps link. Handles:
@@ -72,7 +83,7 @@ export default function GoogleMapsImportBlock({
       } else {
         const res = await fetch('/api/resolve-maps', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: await authHeaders(),
           body: JSON.stringify({ url: u }),
         })
         const data = await res.json()
@@ -174,7 +185,7 @@ export default function GoogleMapsImportBlock({
     try {
       const res = await fetch('/api/resolve-maps', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await authHeaders(),
         body: JSON.stringify({ query: q }),
       })
       const data = await res.json()

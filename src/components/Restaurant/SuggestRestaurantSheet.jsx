@@ -153,17 +153,11 @@ export default function SuggestRestaurantSheet({ userId = null, userEmail = null
       const recipientEmail = isAnon ? email.trim() : userEmail
       const senderName = isAnon ? '' : (userName || '')
       if (recipientEmail) {
+        // Una chiamata sola: dopo il captcha il server manda la notifica a
+        // noi e la conferma a chi ha segnalato. La conferma non ha più un
+        // suo endpoint aperto, che chiunque poteva usare per spedire email a
+        // indirizzi a caso col nostro mittente.
         Promise.allSettled([
-          fetch('/api/send-email', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              type: 'confirmation',
-              to: recipientEmail,
-              nome_utente: senderName,
-              nome_locale: name.trim(),
-            }),
-          }),
           fetch('/api/send-email', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

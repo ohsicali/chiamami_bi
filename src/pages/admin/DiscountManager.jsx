@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
+import { fetchRestaurantSecrets } from '../../lib/restaurantColumns'
 import AdminLayout from '../../components/Layout/AdminLayout'
 import PillTab from '../../components/admin/PillTab'
 import EmptyState from '../../components/admin/EmptyState'
@@ -609,10 +610,12 @@ export default function DiscountManager() {
     }
     Promise.all([
       supabase.from('discounts').select('*, products:discount_products(id, name, note, photo_url, thumb_url, sort_order), restaurant:restaurants(id, name)').order('created_at', { ascending: false }),
-      supabase.from('restaurants').select('id, name, verify_pin, restaurant_photos(photo_url)').order('name'),
+      supabase.from('restaurants').select('id, name, restaurant_photos(photo_url)').order('name'),
       supabase.from('restaurant_partners').select('restaurant_id, pin_code').eq('is_active', true),
       supabase.from('sponsored_placements').select('id, discount_id').not('discount_id', 'is', null),
-    ]).then(([discRes, restRes, partRes, adsRes]) => {
+      // Chi ha un PIN: il PIN non si legge dalla tabella, lo dà l'RPC admin.
+      fetchRestaurantSecrets().catch(() => ({})),
+    ]).then(([discRes, restRes, partRes, adsRes, secrets]) => {
       const restPhotoMap = {}
       ;(restRes.data || []).forEach((r) => {
         restPhotoMap[r.id] = r.restaurant_photos?.[0]?.photo_url || null
@@ -622,7 +625,7 @@ export default function DiscountManager() {
         restaurant_photo: restPhotoMap[d.restaurant_id] || null,
       }))
       setDiscounts(enriched)
-      setRestaurants((restRes.data || []).map((r) => ({ id: r.id, name: r.name, has_pin: !!r.verify_pin })))
+      setRestaurants((restRes.data || []).map((r) => ({ id: r.id, name: r.name, has_pin: !!secrets[r.id]?.verify_pin })))
       const partnerRows = partRes.data || []
       setPartnerIds(new Set(partnerRows.map((p) => p.restaurant_id)))
       setPartnerPins(Object.fromEntries(partnerRows.filter((p) => p.pin_code).map((p) => [p.restaurant_id, p.pin_code])))

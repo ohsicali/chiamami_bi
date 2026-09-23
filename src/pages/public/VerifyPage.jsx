@@ -80,6 +80,11 @@ function readLockout() {
   }
 }
 
+/** Fin quando dura il blocco, se comincia adesso. */
+function lockoutEndsAt() {
+  return Date.now() + LOCKOUT_MS
+}
+
 function writeLockout(data) {
   try { localStorage.setItem(LOCKOUT_KEY, JSON.stringify(data)) } catch {}
 }
@@ -232,6 +237,19 @@ export default function VerifyPage() {
         p_pin: pinToUse,
         p_user_agent: (navigator.userAgent || '').slice(0, 500),
       })
+
+      // Il blocco vero è sul server (verify_login conta i tentativi falliti
+      // per IP e in totale): qui lo si mostra con la stessa schermata del
+      // blocco locale, che da solo si aggirava svuotando il localStorage.
+      if (loginData?.error === 'too_many_attempts') {
+        const until = lockoutEndsAt()
+        writeLockout({ attempts: MAX_ATTEMPTS, lockedUntil: until })
+        setLockedUntil(until)
+        setIsPinWrong(false)
+        setError(null)
+        setSubmitting(false)
+        return
+      }
 
       if (rpcErr || !loginData || loginData.error) {
         triggerError(true)

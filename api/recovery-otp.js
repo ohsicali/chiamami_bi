@@ -15,6 +15,7 @@
  *   - Vecchi client che chiamano /api/verify-recovery-otp continuano a
  *     funzionare grazie al rewrite in vercel.json.
  */
+import { randomInt, timingSafeEqual } from 'node:crypto'
 import { createClient } from '@supabase/supabase-js'
 import { rateLimit, maybeCleanup } from './_rate-limit.js'
 import { applyCors } from './_cors.js'
@@ -63,6 +64,9 @@ async function handleRequest({ adminClient, body, req, res }) {
   if (!email || !action) {
     return res.status(400).json({ error: 'Email and action required' })
   }
+  if (action !== 'reset_password' && action !== 'verify_recovery') {
+    return res.status(400).json({ error: 'Invalid action' })
+  }
 
   // Captcha required only on the "request" step — the verify step is gated
   // by knowledge of the OTP itself and the failed_attempts cap.
@@ -86,7 +90,9 @@ async function handleRequest({ adminClient, body, req, res }) {
       return res.status(200).json({ success: false, no_recovery: true, message: 'Nessuna email di recupero configurata. Contatta supporto@chiamamibi.com' })
     }
 
-    const otp = String(Math.floor(100000 + Math.random() * 900000))
+    // crypto, non Math.random: chi indovina il codice cambia password o
+    // email dell'account.
+    const otp = String(randomInt(100000, 1000000))
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString()
     const { error: upsertErr } = await adminClient
       .from('auth_recovery_tokens')
@@ -95,6 +101,9 @@ async function handleRequest({ adminClient, body, req, res }) {
         otp,
         expires_at: expiresAt,
         action,
+        // Un codice nuovo riparte da zero tentativi: senza, il contatore
+        // restava quello del codice precedente.
+        failed_attempts: 0,
       }, { onConflict: 'user_id' })
 
     if (upsertErr) {
@@ -132,6 +141,13 @@ async function handleVerify({ adminClient, body, res }) {
 
   if (!email || !otp) {
     return res.status(400).json({ error: 'Email and OTP required' })
+  }
+  // Prima di consumare il codice: un input storto non deve bruciare l'OTP.
+  if (new_password != null && (typeof new_password !== 'string' || new_password.length < 6 || new_password.length > 72)) {
+    return res.status(400).json({ error: 'La password deve avere fra 6 e 72 caratteri' })
+  }
+  if (new_email != null && (typeof new_email !== 'string' || new_email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(new_email.trim()))) {
+    return res.status(400).json({ error: 'Email non valida' })
   }
 
   try {
@@ -176,7 +192,7 @@ async function handleVerify({ adminClient, body, res }) {
       return res.status(429).json({ error: 'Troppi tentativi errati. Richiedi un nuovo codice.' })
     }
 
-    if (!token.otp || token.otp !== String(otp).trim()) {
+    if (!token.otp || !sameCode(token.otp, String(otp).trim())) {
       // Best-effort increment; ignore failure if column missing.
       await adminClient
         .from('auth_recovery_tokens')
@@ -220,6 +236,13 @@ async function handleVerify({ adminClient, body, res }) {
     console.error('Verify recovery OTP error:', err)
     return res.status(500).json({ error: 'Internal error' })
   }
+}
+
+/** Confronto a tempo costante: il tempo di risposta non dice quante cifre sono giuste. */
+function sameCode(expected, given) {
+  const a = Buffer.from(String(expected))
+  const b = Buffer.from(String(given))
+  return a.length === b.length && timingSafeEqual(a, b)
 }
 
 function maskEmail(email) {
