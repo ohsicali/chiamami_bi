@@ -1,5 +1,6 @@
 -- =====================================================================
 -- AUDIT SICUREZZA 23/09 — parte A (si applica subito, non rompe niente)
+-- ✅ APPLICATA sul DB live il 23/09 (migration `security_audit_2026_09_23_part_a`).
 -- =====================================================================
 -- Il resoconto completo, con gli attacchi provati sul DB live, sta in
 -- docs/security-audit-2026-09-23.md. Qui solo le correzioni.
