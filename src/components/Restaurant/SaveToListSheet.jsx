@@ -77,22 +77,26 @@ export default function SaveToListSheet({ userId, restaurant, onClose }) {
                 className={`stl-item${inList ? ' is-in' : ''}`}
                 onClick={() => handleToggle(l)}
                 disabled={busy === key}
-                whileTap={{ transform: 'scale(0.97)' }}
+                whileTap={{ scale: 0.97 }}
                 transition={SPRING_SNAP}
               >
                 <span className="stl-emoji" aria-hidden="true">{l.emoji || '📁'}</span>
                 <span className="stl-name">{l.name}</span>
                 {/* Il segno cambia con uno scatto, non un dissolvere: è la
                     conferma che il tocco ha aggiunto (o tolto) il locale
-                    davvero, non solo un pallino che appare e basta. */}
+                    davvero, non solo un pallino che appare e basta.
+                    `scale` e `rotate` e niente opacità, come nel cuore di
+                    SaveButton: animati via Web Animations, su Safari per
+                    iPhone la voce spariva al tocco e la spunta non
+                    compariva mai. */}
                 <span className="stl-check-wrap" aria-hidden="true">
                   <AnimatePresence mode="popLayout" initial={false}>
                     <motion.span
                       key={inList ? 'check' : 'plus'}
                       className="stl-check"
-                      initial={{ transform: 'scale(0.3) rotate(-25deg)', opacity: 0 }}
-                      animate={{ transform: 'scale(1) rotate(0deg)', opacity: 1 }}
-                      exit={{ transform: 'scale(0.3)', opacity: 0 }}
+                      initial={{ scale: 0.3, rotate: -25 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      exit={{ scale: 0.3 }}
                       transition={SPRING_SNAP}
                     >
                       {inList ? '✓' : '+'}
