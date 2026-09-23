@@ -325,7 +325,7 @@ export default function SavedPage() {
       {restaurants.length > 0 && (
         <div className="md:hidden" style={{
           position: 'sticky',
-          top: 'calc(env(safe-area-inset-top, 0px) + 51px)',
+          top: 'var(--logo-header-h, calc(env(safe-area-inset-top, 0px) + 69px))',
           zIndex: 49,
           padding: '14px 16px 14px',
           background: 'rgba(250,247,242,0.75)',

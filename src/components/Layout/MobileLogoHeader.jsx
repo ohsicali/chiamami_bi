@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import BiLogoMark from '../UI/BiLogoMark'
 
@@ -5,10 +6,35 @@ import BiLogoMark from '../UI/BiLogoMark'
  * Sticky logo bar per le pagine mobile (Sconti, Salvati, Profilo, ecc).
  * Wordmark "LA GUIDA DI BI" a sx + pill "Chiedi a Bi" a dx.
  * NON include la chip Torino: quella sta solo su Esplora (Navbar).
+ *
+ * Pubblica la propria altezza reale in `--logo-header-h` su <html>: le barre
+ * che si agganciano sotto (filtri dei Salvati, tab del Bi Club) la usano come
+ * `top`. Un numero scritto a mano sbaglia appena cambiano font, notch o
+ * dimensione del testo, e l'header finisce sopra i bottoni tagliandoli.
  */
 export default function MobileLogoHeader() {
+  const ref = useRef(null)
+
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const root = document.documentElement
+    const publish = () => root.style.setProperty('--logo-header-h', `${el.getBoundingClientRect().height}px`)
+    publish()
+    const ro = new ResizeObserver(publish)
+    // border-box: il padding del notch cambia ruotando il telefono, e da
+    // solo non tocca il contenuto — con l'osservazione di default non
+    // ce ne accorgeremmo.
+    ro.observe(el, { box: 'border-box' })
+    return () => {
+      ro.disconnect()
+      root.style.removeProperty('--logo-header-h')
+    }
+  }, [])
+
   return (
     <div
+      ref={ref}
       className="md:hidden"
       style={{
         position: 'sticky',
