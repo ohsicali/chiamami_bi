@@ -9,20 +9,53 @@ registrato da sé (la registrazione è aperta). Segue l'audit del 09/06
 Ogni falla del DB è stata **provata sul DB live** con `set local role
 anon/authenticated` in una transazione annullata, prima e dopo il fix.
 
-## Stato dei fix
+## Stato dei fix — tutto applicato il 23/09
 
 | | Dove | Stato |
 |---|---|---|
-| SQL parte A | `supabase/security-audit-2026-09-23.sql` | ✅ **applicata sul DB live il 23/09** (migration `security_audit_2026_09_23_part_a`) |
-| Codice | questa PR (`api/`, `src/`) | da mergiare |
-| SQL parte B | `supabase/security-audit-2026-09-23-part-b.sql` | ⏳ **da eseguire DOPO il deploy della PR** |
+| SQL parte A | `supabase/security-audit-2026-09-23.sql` | ✅ applicata sul DB live (migration `security_audit_2026_09_23_part_a`) |
+| Codice | PR #293 (`api/`, `src/`) | ✅ mergiata (`8d699b6`) e in produzione (deploy `dpl_FKEL77Lnrb2jNEKfpZ4dbCahNN8j`) |
+| SQL parte B | `supabase/security-audit-2026-09-23-part-b.sql` | ✅ applicata sul DB live dopo il deploy (migration `security_audit_2026_09_23_part_b`) |
 
-La parte B va dopo il deploy perché toglie colonne a `authenticated`: il
-frontend vecchio chiedeva `select=*` su `restaurants` (pannello admin, pagine
-Salvati) e con i grant di colonna quella richiesta fallisce intera. Il
-frontend nuovo funziona con e senza la parte B. Provata a secco sul live:
-l'admin legge i 107 locali e i 16 PIN (via RPC), un utente i 98 pubblicati e
-nessun PIN.
+La parte B andava per forza dopo il deploy perché toglie colonne ad
+`authenticated`: il frontend vecchio chiedeva `select=*` su `restaurants`
+(pannello admin, pagine Salvati) e con i grant di colonna quella richiesta
+fallisce intera. Il frontend nuovo funziona con e senza la parte B.
+
+**Nota sul rilascio:** al momento del merge il progetto Vercel era in pausa
+(pagina "This deployment is temporarily paused" su chiamamibi.com), quindi il
+deploy automatico del merge non è partito. Dopo la riattivazione il deploy di
+produzione è stato lanciato a mano dal commit `8d699b6`, e solo dopo averlo
+visto servire il codice nuovo è stata applicata la parte B.
+
+### Verifiche fatte dopo il rilascio (23/09 sera)
+
+- **Permessi DB** (simulati come `anon` / utente qualsiasi / admin, in
+  transazioni annullate): l'admin legge 107 locali e i 16 PIN via
+  `admin_restaurant_secrets`; un utente legge i 98 pubblicati e nessuna
+  colonna segreta (`verify_pin`, `magic_token`, `partner_email`); `anon`
+  idem; un utente vede solo il proprio profilo (0 email altrui).
+- **Login ristoratori**: `verify_login` col PIN giusto dà il `device_token` e
+  la risposta non contiene più PIN né `magic_token`; col PIN sbagliato
+  `invalid_pin`, e il tentativo viene contato.
+- **Produzione**: `/api/public` (ristoranti, categorie, sconti, banner),
+  anteprime social di `/restaurant/:slug`, `sitemap.xml`,
+  `/api/places-details`, `/api/img` rispondono come prima;
+  `/api/resolve-maps` senza login → 401; le conferme email pubbliche non
+  spediscono più (`skipped: sent-by-server`); il bundle contiene
+  `restaurantColumns` con l'RPC admin.
+- **Log**: nessun errore di permesso nei log Postgres/API dopo le due parti.
+  Unico 400 ricorrente: l'upsert su `newsletter_subscribers` alla
+  registrazione (`useAuth.js`), che fallisce da prima dell'audit (c'era già il
+  22/09) — la lista newsletter è legacy, le email partono da
+  `email_preferences`.
+- **Linter Supabase**: restano solo le funzioni pubbliche per scelta (RPC
+  `verify_*` guardate dal `device_token`, preferenze email via token,
+  `is_admin`) e "Leaked password protection" da attivare a mano.
+- **Non provato in un browser** (il browser automatico non si fida del proxy
+  dell'ambiente di lavoro): pannello admin con PIN/credenziali, pagina
+  Salvati da utente loggato, `/verify`. Le loro query sono state provate sul
+  DB con gli stessi ruoli.
 
 ## 🔴 Critiche
 
@@ -40,11 +73,10 @@ Residuo A1 del 09/06, ancora aperto: `authenticated` aveva il SELECT di
 tabella su `restaurants` → `verify_pin` (16 su 16), `partner_email`,
 `magic_token`. Col PIN si entra in `/verify`: riscatto QR, statistiche,
 cambio PIN ed email del locale.
-**Fix:** RPC `admin_restaurant_secrets()` guardata da `is_admin()` (A,
-applicata); il pannello admin legge PIN ed email da lì
+**Fix (A + B, applicati):** RPC `admin_restaurant_secrets()` guardata da `is_admin()`; il pannello admin legge PIN ed email da lì
 (`src/lib/restaurantColumns.js`); `RestaurantDrawer`, `EditRestaurant`,
 `SavedPage`, `DesktopSavedPage` chiedono colonne esplicite invece di `*`;
-revoca delle colonne segrete ad `authenticated` (B, dopo il deploy).
+revoca delle colonne segrete ad `authenticated` (B).
 
 ### C3 — Login ristoratori indovinabile a raffica
 `verify_login(p_pin)` cerca il PIN fra **tutti** i locali, senza freno lato
@@ -61,8 +93,7 @@ Le policy del bucket `photos` chiedevano solo `authenticated`: upload,
 sovrascrittura e cancellazione di qualunque file. In più nessun limite di
 tipo: un HTML/SVG caricato lì veniva servito da `/api/img` **dal dominio
 chiamamibi.com** (XSS memorizzato).
-**Fix:** policy di scrittura solo `is_admin()` e bucket limitati a immagini
-(A, applicato); `/api/img` rifiuta tutto ciò che non è un'immagine raster e
+**Fix (applicato):** policy di scrittura solo `is_admin()` e bucket limitati a immagini; `/api/img` rifiuta tutto ciò che non è un'immagine raster e
 aggiunge `CSP: sandbox` + `nosniff` (codice).
 
 ## 🟠 Alte
@@ -113,9 +144,8 @@ non segue più i redirect fuori da Instagram.
 - Linter Supabase: revocato EXECUTE sulle funzioni-trigger (i trigger continuano
   a funzionare, verificato), `search_path` fissato su 4 funzioni.
 
-## Da fare (non in questa PR)
+## Da fare
 
-- **Eseguire la parte B** dopo il deploy.
 - **Supabase → Auth → "Leaked password protection"**: attivarla (impostazione del
   dashboard, non SQL).
 - **Verificare che `TURNSTILE_SECRET_KEY` sia impostata su Vercel in produzione**
@@ -131,6 +161,8 @@ non segue più i redirect fuori da Instagram.
   pubblici conta il captcha; a lungo termine Upstash/KV.
 - CSP con `'unsafe-inline' 'unsafe-eval'` negli script: stringerla richiede di
   provare Mapbox e Turnstile in browser.
+- `newsletter_subscribers`: l'upsert fatto alla registrazione da `useAuth.js`
+  risponde 400 (preesistente, vedi sopra). Toglierlo o sistemarlo.
 - `profiles.email` resta modificabile dall'utente (serve a chi entra con Google):
   il recupero account la usa per trovare il profilo, quindi un utente che si
   mette la stessa email di un altro gli blocca il recupero (non glielo ruba:

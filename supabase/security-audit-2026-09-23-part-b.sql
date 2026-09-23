@@ -2,6 +2,10 @@
 -- AUDIT SICUREZZA 23/09 — parte B: il PIN dei ristoratori non si legge
 -- più da utente loggato
 -- =====================================================================
+-- ✅ APPLICATA sul DB live il 23/09, dopo il deploy di produzione di #293
+--    (migration `security_audit_2026_09_23_part_b`). Se si ricrea il DB da
+--    zero, va eseguita dopo la parte A.
+--
 -- ⚠️ ESEGUIRE SOLO DOPO IL DEPLOY del frontend della PR dell'audit (e
 -- dopo la parte A, che crea `admin_restaurant_secrets`). Prima di quel
 -- deploy il pannello admin e le pagine "Salvati" chiedevano `select=*` su
