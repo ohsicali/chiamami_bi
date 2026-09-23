@@ -15,6 +15,13 @@ import { SPRING_SOFT, TR_MENU } from '../../lib/motion'
  * il "pop", ma essendo una transizione e non dei keyframe riparte dal
  * valore corrente se lo ripremi subito, invece di ricominciare da zero.
  * L'hover è passato al CSS, dietro a (hover: hover) and (pointer: fine).
+ *
+ * Scala con `scale`, non con la stringa `transform` (23/09). Su Safari per
+ * iPhone il cuore spariva al tocco anche se il salvataggio arrivava al
+ * database; in Chromium no. La stringa `transform` framer-motion la affida
+ * alle Web Animations del browser, `scale` invece lo scrive lui a ogni
+ * fotogramma: è l'unica differenza fra questo cuore e le animazioni che su
+ * iPhone funzionano, quindi si toglie quella.
  */
 export default function SaveButton({
   saved = false,
@@ -59,7 +66,7 @@ export default function SaveButton({
         WebkitTapHighlightColor: 'transparent',
         touchAction: 'manipulation',
       }}
-      whileTap={reduce ? undefined : { transform: 'scale(0.85)' }}
+      whileTap={reduce ? undefined : { scale: 0.85 }}
       transition={SPRING_SOFT}
       aria-pressed={saved}
       aria-label={saved ? 'Rimuovi dai salvati' : 'Salva ristorante'}
@@ -77,7 +84,7 @@ export default function SaveButton({
         strokeLinecap="round"
         strokeLinejoin="round"
         style={{ transition: `fill ${TR_MENU.duration}s, stroke ${TR_MENU.duration}s` }}
-        animate={{ transform: `scale(${saved && !reduce ? 1.08 : 1})` }}
+        animate={{ scale: saved && !reduce ? 1.08 : 1 }}
         transition={SPRING_SOFT}
       >
         <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
