@@ -11,7 +11,12 @@ import './ShortCodeCard.css'
  * il segno a metà) e a chi ascolta dall'altra parte del bancone; la prima
  * è colorata perché è l'unica lettera, e si vede da che verso si legge.
  */
-export default function ShortCodeCard({ code, tone = 'light', divider = true }) {
+export default function ShortCodeCard({
+  code,
+  tone = 'light',
+  divider = true,
+  label = 'Detta questo codice',
+}) {
   const normalized = normalizeShortCode(code)
   const [copied, setCopied] = useState(false)
   const timerRef = useRef(null)
@@ -46,7 +51,7 @@ export default function ShortCodeCard({ code, tone = 'light', divider = true }) 
         </div>
       )}
 
-      <div className="shortcode-label">Detta questo codice</div>
+      <div className="shortcode-label">{label}</div>
 
       <div className="shortcode-digits">
         {/* Le caselle sono decorazione: allo screen reader diamo il codice

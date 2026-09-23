@@ -28,7 +28,7 @@ import {
 import React from 'react'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
-import { formatShortCode } from './_short-code.js'
+import { formatShortCode, isShortCode } from './_short-code.js'
 import { formatDays, formatSlots } from '../src/lib/validity.js'
 
 export const config = { maxDuration: 30 }
@@ -47,6 +47,12 @@ const C = {
   coralloDark: '#B92E26',
   oro: '#B08954',
   oroSoft: '#F0E4D2',
+  // Il verde degli sconti dell'app (--color-sconto-b / --color-sconto-ink):
+  // il badge è lo stesso del pass a schermo, non più corallo.
+  sconto: '#4ADE80',
+  scontoInk: '#1A4731',
+  cream: '#F5F0E4',
+  coralloWash: '#FDEDEB',
 }
 
 /* ============================================================================
@@ -156,8 +162,10 @@ function pctText(deal) {
   if (deal.discount_type === 'freebie') return deal.title || deal.discount_value || ''
   if (deal.discount_type === 'special_price') return deal.title || `${String(deal.discount_value || '').replace(/[%€\s]/g, '').replace(/^[-−]/, '').trim()}€`
   const v = String(deal.discount_value || '').replace(/[%€\s]/g, '').replace(/^[-−]/, '').trim()
-  if (deal.discount_type === 'percentage') return `${v}%`
-  if (deal.discount_type === 'fixed') return `${v}€`
+  // Col segno meno, come ogni badge sconto del sito (`formatDiscountBadge`
+  // in src/lib/utils/discountFormat.js).
+  if (deal.discount_type === 'percentage') return `−${v}%`
+  if (deal.discount_type === 'fixed') return `−${v}€`
   return deal.discount_value || deal.title || ''
 }
 
@@ -284,7 +292,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18, paddingTop: 5, gap: 9,
   },
   pctBadge: {
-    backgroundColor: C.corallo, color: '#fff', fontFamily: 'Poppins', fontWeight: 800,
+    backgroundColor: C.sconto, color: C.scontoInk, fontFamily: 'Poppins', fontWeight: 800,
     fontSize: 17, paddingTop: 4, paddingBottom: 3, paddingHorizontal: 10,
     borderRadius: 5, letterSpacing: -0.6,
   },
@@ -309,30 +317,51 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins', fontWeight: 700, fontSize: 8, color: C.ink,
     letterSpacing: -0.1,
   },
-  /* QR */
+  /* Lo strappo tratteggiato fra il locale e il QR, come nel pass a schermo */
+  tear: {
+    marginHorizontal: 18, marginTop: 5,
+    borderTopWidth: 0.8, borderTopColor: C.line, borderStyle: 'dashed',
+  },
+  /* QR — su bianco, con i quattro angoli di mira del pass (niente cornice
+     piena: la fotocamera la scambierebbe per parte del codice). */
   qrWrap: {
     flex: 1, alignItems: 'center', justifyContent: 'center',
     paddingHorizontal: 18, paddingTop: 3,
   },
   qrBox: {
-    width: 110, height: 110, backgroundColor: '#fff',
-    borderWidth: 1.3, borderColor: C.ink, borderRadius: 7, padding: 5,
+    width: 100, height: 100, backgroundColor: '#fff',
+    borderRadius: 7, padding: 7, position: 'relative',
   },
   qrImage: { width: '100%', height: '100%' },
+  corner: { position: 'absolute', width: 14, height: 14, borderColor: C.ink },
+  cornerTL: { top: 0, left: 0, borderTopWidth: 1.6, borderLeftWidth: 1.6, borderTopLeftRadius: 6 },
+  cornerTR: { top: 0, right: 0, borderTopWidth: 1.6, borderRightWidth: 1.6, borderTopRightRadius: 6 },
+  cornerBL: { bottom: 0, left: 0, borderBottomWidth: 1.6, borderLeftWidth: 1.6, borderBottomLeftRadius: 6 },
+  cornerBR: { bottom: 0, right: 0, borderBottomWidth: 1.6, borderRightWidth: 1.6, borderBottomRightRadius: 6 },
   qrHint: { fontFamily: 'Caveat', fontWeight: 700, fontSize: 18, color: C.corallo, marginTop: 2, lineHeight: 1 },
   codeLabel: {
     fontFamily: 'Poppins', fontWeight: 700, fontSize: 5.5, color: C.ink3,
     letterSpacing: 1.1, marginTop: 4,
   },
-  codeShort: {
-    fontFamily: 'Courier', fontSize: 15, color: C.ink, letterSpacing: 2.5,
-    marginTop: 2,
+  /* Il codice a caselle, la prima (l'unica lettera) in corallo: come
+     ShortCodeCard sull'app. */
+  codeRow: { flexDirection: 'row', marginTop: 3 },
+  codeCell: {
+    width: 14, height: 17, marginHorizontal: 1.2, borderRadius: 3.5,
+    backgroundColor: C.cream, borderWidth: 0.6, borderColor: C.line,
+    alignItems: 'center', justifyContent: 'center',
   },
+  codeCellLetter: { backgroundColor: C.corallo, borderColor: C.corallo },
+  codeCellGap: { marginLeft: 5 },
+  codeChar: { fontFamily: 'Courier-Bold', fontSize: 11, color: C.ink },
+  codeCharLetter: { color: '#fff' },
   scadPill: {
     backgroundColor: C.oroSoft, color: C.oro, fontFamily: 'Poppins', fontWeight: 700,
     fontSize: 7, paddingTop: 3, paddingBottom: 2, paddingHorizontal: 10,
-    borderRadius: 100, marginTop: 3, letterSpacing: 0.3,
+    borderRadius: 100, marginTop: 4, letterSpacing: 0.3,
   },
+  // Corallo solo per i drop (scadono), come la pillola del pass e le email.
+  scadPillDrop: { backgroundColor: C.coralloWash, color: C.coralloDark },
   /* Footer */
   footer: {
     borderTopWidth: 0.5, borderTopColor: C.line,
@@ -346,7 +375,7 @@ const styles = StyleSheet.create({
 /* ============================================================================
    Document
    ============================================================================ */
-function CouponDocument({ ctx }) {
+export function CouponDocument({ ctx }) {
   return React.createElement(
     Document, null,
     React.createElement(
@@ -394,22 +423,36 @@ function CouponDocument({ ctx }) {
             React.createElement(Text, { style: styles.validityText }, ctx.validita)
           )
         : null,
+      React.createElement(View, { style: styles.tear }),
       // QR
       React.createElement(
         View, { style: styles.qrWrap },
         React.createElement(
           View, { style: styles.qrBox },
-          React.createElement(Image, { src: ctx.qr_data_url, style: styles.qrImage })
+          React.createElement(Image, { src: ctx.qr_data_url, style: styles.qrImage }),
+          ...['cornerTL', 'cornerTR', 'cornerBL', 'cornerBR'].map((k) =>
+            React.createElement(View, { key: k, style: [styles.corner, styles[k]] }))
         ),
-        React.createElement(Text, { style: styles.qrHint }, 'Mostra al ristoratore'),
-        ctx.codice_breve
-          ? React.createElement(Text, { style: styles.codeLabel }, 'OPPURE DETTA IL CODICE')
+        React.createElement(Text, { style: styles.qrHint }, 'Mostralo al ristoratore'),
+        ctx.codice_chars
+          ? React.createElement(Text, { style: styles.codeLabel }, 'NON LEGGE IL QR? DETTA IL CODICE')
           : null,
-        ctx.codice_breve
-          ? React.createElement(Text, { style: styles.codeShort }, ctx.codice_breve)
+        ctx.codice_chars
+          ? React.createElement(
+              View, { style: styles.codeRow },
+              ...ctx.codice_chars.map((ch, i) => React.createElement(
+                View,
+                { key: i, style: [styles.codeCell, i === 0 ? styles.codeCellLetter : null, i === 3 ? styles.codeCellGap : null].filter(Boolean) },
+                React.createElement(Text, { style: [styles.codeChar, i === 0 ? styles.codeCharLetter : null].filter(Boolean) }, ch)
+              ))
+            )
           : null,
         ctx.scadenza
-          ? React.createElement(Text, { style: styles.scadPill }, `Scade ${ctx.scadenza}`)
+          ? React.createElement(
+              Text,
+              { style: [styles.scadPill, ctx.is_drop ? styles.scadPillDrop : null].filter(Boolean) },
+              ctx.is_drop ? `Scade tra ${ctx.scadenza}` : `Valido fino al${ctx.scadenza.replace(/^il/, '')}`
+            )
           : null
       ),
       // FOOTER
@@ -515,12 +558,17 @@ export default async function handler(req, res) {
     locale_categoria: cuisine,
     locale_indirizzo: shortAddress(restaurant.address),
     percentuale: pctText(deal),
+    is_drop: !!deal.is_drop,
     descrizione_sconto: deal.title || deal.description || 'Valido alla cassa',
     validita: formatValidityLine(deal),
     codice_testuale: redemption.qr_code,
     // Il codice da dettare al ristoratore quando la fotocamera non legge il
     // QR: spezzato in due gruppi di tre, come sull'app.
     codice_breve: formatShortCode(redemption.short_code),
+    // Le sei caselle: solo se il codice ha la forma giusta, come ShortCodeCard.
+    codice_chars: isShortCode(redemption.short_code)
+      ? String(redemption.short_code).toUpperCase().split('')
+      : null,
     scadenza: formatExpiryLabel(deal),
   }
 

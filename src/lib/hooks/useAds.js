@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../supabase'
+import { ADS_SELECT, fetchPublic } from '../publicQueries'
 import { slotsForPath, MAX_ADS_PER_PAGE } from '../adSlots'
 import { DEMO_ADS, isDemoAds, isDemoAdsAtLoad } from '../demoAds'
 
@@ -22,12 +23,6 @@ import { DEMO_ADS, isDemoAds, isDemoAdsAtLoad } from '../demoAds'
  */
 
 export const AdsContext = createContext({ bySlot: {}, loading: false })
-
-const SELECT = `
-  *,
-  restaurant:restaurants(id, name, slug, cuisine_type, category, price_range, address, tagline, hours_cache, photos:restaurant_photos(id, photo_url, thumb_url, sort_order)),
-  discount:discounts(id, title, description, discount_type, discount_value, conditions, valid_until)
-`
 
 // Cambia a ogni caricamento dell'app: è quello che rende l'estrazione diversa
 // tra una visita e l'altra. Vive fuori dal render, quindi non introduce
@@ -128,12 +123,16 @@ export function useAdsValue() {
     if (!isSupabaseConfigured()) return
     let cancelled = false
     const nowIso = new Date().toISOString()
-    supabase
-      .from('sponsored_placements')
-      .select(SELECT)
-      .eq('active', true)
-      .lte('start_at', nowIso)
-      .gt('end_at', nowIso)
+    // Copia in cache CDN prima (vedi lib/publicQueries.js), query diretta se
+    // l'endpoint non risponde. La finestra di date la ricontrolla drawForPage.
+    fetchPublic('ads')
+      .then((data) => ({ data, error: null }))
+      .catch(() => supabase
+        .from('sponsored_placements')
+        .select(ADS_SELECT)
+        .eq('active', true)
+        .lte('start_at', nowIso)
+        .gt('end_at', nowIso))
       .then(({ data, error }) => {
         if (cancelled) return
         if (error) {

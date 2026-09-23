@@ -21,3 +21,9 @@ export function formatShortCode(raw) {
   if (c.length <= 3) return c
   return `${c.slice(0, 3)} ${c.slice(3)}`
 }
+
+/** True se è un codice completo e ben formato (stessa regola del CHECK nel
+ *  DB e di `isShortCode` in `src/lib/shortCode.js`). */
+export function isShortCode(raw) {
+  return /^[A-HJ-NP-Z][0-9]{5}$/.test(normalizeShortCode(raw))
+}

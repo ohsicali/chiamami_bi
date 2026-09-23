@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import QRCode from 'qrcode'
-import ShortCodeCard from './ShortCodeCard'
 import DiscountRules from './DiscountRules'
+import { QRPassSheet } from './QRPass'
 import { formatDiscountBadge, formatDiscountValue } from '../../lib/utils/discountFormat'
 
 /**
@@ -32,20 +31,10 @@ import { formatDiscountBadge, formatDiscountValue } from '../../lib/utils/discou
  * ("Scopri di più"/"Usa sconto") e di `DiscountDetailPopup` su /sconti —
  * i tre punti in cui si sblocca uno sconto sull'app hanno lo stesso
  * bottone, non tre bottoni diversi.
+ *
+ * Il QR, una volta sbloccato, è `QRPassSheet`: lo stesso pass del Bi Club,
+ * con il nome e la foto del locale che passa chi apre il popup.
  */
-function QRCanvas({ value, size = 210 }) {
-  const canvasRef = useRef(null)
-  useEffect(() => {
-    if (!canvasRef.current || !value) return
-    QRCode.toCanvas(canvasRef.current, value, {
-      width: size,
-      margin: 2,
-      color: { dark: '#1A1A1A', light: '#FFFFFF' },
-    })
-  }, [value, size])
-  return <canvas ref={canvasRef} style={{ width: size, height: size }} />
-}
-
 export default function DiscountQuickPopup({
   deal,
   initialUnlocked = false,
@@ -58,9 +47,15 @@ export default function DiscountQuickPopup({
   blockedMessage = null,
   onClaim,   // async: ritorna { id, qr_code, short_code } | null (blocco/auth gate)
   onClose,
+  // Intestazione del pass: il chiamante è sulla pagina del locale e ha già
+  // nome, foto e categoria — `deal` di solito non si porta dietro il locale.
+  restaurantName,
+  restaurantSubtitle,
+  photoUrl,
 }) {
   const [unlocked, setUnlocked] = useState(initialUnlocked)
   const [redemption, setRedemption] = useState(initialRedemption)
+  const [justUnlocked, setJustUnlocked] = useState(false)
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose?.() }
@@ -74,13 +69,14 @@ export default function DiscountQuickPopup({
     if (result?.id) {
       setRedemption(result)
       setUnlocked(true)
+      setJustUnlocked(true)
     }
   }
 
   const badge = formatDiscountBadge(deal)
   const valueLabel = formatDiscountValue(deal)
   const description = deal?.description && deal.description !== deal.title ? deal.description : null
-  const verifyUrl = redemption?.qr_code ? `${window.location.origin}/verify?code=${redemption.qr_code}` : null
+  const showPass = unlocked && !blockedMessage
 
   return (
     <motion.div
@@ -91,8 +87,12 @@ export default function DiscountQuickPopup({
       onClick={onClose}
     >
       <motion.div
-        className="mx-4 w-full max-w-md rounded-3xl bg-white p-6 shadow-xl overflow-y-auto"
-        style={{ maxHeight: '85vh' }}
+        className={showPass
+          ? 'mx-4 w-full max-w-md rounded-3xl shadow-xl overflow-hidden flex flex-col'
+          : 'mx-4 w-full max-w-md rounded-3xl bg-white p-6 shadow-xl overflow-y-auto'}
+        style={showPass
+          ? { maxHeight: '88dvh', background: 'var(--color-page, #FAF7F2)', paddingTop: 10 }
+          : { maxHeight: '85vh' }}
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.8, opacity: 0 }}
@@ -161,41 +161,20 @@ export default function DiscountQuickPopup({
             </button>
           </>
         ) : (
-          <>
-            {/* QR — stesso contenuto di prima, invariato */}
-            <div className="text-center mb-5">
-              <h3 className="text-lg font-bold text-primary" style={{ fontFamily: 'var(--font-sans)', fontWeight: 800 }}>
-                Il tuo sconto
-              </h3>
-              <p className="text-accent font-bold text-xl mt-1">{badge}</p>
-              {deal?.title && deal.title !== valueLabel && (
-                <p className="text-sm text-secondary mt-0.5">{deal.title}</p>
-              )}
-            </div>
-
-            <div className="flex justify-center mb-4 rounded-2xl bg-white p-4">
-              {verifyUrl ? <QRCanvas value={verifyUrl} size={210} /> : <div className="text-sm text-secondary">Genero QR…</div>}
-            </div>
-
-            <div className="rounded-xl bg-accent-light p-3 mb-2">
-              <p className="text-xs text-center text-secondary leading-relaxed">
-                Mostra questo QR al cameriere. Verrà scansionato con la fotocamera del telefono per validare lo sconto.
-              </p>
-            </div>
-
-            <div className="mb-5">
-              <ShortCodeCard code={redemption?.short_code} />
-            </div>
-
-            <motion.button
-              type="button"
-              onClick={onClose}
-              className="w-full rounded-full bg-primary py-3 text-sm font-semibold text-white"
-              whileTap={{ scale: 0.97 }}
-            >
-              Chiudi
-            </motion.button>
-          </>
+          <QRPassSheet
+            deal={deal}
+            redemption={redemption}
+            restaurantName={restaurantName}
+            subtitle={restaurantSubtitle}
+            photoUrl={photoUrl}
+            justUnlocked={justUnlocked}
+            onClose={onClose}
+          >
+            {description && (
+              <p className="text-sm text-secondary mb-3" style={{ lineHeight: 1.5 }}>{description}</p>
+            )}
+            <DiscountRules deal={deal} />
+          </QRPassSheet>
         )}
       </motion.div>
     </motion.div>

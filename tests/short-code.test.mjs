@@ -28,6 +28,7 @@ import {
 import {
   normalizeShortCode as apiNormalize,
   formatShortCode as apiFormat,
+  isShortCode as apiIsShortCode,
 } from '../api/_short-code.js'
 
 /* Lo stesso vincolo che ha il DB (CHECK discount_redemptions_short_code_format). */
@@ -110,10 +111,11 @@ test('il gemello lato server si comporta identico', () => {
   // `api/_short-code.js` è una copia perché le funzioni serverless non
   // importano da `src/`. Se le due versioni divergono, PDF ed email
   // mostrano un codice diverso da quello dell'app.
-  const casi = ['K48213', 'k48 213', '  z00000  ', 'A1', '', 'K48-213']
+  const casi = ['K48213', 'k48 213', '  z00000  ', 'A1', '', 'K48-213', 'I12345', 'K482134']
   for (const c of casi) {
     assert.equal(apiNormalize(c), normalizeShortCode(c), `normalize divergente su "${c}"`)
     assert.equal(apiFormat(c), formatShortCode(c), `format divergente su "${c}"`)
+    assert.equal(apiIsShortCode(c), isShortCode(c), `isShortCode divergente su "${c}"`)
   }
 })
 

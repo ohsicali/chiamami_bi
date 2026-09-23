@@ -122,6 +122,21 @@ quando la fotocamera non collabora. Tre regole:
 - per mostrarlo usa `formatShortCode()` e il componente
   `ShortCodeCard` — mai il codice nudo, mai il `qr_code` scritto per esteso.
 
+**Il QR si mostra in un solo modo (22/09):** `QRPassSheet` in
+`src/components/Discount/QRPass.jsx`, variante "A · Selettore" scelta fra
+quattro proposte. In testa il locale e la X; una card con badge (e le
+regole in piccolo accanto), e dentro un selettore **QR / Codice** che scambia il QR
+(SVG, tocco → tutto schermo su bianco con wake lock) e il codice a sei
+caratteri (`ShortCodeCard`) nello stesso riquadro ad altezza fissa; sotto due
+bottoni uguali, **Info sconto** (pannello dal basso) e **Scarica PDF**. Lo
+usano il popup del Bi Club (`DiscountDetailPopup`) e quello della pagina del
+locale (`DiscountQuickPopup`); il PDF (`api/discount-pdf.js`) ne ricopia lo
+stile. Un nuovo punto che mostra un QR monta questo componente, non un canvas
+suo. Il badge è verde (`--gradient-sconto`) come ovunque; accanto, in
+piccolo, il vantaggio, i giorni in cui vale (lettere accese/spente, oggi
+sottolineato), la fascia o l'orario e la prima condizione. Niente pillola
+"Sempre valido"; il corallo compare solo sui drop, col countdown.
+
 Dettagli e ragioni: sezione "18/09 — sbloccare uno sconto digitando il
 codice" in `docs/v4-status.md`.
 

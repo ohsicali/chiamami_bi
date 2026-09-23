@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase, isSupabaseConfigured } from '../supabase'
 import { getDistance } from '../utils/distance'
 import { isOpenForMoment } from '../hours'
+import { RESTAURANTS_SELECT, fetchPublic, isAdminPath } from '../publicQueries'
 
 // Re-export from useCategories for backwards compatibility
 export { getCategoryInfo, DEFAULT_CATEGORIES as CUISINE_CATEGORIES, useCategories } from './useCategories'
@@ -434,38 +435,22 @@ export function useRestaurants(userPosition = null) {
     setError(null)
     try {
       if (isSupabaseConfigured()) {
-        // Narrow the SELECT to columns actually consumed by public components.
-        // `*` pulled ~30+ unused fields per row, including long text columns
-        // (`our_review`, etc.) that aren't read on list views.
-        const RESTAURANT_COLUMNS = [
-          'id', 'name', 'slug', 'city', 'country', 'address', 'neighborhood',
-          'location_label',
-          'latitude', 'longitude', 'phone', 'website', 'google_maps_url',
-          'category', 'cuisine_type', 'price_range', 'our_rating',
-          'our_review', 'our_tip', 'recommended_for', 'tagline',
-          'tiktok_url', 'instagram_reel', 'moments',
-          'place_id', 'place_id_verified_at', 'opening_hours',
-          'is_published', 'created_at', 'updated_at',
-        ].join(', ')
-        // `hours_cache` e' la risposta grezza di Google Places e pesa da sola
-        // 230 kB sui 544 kB della query: dentro ci sono `currentOpeningHours`
-        // (140 kB, ogni periodo con il suo oggetto `date` completo),
-        // `displayName` (copia di `name`) e una seconda copia di
-        // `weekdayDescriptions`. Di tutto questo l'app legge solo
-        // `regularOpeningHours` e `utcOffsetMinutes` (vedi `getHoursStatus` in
-        // lib/hours.js, `useOrariStatus` e OrariLocale): `currentOpeningHours`
-        // e' scritto come fallback per quando manca `regularOpeningHours`, ma
-        // in tutto il DB non c'e' una sola riga in quel caso — il ramo non
-        // scatta mai. PostgREST sa proiettare dentro il JSONB, quindi ce li
-        // facciamo dare gia' separati e ricomponiamo sotto la stessa forma di
-        // prima, cosi' nessun consumatore cambia.
-        const HOURS_PROJECTION =
-          'hours_regular:hours_cache->regularOpeningHours, hours_offset:hours_cache->utcOffsetMinutes'
-        const { data, error: dbError } = await supabase
-          .from('restaurants')
-          .select(`${RESTAURANT_COLUMNS}, ${HOURS_PROJECTION}, restaurant_photos(id, photo_url, thumb_url, sort_order), restaurant_locations(id, label, address, latitude, longitude, sort_order)`)
-          .eq('is_published', true)
-          .order('name')
+        // Prima la copia in cache CDN (/api/public, vedi lib/publicQueries.js):
+        // è quella che regge il traffico. Se non risponde (sviluppo locale,
+        // errore) si ripiega sulla query diretta — stessa select, stessi dati.
+        // Nel pannello admin si va sempre diretti: serve il dato appena salvato.
+        let data = null
+        let dbError = null
+        if (!isAdminPath()) {
+          try { data = await fetchPublic('restaurants') } catch { data = null }
+        }
+        if (!data) {
+          ;({ data, error: dbError } = await supabase
+            .from('restaurants')
+            .select(RESTAURANTS_SELECT)
+            .eq('is_published', true)
+            .order('name'))
+        }
         if (dbError) {
           // eslint-disable-next-line no-console
           console.error('[useRestaurants] Supabase error:', dbError)

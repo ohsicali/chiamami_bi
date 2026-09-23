@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-22 (fix GRANT mancante su `location_label` — home non caricava i locali)
+Ultima modifica: 2026-09-23 (Admin Analytics: numeri calcolati nel DB)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -27,6 +27,226 @@ dove siamo. Aggiorna a ogni step importante.
 | Sito online — rimosso gate manutenzione/PIN | — | ✅ Done | Vedi sezione "22/09 — sito online" sotto. |
 | Home non caricava "aperti nella fascia" / "ultimi aggiunti" | — | ✅ Fix (SQL eseguito) | Vedi sezione "22/09 — GRANT mancante su location_label" sotto. |
 | Audit prestazioni pre-lancio | #276 | ✅ Merged (0ad5081) | Home **4549 → 2337 kB** misurati in produzione dopo il merge. Vedi sezione "22/09 — audit prestazioni" sotto. |
+| Lancio — Supabase saturo, letture in cache CDN | #278, #280, #281 | ✅ Merged | Vedi sezione "22/09 — lancio: Supabase saturo" sotto. |
+| Admin — sconti presi/utilizzati in tempo reale | #284 | ✅ Merged | Nessun SQL. Vedi sezione "22/09 — admin: sconti in diretta" sotto. |
+| Bi Club — chiarezza "Tutti gli sconti" / "I miei vantaggi" | #285 | ✅ Merged | Nessun SQL. Vedi sezione "22/09 — Bi Club: dove finiscono gli sconti" sotto. |
+| Admin Analytics — numeri veri e più chiari | — | 🚧 In review | SQL `supabase/admin-analytics-2026-09-23.sql` **già eseguito** (connettore Supabase). Vedi sezione "23/09 — admin Analytics" sotto. |
+
+## 23/09 — admin Analytics: numeri calcolati nel DB
+
+Richiesta: in `/admin/analytics` vedere in modo chiaro visite, utenti ecc.
+
+**Fonte**: la tabella `page_views` (il sito registra ogni pagina da
+`api/track.js`, con paese/città/dispositivo dagli header Vercel). **Non**
+Vercel Web Analytics: il componente `<Analytics />` è in `main.jsx` ma sul
+progetto Vercel Web Analytics non è attivo (l'API risponde "Web Analytics not
+found"), e comunque non ha un'API pubblica da leggere dal pannello.
+
+**Il problema di prima**: la pagina scaricava le righe di `page_views` nel
+browser e le contava lì, ma PostgREST ne restituisce al massimo 1000 per
+richiesta. Il 22/09 le visite erano 10.656: "visitatori unici", grafico,
+paesi e città erano calcolati su ~1000 righe. In più contava `/deals` ma non
+`/sconti`, e nella dashboard i "locali più visti" cercavano `/r/<slug>`
+(percorso che non esiste: la lista era sempre vuota).
+
+**Fatto**:
+- `supabase/admin-analytics-2026-09-23.sql` (eseguito il 23/09):
+  `admin_analytics(from, to, prev_from, prev_to, bucket)` restituisce in un
+  solo JSON riepilogo del periodo e del periodo precedente, serie per
+  giorno/ora (ora italiana, secchi vuoti inclusi), sezioni del sito,
+  provenienze, locali più visti con i salvataggi, città, paesi, dispositivi.
+  `admin_analytics_live()` = persone negli ultimi 5 minuti e dove sono.
+  Entrambe SECURITY DEFINER con `is_admin()` in testa (provato: anon →
+  permission denied). I raggruppamenti stanno in `analytics_section(path)` e
+  `analytics_source(referrer)`: una pagina nuova del sito va aggiunta lì.
+- **`page_views.visitor_id`**: id anonimo casuale in `localStorage`
+  (`chiamamibi_visitor_id`), per contare le **persone** e non solo le visite
+  (il `session_id` cambia dopo 30 minuti e a ogni scheda). Prima del 23/09
+  la colonna è vuota e il DB ripiega sul `session_id`: per quei giorni
+  persone = visite.
+- `AnalyticsPage.jsx` rifatta: adesso sul sito, Visite (persone, visite,
+  pagine viste, pagine per visita) con confronto col periodo precedente,
+  grafico a barre con scelta persone / pagine viste / nuovi iscritti, da dove
+  arrivano, cosa guardano, locali più visti, utenti e sconti, città/paesi/
+  dispositivi, e un riquadro "come si contano". "7g" = oggi + 6 giorni interi
+  (`src/lib/analyticsRange.js`, testato in `tests/analytics-range.test.mjs`).
+- `AdminDashboard.jsx`: "persone live" e "locali più visti" usano le stesse
+  due funzioni.
+
+Verificato con screenshot locali (dati reali della settimana, Supabase
+simulato) a 1366px e 390px. **Resta da vedere con l'account admin vero**
+dopo il deploy.
+
+## 22/09 — Bi Club: dove finiscono gli sconti sbloccati
+
+Feedback utenti: su `/sconti` non si capiva quali sconti sono disponibili,
+dove finiscono quando li sblocchi, e che esistono due sezioni distinte.
+
+Cause trovate in `SconteRedesignPage.jsx`:
+- la parola **"Disponibili"** era sia il primo tab sia il sotto-tab dentro
+  "I miei vantaggi" → non si capiva in quale dei due si era;
+- una convenzione sbloccata **spariva dal catalogo** (`convAvailable`)
+  senza dire dove fosse finita;
+- il selettore sembrava un filtro, e il numero su "I miei vantaggi"
+  sommava pronti + già usati.
+
+Fatto (solo front-end, nessun SQL):
+- tab rinominati **"Tutti gli sconti"** / **"I miei vantaggi"**, ognuno con
+  una riga sotto che dice cosa contiene ("6 da sbloccare", "2 pronti da
+  usare"). Il numero dei "da sbloccare" esclude i drop già presi. Pallino
+  corallo su "I miei vantaggi" con animazione a ogni nuovo sblocco.
+- sotto-tab rinominati **"Da usare"** / **"Già usati"**.
+- in testa al catalogo (`ClubGuide`): chi non ha mai sbloccato nulla vede i
+  3 passi (Sblocca → lo ritrovi in I miei vantaggi → mostri il QR); chi ha
+  sconti pronti vede "Hai N sconti pronti da usare →" che porta lì.
+- riga sezione Convenzioni: "le N già sbloccate sono in I miei vantaggi"
+  (link). Se il catalogo è vuoto perché le ha prese tutte, lo dice.
+- dopo uno sblocco dal catalogo, alla chiusura del popup QR: toast
+  "Salvato in «I miei vantaggi»" con bottone **Vedi**.
+- stati vuoti di "I miei vantaggi" con bottone "Guarda gli sconti".
+- la barra dei tab **resta agganciata in alto** mentre si scorre
+  (`.sc-tabs-sticky`): su mobile sotto `MobileLogoHeader` (69px + tacca
+  iPhone), su desktop sotto la navbar flottante (84px). Se cambiano quelle
+  altezze va aggiornato il `top` in `SconteRedesignPage.css`. Su desktop la
+  barra ora sta sotto il titolo e non più accanto: il `sticky` non esce dal
+  contenitore di riga in cui stava. Cambiando tab dalla barra agganciata la
+  pagina risale all'inizio della lista.
+
+Verificato con screenshot locali (dati reali del catalogo, utente simulato)
+su mobile 390px e desktop 1366px.
+
+## 22/09 — admin: sconti presi e utilizzati in tempo reale
+
+Richiesta: vedere in admin, dal vivo, quali sconti vengono presi, e su ogni
+card della sezione Sconti quanti ne sono stati presi e quanti utilizzati.
+
+- **"Preso"** = una riga in `discount_redemptions` (QR/codice generato).
+  **"Utilizzato"** = la stessa riga con `status = 'redeemed'` (convalidata
+  dal locale).
+- **Pannello "In diretta"** in cima a `/admin/discounts`
+  (`src/components/admin/LiveRedemptionsPanel.jsx`): gli ultimi 40 eventi
+  ("Giulia ha preso lo sconto di Orso", "Orso ha convalidato lo sconto di
+  Giulia"), i contatori di oggi, il pallino verde quando il canale è attivo.
+- **Card**: sempre due contatori, "Presi" e "Utilizzati" (più la % di
+  convalidati), che lampeggiano quando arriva un evento. Se il locale ha più
+  sconti, sotto c'è anche il totale del locale. La barra dei posti ora conta i
+  **presi** su `maxQuantity()`: prima contava gli utilizzati su
+  `max_redemptions` e ignorava il `max_quantity` dei drop, mentre il sito
+  pubblico decide "esaurito" sui presi.
+- **Una sola fonte**: `useAdminRedemptions` carica tutte le righe (paginando:
+  la query di prima si fermava al tetto di 1000 righe di PostgREST) e ascolta
+  `postgres_changes` su `discount_redemptions`. Feed, "oggi" e contatori
+  escono dalla stessa mappa (`src/lib/redemptionsLive.js`, testata in
+  `tests/redemptions-live.test.mjs`), quindi non possono contraddirsi. Dopo
+  una riconnessione o tornando sulla scheda si ricarica tutto, per non perdere
+  eventi.
+- **Niente SQL**: la tabella è già nella publication `supabase_realtime` e la
+  policy "Read redemptions" lascia leggere tutto a `is_admin()` (verificato
+  sul DB il 22/09). Il canale lo apre solo la pagina admin.
+- **Resta da provare dal vivo**: ho verificato con dati finti (Supabase e
+  auth simulati), non con un account admin vero. Prova: apri
+  `/admin/discounts`, sblocca uno sconto da un altro dispositivo e controlla
+  che la riga compaia e la card si aggiorni senza ricaricare.
+
+## 22/09 — "Metti in una lista" apriva il ristorante su iPhone (terza volta)
+
+Segnalazione: *"il tasto mettilo in una lista non funziona, lo clicco ma non
+succede nulla"*. Terza segnalazione dopo il 14/09 e il 20/09: entrambe le
+volte il giro era stato provato in Chromium e funzionava, e funzionava
+ancora — anche in WebKit (Playwright), con dati finti.
+
+**La prova vera stava nei log di Supabase** (edge logs, account admin da
+iPhone Safari): alle 18:24:19 la pagina Salvati si carica, alle 18:24:22 si
+apre la scheda di **ORSO** — la prima card dei Salvati, l'unica in alto che
+non sta in nessuna lista e quindi mostra "+ Metti in una lista" — e alle
+18:24:24 si torna indietro. Il foglio delle liste (che al montaggio fa la sua
+GET su `saved_lists`) non si è mai aperto, e in 24 ore non c'è un solo POST
+su `saved_lists`/`saved_list_items`. Il tocco sulla riga finiva al
+bottone-lenzuolo che apre la scheda.
+
+**Causa**: nella card `tile` il bottone che apre la scheda copriva l'intera
+card (`absolute; inset: 0`) e la riga delle liste ci stava sopra con uno
+z-index più alto. Per il mouse e per i tocchi sintetici di Playwright basta;
+Safari su iPhone invece "aggiusta" il tocco (touch adjustment) verso
+l'elemento cliccabile più probabile nell'area del dito, e fra una riga alta
+28px e un bottone grande quanto la card sceglieva spesso il secondo. Per
+questo in nessun test si è mai visto: Playwright non passa da
+quell'aggiustamento.
+
+**Fix**:
+- `RestaurantCard.jsx` (variante `tile`): il bottone che apre la scheda copre
+  solo foto e testo; la riga in fondo (`footer`) sta fuori da quella zona,
+  quindi sotto di lei non c'è altro da toccare. In più la riga ferma il
+  `pointerdown` prima della card: il `whileTap` di Framer è sulla card intera
+  e premendo la riga la card si rimpiccioliva come se si aprisse il locale.
+- `SavedListsFooter` (`SavedListsStrip.jsx`): la riga è alta 44px (minimo
+  Apple per un tocco) e arriva fino al bordo della card.
+
+**Verificato** (Chromium e WebKit, telefono emulato, dati finti): il tocco
+sulla riga apre il foglio, il tocco su "Da provare" crea lista e riga, la
+card non si rimpicciolisce premendo la riga, il tocco sulla card apre ancora
+la scheda. `npm test` 136/136, build a posto, lint invariato. **Resta da
+provare su un iPhone vero** dopo il deploy — il touch adjustment esiste solo lì.
+
+## 22/09 — lancio: Supabase saturo, sito vuoto e registrazioni ferme
+
+**Sintomo** (dalle 17:00 UTC, uscita pubblica): il sito si apriva ma senza
+locali, e nessuno riusciva a registrarsi. Nelle 3 ore del picco una sola
+registrazione riuscita; tutti i `POST /auth/v1/signup` in 504/522.
+
+**Cosa dicevano i log**: Postgres quasi fermo (nessuna query lenta, nessun
+lock, 22 MB di DB), ma PostgREST e GoTrue sulla stessa macchina bloccati:
+"Warp server error: Thread killed by timeout manager" a centinaia,
+`PGRST002` (schema cache), 522 da Cloudflare, `auth/v1/health` senza
+risposta per 20 s, una `categories` da 1 riga tornata dopo 228 s. La status
+page di Supabase era verde: era la macchina del progetto (compute piccolo,
+`max_connections=60`, `shared_buffers` 224 MB) sotto il traffico.
+
+**Da dove veniva il carico** (edge logs, 40 minuti di picco): prima voce
+`POST page_views` (~1700), poi le letture pubbliche che ogni visitatore
+rifaceva da sé — `restaurants`, `discounts`, `categories`,
+`sponsored_placements` — più i relativi preflight OPTIONS. In più
+`usePageTracking` chiamava `supabase.auth.getUser()` (richiesta al server
+auth) a **ogni cambio pagina**, e se `/api/track` rispondeva 5xx rifaceva
+l'insert dal browser: più Supabase rallentava, più richieste riceveva.
+
+**Fix nel codice**:
+- `api/public.js` + `src/lib/publicQueries.js`: le quattro letture pubbliche
+  passano da un endpoint con `s-maxage` (30 s sconti, 120 s ristoranti e
+  banner, 600 s categorie) e `stale-while-revalidate` di un giorno. La CDN di
+  Vercel serve tutti i visitatori; Supabase vede una richiesta per risorsa
+  ogni tanto. Stessa chiave anon del browser, stesso perimetro GRANT/RLS. Gli
+  hook ripiegano sulla query diretta se l'endpoint non risponde, e nel
+  pannello admin vanno sempre diretti (serve il dato appena salvato).
+- `usePageTracking`: `getSession()` (locale) al posto di `getUser()`, e
+  ripiego sull'insert diretto solo se `/api/track` non esiste (404, sviluppo
+  locale), non quando risponde 5xx.
+- `api/track.js`: timeout di 4 s verso Supabase e log dell'errore tagliato
+  (prima finiva nei log l'intera pagina HTML di Cloudflare).
+
+**Fuori dal codice (dashboard, solo il titolare)**: compute passato da Nano
+a **Micro** (1 GB) alle 17:53 UTC, con riavvio. Dopo: 0 errori 5xx, 4
+registrazioni nei primi 10 minuti, `restaurants` da ~450 letture ogni 40
+minuti a ~8 ogni 5 (quasi tutto servito dalla CDN, `x-vercel-cache: HIT`).
+Alle 18:13–18:16 UTC passato a **Small** (2 GB, `max_connections` 90,
+`shared_buffers` 512 MB): su Micro la CPU stava fra il 21 e il 48% e la
+memoria al 56%, troppo vicino al limite per una macchina a CPU condivisa.
+
+**Stesso giorno, dopo**:
+- #280 — su Safari iPhone il bottone di invio del login e il cerchio "Bi"
+  comparivano senza sfondo (testo bianco su crema): con email e password non
+  si entrava né ci si registrava, solo con Google. Il bottone ora è un
+  `<button>` semplice con il colore per esteso; in cima al modulo c'è il
+  selettore "Accedi | Registrati". Verificato in produzione con una
+  registrazione di prova (`delivered@resend.dev`, poi cancellata).
+- #281 — `/api/public` aggiunge `stale-if-error`: durante il riavvio per il
+  cambio compute la CDN rispondeva 502/504 invece dell'ultima copia buona.
+  Limite: un deploy svuota la cache CDN, quindi subito dopo un deploy non
+  c'è copia da servire finché qualcuno non richiede la risorsa.
+
+**Da tenere a mente**: una nuova lettura pubblica fatta a ogni visita va
+aggiunta a `publicQueries.js` e servita da `/api/public`, non chiesta a
+Supabase da ogni browser.
 
 ## 22/09 — GRANT mancante su `location_label`: la home non caricava i locali
 

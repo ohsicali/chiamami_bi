@@ -464,7 +464,8 @@ export default function LoginPage() {
               width: 64,
               height: 64,
               borderRadius: '50%',
-              background: 'var(--color-corallo)',
+              // Colore per esteso, come il bottone di invio: vedi lì.
+              backgroundColor: '#E8453C',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -476,29 +477,56 @@ export default function LoginPage() {
             <BiLogoMark style={{ width: 38, height: 38 }} />
           </motion.div>
 
-          {/* Kick pill */}
+          {/* Accedi | Registrati — in cima e ben visibile. Prima il passaggio
+              stava solo in una riga piccola in fondo al modulo, e chi arrivava
+              dalla scheda Profilo (che apre la registrazione) non trovava più
+              come entrare con un account che aveva già. */}
           {(mode === 'login' || mode === 'register') && (
             <motion.div
               variants={itemVariants}
-              style={{ textAlign: 'center', marginBottom: 10 }}
+              role="tablist"
+              aria-label="Accedi o registrati"
+              style={{
+                display: 'flex',
+                gap: 4,
+                padding: 4,
+                margin: '0 auto 16px',
+                maxWidth: 320,
+                background: 'rgba(34,24,28,.06)',
+                borderRadius: 999,
+              }}
             >
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '5px 10px',
-                  background: 'var(--color-corallo-soft)',
-                  color: 'var(--color-corallo-ink)',
-                  borderRadius: 999,
-                  fontSize: 10.5,
-                  fontWeight: 800,
-                  letterSpacing: '.1em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                {mode === 'login' ? 'Bentornato' : 'Nuovo qui'}
-              </span>
+              {[
+                { key: 'login', label: 'Accedi' },
+                { key: 'register', label: 'Registrati' },
+              ].map(({ key, label }) => {
+                const active = mode === key
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => { if (!active) { setMode(key); setError(''); setSuccess('') } }}
+                    style={{
+                      flex: 1,
+                      minHeight: 40,
+                      padding: '8px 14px',
+                      borderRadius: 999,
+                      border: 'none',
+                      cursor: active ? 'default' : 'pointer',
+                      background: active ? 'var(--color-ink)' : 'transparent',
+                      color: active ? '#fff' : 'var(--color-ink-70)',
+                      fontFamily: 'var(--font-sans)',
+                      fontSize: 14,
+                      fontWeight: 800,
+                      transition: 'background .15s ease, color .15s ease',
+                    }}
+                  >
+                    {label}
+                  </button>
+                )
+              })}
             </motion.div>
           )}
 
@@ -994,15 +1022,20 @@ export default function LoginPage() {
                 e quello che sembrava un bottone rotto era un accesso in corso.
                 Adesso il colore non cambia, gira una rotella e c'è scritto
                 cosa sta succedendo. */}
-            <motion.button
+            {/* Bottone normale, non motion.button, e colore scritto per
+                esteso: il 22/09 su Safari iPhone il bottone (e il cerchio
+                "Bi" qui sopra, stesso schema) comparivano senza sfondo —
+                testo bianco su crema, cioè invisibili — e nessuno riusciva a
+                entrare o registrarsi con email. L'effetto pressione lo fa la
+                classe `press` in CSS, senza passare da Framer. */}
+            <button
               type="submit"
               disabled={submitting}
               aria-busy={submitting}
-              className="hover-lift-sm"
-              whileTap={{ transform: 'scale(0.98)' }}
+              className="press hover-lift-sm"
               style={{
                 width: '100%',
-                background: 'var(--color-corallo)',
+                backgroundColor: '#E8453C',
                 color: '#fff',
                 opacity: submitting ? 0.75 : 1,
                 border: 'none',
@@ -1052,7 +1085,7 @@ export default function LoginPage() {
                   : mode === 'login'
                   ? 'Accedi'
                   : 'Crea account'}
-            </motion.button>
+            </button>
           </motion.form>
 
           {/* Toggle mode */}

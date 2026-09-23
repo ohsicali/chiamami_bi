@@ -15,6 +15,7 @@ import RestaurantLocationsNote from './RestaurantLocationsNote'
 import SmartImage from '../UI/SmartImage'
 import RestaurantCard from './RestaurantCard'
 import DiscountQuickPopup from '../Discount/DiscountQuickPopup'
+import { passHeaderFromRestaurant } from '../../lib/utils/passHeader'
 import OtherDiscountsSheet from '../Discount/OtherDiscountsSheet'
 import SconteAuthGate from '../Discount/SconteAuthGate'
 import { checkValidity, computeNextValidWindow } from '../../lib/validity'
@@ -762,6 +763,7 @@ export default function DesktopRestaurantSheet({
             blockedMessage={blockedMessage}
             onClaim={handleClaim}
             onClose={() => { setPopupOpen(false); setBlockedMessage(null) }}
+            {...passHeaderFromRestaurant(restaurant)}
           />
         )}
       </AnimatePresence>

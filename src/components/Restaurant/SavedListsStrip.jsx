@@ -383,7 +383,11 @@ export function SavedListsFooter({ lists, restaurantId, restaurantName, onOpen }
       aria-label={vuoto ? `Metti ${restaurantName} in una lista` : `Cambia le liste di ${restaurantName}`}
       style={{
         display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap',
-        width: '100%', marginTop: 8, paddingTop: 8, border: 'none',
+        // 44px e fino al bordo della card: è la misura minima di un tocco
+        // su iPhone. Alta 28px, la riga perdeva il tocco a favore di quello
+        // che le stava intorno (v. RestaurantCard, variante tile).
+        width: '100%', minHeight: 44, padding: '10px 0 12px', border: 'none',
+        touchAction: 'manipulation',
         borderTop: '1px solid var(--color-ink-05)',
         background: 'none', cursor: 'pointer', fontFamily: 'inherit',
         fontSize: 11.5, fontWeight: 700, textAlign: 'left',

@@ -5,6 +5,7 @@ import { supabase, isSupabaseConfigured } from '../supabase'
 const SESSION_KEY = 'chiamamibi_session_id'
 const SESSION_TIMESTAMP_KEY = 'chiamamibi_session_ts'
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000 // 30 min inactivity = new session
+const VISITOR_KEY = 'chiamamibi_visitor_id'
 
 function generateSessionId() {
   const rand = Math.random().toString(36).slice(2, 12)
@@ -35,6 +36,21 @@ export function getOrCreateSessionId() {
   }
 }
 
+/** Id anonimo e casuale del browser, per contare le persone e non solo le
+ *  visite: il session_id cambia dopo 30 minuti e a ogni scheda nuova. Non è
+ *  legato all'account né ad altro — serve solo a dire "è lo stesso browser". */
+function getOrCreateVisitorId() {
+  try {
+    const existing = localStorage.getItem(VISITOR_KEY)
+    if (existing) return existing
+    const fresh = generateSessionId()
+    localStorage.setItem(VISITOR_KEY, fresh)
+    return fresh
+  } catch {
+    return null
+  }
+}
+
 /**
  * Page tracking hook — inserts a row into page_views on every route change.
  * Skips admin routes (we don't want admin noise polluting visitor metrics).
@@ -56,12 +72,17 @@ export function usePageTracking() {
     lastTrackedPath.current = path
 
     const sessionId = getOrCreateSessionId()
+    const visitorId = getOrCreateVisitorId()
 
     // Fire-and-forget — never block navigation or surface errors to the user
     ;(async () => {
       try {
-        const { data: authData } = await supabase.auth.getUser()
-        const userId = authData?.user?.id || null
+        // getSession legge la sessione già in memoria/localStorage; getUser
+        // faceva una richiesta al server auth a OGNI cambio pagina — al lancio
+        // del 22/09 erano centinaia al minuto sullo stesso servizio che gestisce
+        // le registrazioni. Per attribuire una visita basta l'id locale.
+        const { data: sessionData } = await supabase.auth.getSession()
+        const userId = sessionData?.session?.user?.id || null
         const referrer = document.referrer || null
 
         // Try server-side /api/track first — it enriches with Vercel geo headers
@@ -76,13 +97,17 @@ export function usePageTracking() {
               path,
               user_id: userId,
               session_id: sessionId,
+              visitor_id: visitorId,
               referrer,
             }),
             keepalive: true,
           })
-          tracked = resp.ok
+          // Solo un 404 (endpoint assente: sviluppo locale) giustifica il
+          // ripiego. Un 5xx vuol dire che Supabase è già in affanno: rifare
+          // l'insert dal browser raddoppierebbe il carico proprio quando fa male.
+          tracked = resp.status !== 404
         } catch {
-          // network/404 — fall through to direct insert
+          // network — fall through to direct insert
         }
 
         if (!tracked) {
@@ -90,6 +115,7 @@ export function usePageTracking() {
             path,
             user_id: userId,
             session_id: sessionId,
+            visitor_id: visitorId,
             referrer,
             user_agent: navigator.userAgent?.slice(0, 255) || null,
           })
