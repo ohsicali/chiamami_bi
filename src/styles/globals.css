@@ -411,6 +411,13 @@ body {
   gap: 2px;
   z-index: 50;
 
+  /* liquidGL (Android/desktop, dopo ~2 s dal caricamento) scrive
+     `pointer-events: none` inline sulla nav e i bottoni lo ereditano:
+     il tocco passava alla pagina sotto e i tasti "non facevano niente".
+     L'`!important` batte lo stile inline — il suo canvas ha già
+     pointer-events: none, alla libreria i tocchi non servono. */
+  pointer-events: auto !important;
+
   /* Apple Liquid Glass — CSS nativo */
   background: rgba(255, 255, 255, 0.52);
   backdrop-filter: blur(28px) saturate(180%) brightness(1.04);
