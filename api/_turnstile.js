@@ -17,15 +17,21 @@ const SITEVERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverif
 
 function clientIp(req) {
   const h = req.headers || {}
+  // x-real-ip lo scrive Vercel; il primo pezzo di x-forwarded-for lo può
+  // scrivere il client (stesso ordine di _rate-limit.js).
   const fwd = (h['x-forwarded-for'] || '').toString().split(',')[0].trim()
-  return fwd || h['x-real-ip'] || h['cf-connecting-ip'] || ''
+  return h['x-real-ip'] || h['x-vercel-forwarded-for'] || fwd || ''
 }
 
 export async function verifyTurnstile(req, { tokenField = 'captcha_token' } = {}) {
   const secret = process.env.TURNSTILE_SECRET_KEY
   if (!secret) {
     // Captcha not configured — let the request through. This keeps local dev
-    // and preview deploys without env vars working.
+    // and preview deploys without env vars working. In produzione però vuol
+    // dire che i form pubblici non hanno difese: lo si urla nei log.
+    if (process.env.VERCEL_ENV === 'production') {
+      console.error('[turnstile] TURNSTILE_SECRET_KEY mancante in produzione: captcha NON verificato')
+    }
     return { ok: true, skipped: true }
   }
 

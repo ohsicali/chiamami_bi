@@ -2,11 +2,12 @@
  * Vercel Serverless Function — Unified email dispatcher
  *
  * Router interno su `type`:
- * - type='user'                           → benvenuto dopo la registrazione (no auth, body {email, name})
+ * - type='user'                           → benvenuto dopo la registrazione (no auth, body {email, name};
+ *                                            parte solo verso un account appena creato, e una volta sola)
  * - type='partner'                        → benvenuto ristoratore col PIN (Bearer admin, body {to, nomeLocale, pin, restaurantId})
- * - type='confirmation'                   → conferma suggerimento all'utente (no auth, body {to, nome_locale, nome_utente?})
- * - type='internal-notify'                → notifica interna a info@ (no auth + Turnstile, body {nome_locale, …, email_utente})
- * - type='partner-application-confirmation' → conferma al candidato partner (no auth, body {to, nome_referente, nome_attivita})
+ * - type='internal-notify'                → notifica interna a info@ + conferma a chi ha segnalato
+ *                                            (no auth + Turnstile, body {nome_locale, …, email_utente})
+ * - type='confirmation' / 'partner-application-confirmation' → non spediscono più niente (vedi sotto)
  * - type='discount-claimed' / 'discount-used' → le due ricevute (sessione utente / QR)
  * - type='preview'                        → una copia di prova all'admin che la chiede
  *
@@ -57,9 +58,16 @@ export default async function handler(req, res) {
 
   if (type === 'user')                             return handleUserWelcome(req, res)
   if (type === 'partner')                          return handlePartnerWelcome(req, res)
-  if (type === 'confirmation')                     return handleSuggestionConfirmation(req, res)
+  // Le due conferme ai form erano aperte a chiunque: bastava un POST per
+  // spedire a un indirizzo qualsiasi un'email col nostro mittente e un testo
+  // scelto da chi chiamava. Ora le manda il server da sé, dopo il captcha —
+  // quella del suggerimento `internal-notify`, quella della candidatura
+  // /api/partner-application. Il 200 resta per le schede rimaste aperte con
+  // la versione vecchia del sito, che le chiamano ancora.
+  if (type === 'confirmation' || type === 'partner-application-confirmation') {
+    return res.status(200).json({ success: true, skipped: 'sent-by-server' })
+  }
   if (type === 'internal-notify')                  return handleInternalNotify(req, res)
-  if (type === 'partner-application-confirmation') return handlePartnerApplicationConfirmation(req, res)
   // Le ricevute degli sconti (Blocco mail): chi le chiede deve essere
   // l'utente stesso, con il proprio token di sessione — vedi handleDiscount*.
   if (type === 'discount-claimed')                 return handleDiscountClaimed(req, res)
@@ -244,6 +252,12 @@ async function handleDiscountUsed(req, res) {
   // 'redeemed' è il valore che scrive la RPC verify_redeem_qr: mandare la
   // conferma per uno sconto non ancora scansionato sarebbe una bugia.
   if (red.status !== 'redeemed') return res.status(409).json({ error: 'Redemption not marked as redeemed' })
+  // La chiamata arriva subito dopo la scansione. Un riscatto usato da ore non
+  // ha motivo di generare email: chi prova codici a caso non deve poterlo
+  // usare per scrivere a utenti che hanno usato uno sconto settimane fa.
+  if (!red.redeemed_at || Date.now() - new Date(red.redeemed_at).getTime() > 2 * 60 * 60 * 1000) {
+    return res.status(200).json({ ok: true, skipped: 'too-old' })
+  }
 
   const { data: profile } = await admin
     .from('profiles').select('email').eq('id', red.user_id).maybeSingle()
@@ -367,6 +381,28 @@ async function handleUserWelcome(req, res) {
     return res.status(400).json({ error: 'Invalid email address' })
   }
 
+  // Il benvenuto parte solo verso un account vero, registrato da poco, e una
+  // volta sola. Prima partiva verso qualunque indirizzo scritto nel corpo,
+  // col nome scelto da chi chiamava: un modo gratuito per mandare email col
+  // nostro mittente a chi si voleva (e la registrazione ne mandava due, una
+  // dal form e una al primo caricamento del profilo).
+  const supaUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
+  const supaService = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!supaUrl || !supaService) return res.status(500).json({ error: 'Server configuration error' })
+  const adminDb = createClient(supaUrl, supaService, { auth: { persistSession: false } })
+  const normalizedEmail = String(email).trim().toLowerCase()
+  const { data: account } = await adminDb
+    .from('profiles').select('id, full_name, created_at').eq('email', normalizedEmail).maybeSingle()
+  const FRESH_MS = 24 * 60 * 60 * 1000
+  if (!account || !account.created_at || Date.now() - new Date(account.created_at).getTime() > FRESH_MS) {
+    return res.status(200).json({ success: true, skipped: 'no-new-account' })
+  }
+  const firstSend = await claimSendSlot(adminDb, {
+    userId: account.id, kind: 'welcome', refId: account.id, toEmail: normalizedEmail,
+  })
+  if (!firstSend) return res.status(200).json({ success: true, skipped: 'already-sent' })
+  const safeName = String(account.full_name || name || '').slice(0, 60)
+
   // Il token per "scegli cosa ricevere": senza, il benvenuto sarebbe l'unica
   // email di annuncio senza via d'uscita — e senza le intestazioni che fanno
   // comparire "Annulla iscrizione" accanto al mittente, che è il primo posto
@@ -380,26 +416,20 @@ async function handleUserWelcome(req, res) {
   // senza numero, che è l'unica cosa peggiore di dirne uno sbagliato.
   let attivi = null
   try {
-    const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
-    const service = process.env.SUPABASE_SERVICE_ROLE_KEY
-    if (url && service) {
-      const admin = createClient(url, service, { auth: { persistSession: false } })
-      const { data: prof } = await admin
-        .from('profiles').select('id').eq('email', String(email).trim().toLowerCase()).maybeSingle()
-      if (prof?.id) token = await tokenForUser(admin, prof.id)
-      const { count } = await admin
-        .from('discounts')
-        .select('id', { count: 'exact', head: true })
-        .eq('is_active', true)
-        .gt('valid_until', new Date().toISOString())
-      attivi = Number.isFinite(count) ? count : null
-    }
+    token = await tokenForUser(adminDb, account.id)
+    const { count } = await adminDb
+      .from('discounts')
+      .select('id', { count: 'exact', head: true })
+      .eq('is_active', true)
+      .gt('valid_until', new Date().toISOString())
+    attivi = Number.isFinite(count) ? count : null
   } catch { /* il benvenuto parte comunque */ }
 
-  const mail = welcomeEmail({ name, attivi, unsubscribeUrl: unsubscribeUrl(token) })
-  const r = await sendEmail({ to: email, ...mail, headers: listUnsubscribeHeaders(token) })
+  const mail = welcomeEmail({ name: safeName, attivi, unsubscribeUrl: unsubscribeUrl(token) })
+  const r = await sendEmail({ to: normalizedEmail, ...mail, headers: listUnsubscribeHeaders(token) })
   if (!r.ok) {
     console.error('[send-email user] ', r.error)
+    await logFailure(adminDb, { userId: account.id, kind: 'welcome', refId: null, toEmail: normalizedEmail, error: r.error })
     return res.status(502).json({ error: 'Failed to send email' })
   }
   return res.status(200).json({ success: true })
@@ -487,20 +517,9 @@ async function handlePartnerWelcome(req, res) {
 /*  CONFIRMATION — conferma suggerimento all'utente proponente         */
 /* ------------------------------------------------------------------ */
 
-async function handleSuggestionConfirmation(req, res) {
-  // Tightened from 5 → 3 / min: this endpoint is unauthenticated and a
-  // determined attacker could use it to spam arbitrary inboxes via Resend.
-  const limited = rateLimit(req, { key: 'send-email-confirmation', max: 3, windowMs: 60_000 })
-  if (limited) return res.status(429).json({ error: limited })
-
-  const { to, nome_locale, nome_utente } = req.body || {}
-  if (!to || !nome_locale) return res.status(400).json({ error: 'Missing required fields: to, nome_locale' })
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return res.status(400).json({ error: 'Invalid email address' })
-
-  const mail = suggestionConfirmationEmail({
-    nomeUtente: String(nome_utente || '').slice(0, 200),
-    nomeLocale: String(nome_locale).slice(0, 200),
-  })
+/** La manda handleInternalNotify, dopo il captcha: non ha un `type` suo. */
+async function sendSuggestionConfirmation({ to, nomeUtente, nomeLocale }) {
+  const mail = suggestionConfirmationEmail({ nomeUtente, nomeLocale })
   const r = await sendEmail({
     to,
     ...mail,
@@ -509,11 +528,7 @@ async function handleSuggestionConfirmation(req, res) {
     // account, e per Gmail un messaggio non richiesto senza uscita è spam.
     headers: { 'List-Unsubscribe': `<mailto:${REPLY_TO()}?subject=unsubscribe>` },
   })
-  if (!r.ok) {
-    console.error('[send-email confirmation] ', r.error)
-    return res.status(502).json({ error: 'Failed to send email' })
-  }
-  return res.status(200).json({ success: true })
+  if (!r.ok) console.error('[send-email confirmation] ', r.error)
 }
 
 /* ------------------------------------------------------------------ */
@@ -566,37 +581,13 @@ async function handleInternalNotify(req, res) {
     console.error('[send-email internal-notify] ', r.error)
     return res.status(502).json({ error: 'Failed to send email' })
   }
-  return res.status(200).json({ success: true })
-}
 
-/* ------------------------------------------------------------------ */
-/*  PARTNER-APPLICATION-CONFIRMATION — conferma al candidato           */
-/* ------------------------------------------------------------------ */
-
-async function handlePartnerApplicationConfirmation(req, res) {
-  const limited = rateLimit(req, { key: 'send-email-partner-app-conf', max: 5, windowMs: 60_000 })
-  if (limited) return res.status(429).json({ error: limited })
-
-  const { to, nome_referente, nome_attivita } = req.body || {}
-  if (!to || !nome_referente || !nome_attivita) {
-    return res.status(400).json({ error: 'Missing required fields: to, nome_referente, nome_attivita' })
-  }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
-    return res.status(400).json({ error: 'Invalid email address' })
-  }
-
-  const mail = partnerApplicationConfirmationEmail({
-    nomeReferente: String(nome_referente).slice(0, 200),
-    nomeAttivita: String(nome_attivita).slice(0, 200),
+  // La conferma a chi ha segnalato parte da qui, dopo il captcha: prima era
+  // una chiamata a parte, senza captcha, che accettava qualsiasi destinatario.
+  await sendSuggestionConfirmation({
+    to: String(email_utente).trim().slice(0, 254),
+    nomeUtente: cap(nome_utente, 200) || '',
+    nomeLocale: cap(nome_locale, 200),
   })
-  const r = await sendEmail({
-    to,
-    ...mail,
-    headers: { 'List-Unsubscribe': `<mailto:${REPLY_TO()}?subject=unsubscribe>` },
-  })
-  if (!r.ok) {
-    console.error('[send-email partner-application-confirmation] ', r.error)
-    return res.status(502).json({ error: 'Failed to send email' })
-  }
   return res.status(200).json({ success: true })
 }

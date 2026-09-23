@@ -29,6 +29,7 @@
  * Auth: Bearer JWT Supabase + profiles.is_admin=true.
  */
 
+import { randomInt } from 'node:crypto'
 import { createClient } from '@supabase/supabase-js'
 import { applyCors } from './_cors.js'
 
@@ -79,10 +80,10 @@ export default async function handler(req, res) {
     if (action === 'ai-seo-suggest') return await aiSeoSuggest(req, res, admin)
     if (action === 'correct-text') return await correctText(req, res)
     if (action === 'search-places') return await searchPlaces(req, res)
-    return res.status(400).json({ error: `Unknown action: ${action}` })
+    return res.status(400).json({ error: 'Unknown action' })
   } catch (err) {
     console.error(`admin-actions/${action} failed:`, err)
-    return res.status(500).json({ error: err.message || 'Internal error' })
+    return res.status(500).json({ error: 'Internal error' })
   }
 }
 
@@ -307,7 +308,10 @@ async function correctText(req, res) {
 /* ------------------------------------------------------------------ */
 async function searchPlaces(req, res) {
   const { name, address } = req.body || {}
-  if (!name || !name.trim()) return res.status(400).json({ error: 'name required' })
+  if (typeof name !== 'string' || !name.trim()) return res.status(400).json({ error: 'name required' })
+  if (name.length > 200 || (address != null && String(address).length > 300)) {
+    return res.status(400).json({ error: 'Testo troppo lungo' })
+  }
 
   const apiKey = process.env.GOOGLE_PLACES_KEY
   if (!apiKey) return res.status(500).json({ error: 'GOOGLE_PLACES_KEY non configurata' })
@@ -361,6 +365,7 @@ async function searchPlaces(req, res) {
 /* ------------------------------------------------------------------ */
 function generatePin() {
   // 6-digit PIN, no leading zeros stripping: exact 6 chars.
-  const n = Math.floor(Math.random() * 900000) + 100000
-  return String(n)
+  // crypto, non Math.random: il PIN apre la dashboard del locale, e
+  // Math.random non è pensato per essere imprevedibile.
+  return String(randomInt(100000, 1000000))
 }

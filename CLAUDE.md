@@ -140,6 +140,24 @@ sottolineato), la fascia o l'orario e la prima condizione. Niente pillola
 Dettagli e ragioni: sezione "18/09 — sbloccare uno sconto digitando il
 codice" in `docs/v4-status.md`.
 
+## Sicurezza — tre regole (audit 23/09)
+Resoconto completo: `docs/security-audit-2026-09-23.md`.
+- **`restaurants` non si legge mai con `select('*')`** dal browser: `verify_pin`,
+  `partner_email`, `magic_token` non sono concessi né ad `anon` né ad
+  `authenticated`, e con i grant di colonna un `*` fallisce intero. Colonne
+  esplicite (`RESTAURANT_READABLE_COLUMNS` in `src/lib/restaurantColumns.js`,
+  `RESTAURANT_COLUMNS` in `publicQueries.js`); il PIN l'admin lo legge con
+  `fetchRestaurantSecrets()` (RPC `admin_restaurant_secrets`). Una **colonna
+  nuova** di `restaurants` va concessa in SQL ad anon *e* authenticated e
+  aggiunta a quell'elenco.
+- **Nessun endpoint pubblico spedisce email a un indirizzo preso dal corpo
+  della richiesta** senza captcha: le conferme dei form le manda il server dopo
+  Turnstile. Un endpoint che consuma API a pagamento (Google, Anthropic) vuole
+  un utente autenticato — admin se serve solo al pannello.
+- **Profili, riscatti e storage**: un utente legge solo il proprio profilo; i
+  riscatti li crea il browser ma li segna usati solo il locale (RPC `verify_*`);
+  nel bucket `photos` scrive solo l'admin.
+
 ## Connettori disponibili — USALI SE ATTIVI
 - **GitHub** — PR, issues, merge (funziona via `gh` CLI, testato e operativo)
 - **Supabase** — se il connettore è attivo, esegui query SQL direttamente. Se non funziona, fornisci SQL all'utente da eseguire nel dashboard Supabase. CLI disponibile (`npx supabase`) ma richiede login/token.

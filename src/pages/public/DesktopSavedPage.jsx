@@ -9,6 +9,7 @@ import { useGeolocation } from '../../lib/hooks/useGeolocation'
 import { isOpenForMoment } from '../../lib/hours'
 import { getDistance } from '../../lib/utils/distance'
 import { supabase } from '../../lib/supabase'
+import { RESTAURANT_READABLE_COLUMNS } from '../../lib/restaurantColumns'
 import { formatDiscountBadgeShort } from '../../lib/utils/discountFormat'
 import RestaurantCard from '../../components/Restaurant/RestaurantCard'
 import SavedListsStrip, { SavedListsFooter } from '../../components/Restaurant/SavedListsStrip'
@@ -56,7 +57,7 @@ export default function DesktopSavedPage() {
     const ids = [...savedIds]
     supabase
       .from('restaurants')
-      .select('*, photos:restaurant_photos(id, photo_url, thumb_url, sort_order)')
+      .select(`${RESTAURANT_READABLE_COLUMNS}, photos:restaurant_photos(id, photo_url, thumb_url, sort_order)`)
       .in('id', ids)
       .then(({ data, error }) => {
         if (error) console.error('[DesktopSavedPage] fetch error:', error)

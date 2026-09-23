@@ -6,6 +6,7 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { useSavedLists } from '../../lib/hooks/useSavedLists'
 import { supabase, proxyImg } from '../../lib/supabase'
+import { RESTAURANT_READABLE_COLUMNS } from '../../lib/restaurantColumns'
 import { getDistance } from '../../lib/utils/distance'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import Footer from '../../components/Layout/Footer'
@@ -91,7 +92,7 @@ export default function SavedPage() {
     Promise.all([
       supabase
         .from('restaurants')
-        .select('*, photos:restaurant_photos(id, photo_url, thumb_url, sort_order)')
+        .select(`${RESTAURANT_READABLE_COLUMNS}, photos:restaurant_photos(id, photo_url, thumb_url, sort_order)`)
         .in('id', ids),
       supabase
         .from('discounts')

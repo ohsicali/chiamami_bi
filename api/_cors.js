@@ -19,7 +19,9 @@ const ALLOWED_ORIGINS = new Set([
 ])
 
 const ALLOWED_PATTERNS = [
-  /^https:\/\/[a-z0-9-]+\.vercel\.app$/i, // Vercel preview deploys
+  // Solo le anteprime di questo progetto (chiamami-bi-….vercel.app), non
+  // qualunque sito ospitato su Vercel: chiunque può pubblicarne uno.
+  /^https:\/\/chiamami-bi(-[a-z0-9-]+)?\.vercel\.app$/i, // Vercel preview deploys
   /^http:\/\/localhost(:\d+)?$/i,         // local dev
   /^http:\/\/127\.0\.0\.1(:\d+)?$/i,      // local dev
 ]

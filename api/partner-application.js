@@ -6,8 +6,8 @@
 import { rateLimit, maybeCleanup } from './_rate-limit.js'
 import { applyCors } from './_cors.js'
 import { verifyTurnstile } from './_turnstile.js'
-import { internalPartnerApplicationEmail } from './_email/templates.js'
-import { sendEmail } from './_email/send.js'
+import { internalPartnerApplicationEmail, partnerApplicationConfirmationEmail } from './_email/templates.js'
+import { sendEmail, REPLY_TO } from './_email/send.js'
 
 const NOTIFY_EMAIL = 'info@chiamamibi.com'
 const SITE_URL = process.env.PUBLIC_SITE_URL || 'https://chiamamibi.com'
@@ -131,18 +131,23 @@ export default async function handler(req, res) {
       console.error('Email send error:', err)
     }
 
-    // Send confirmation to candidate (fire-and-forget — does not block the response)
-    const siteUrl = process.env.SITE_URL || SITE_URL
-    fetch(`${siteUrl}/api/send-email`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: 'partner-application-confirmation',
+    // La conferma al candidato parte da qui, dopo captcha e rate limit.
+    // Prima passava da un tipo di /api/send-email aperto a chiunque, che
+    // spediva la stessa email a qualsiasi indirizzo gli si desse.
+    try {
+      const confirmation = partnerApplicationConfirmationEmail({
+        nomeReferente: cleanContactName,
+        nomeAttivita: cleanRestaurantName,
+      })
+      const sent = await sendEmail({
         to: cleanEmail,
-        nome_referente: cleanContactName,
-        nome_attivita: cleanRestaurantName,
-      }),
-    }).catch((err) => console.warn('[partner-application] confirmation send failed:', err))
+        ...confirmation,
+        headers: { 'List-Unsubscribe': `<mailto:${REPLY_TO()}?subject=unsubscribe>` },
+      })
+      if (!sent.ok) console.warn('[partner-application] confirmation send failed:', sent.error)
+    } catch (err) {
+      console.warn('[partner-application] confirmation send failed:', err)
+    }
   }
 
   return res.status(200).json({ success: true })

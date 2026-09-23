@@ -132,7 +132,14 @@ export default async function handler(req, res) {
       return res.status(response.status).end()
     }
 
-    const originalContentType = response.headers.get('content-type') || 'image/jpeg'
+    // Solo immagini raster. Questo endpoint risponde da chiamamibi.com: un
+    // file HTML o SVG (che può contenere script) caricato nello storage e
+    // servito da qui girerebbe con i cookie e la sessione del nostro dominio.
+    const originalContentType = (response.headers.get('content-type') || 'image/jpeg').toLowerCase()
+    if (!/^image\/(jpeg|jpg|png|webp|avif|gif|heic|heif)\b/.test(originalContentType)) {
+      res.setHeader('Cache-Control', 'public, s-maxage=300, max-age=300')
+      return res.status(415).json({ error: 'Unsupported media type' })
+    }
     const originalBuffer = Buffer.from(await response.arrayBuffer())
 
     let outBuffer = originalBuffer
@@ -195,6 +202,8 @@ export default async function handler(req, res) {
     // ogni destinatario è un client diverso, sarebbe una copia a testa.
     if (width && !forceJpeg) res.setHeader('Vary', 'Accept')
     res.setHeader('Content-Type', outContentType)
+    res.setHeader('X-Content-Type-Options', 'nosniff')
+    res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox")
     res.setHeader('Content-Length', outBuffer.length)
     res.send(outBuffer)
   } catch (e) {

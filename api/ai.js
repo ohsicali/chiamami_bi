@@ -159,7 +159,11 @@ export default async function handler(req, res) {
   const limited = rateLimit(req, { key: `ai-auth-${userId}`, max: 10, windowMs: 60_000 })
   if (limited) return res.status(429).json({ error: limited })
 
-  const { prompt: rawPrompt, conversation_id, current_moment, user_location, city } = req.body || {}
+  const { prompt: rawPrompt, conversation_id, user_location, city } = req.body || {}
+  // Finisce nei metadati salvati e nel prompt: solo i valori che conosciamo.
+  const current_moment = typeof req.body?.current_moment === 'string' && Object.hasOwn(MOMENT_LABELS, req.body.current_moment)
+    ? req.body.current_moment
+    : null
   const prompt = typeof rawPrompt === 'string' ? rawPrompt.trim() : ''
   if (!prompt) return res.status(400).json({ error: 'prompt required' })
   if (prompt.length > MAX_PROMPT_LEN) {
@@ -298,7 +302,7 @@ export default async function handler(req, res) {
       sseEvent(res, 'done', { conversation_id: finalConversationId })
     } catch (err) {
       console.error('ai stream error:', err)
-      sseEvent(res, 'error', { message: err?.message || 'AI error' })
+      sseEvent(res, 'error', { message: 'AI error' })
     } finally {
       clearInterval(heartbeat)
       res.end()
@@ -324,7 +328,7 @@ export default async function handler(req, res) {
     })
   } catch (err) {
     console.error('ai endpoint error:', err)
-    return res.status(502).json({ error: `AI service error: ${err.message}` })
+    return res.status(502).json({ error: 'AI service error' })
   }
 }
 
@@ -1059,7 +1063,7 @@ async function runSearchOnce(admin, filters, ctx) {
     : new Set(expandCity(requestedCity).map(normCity))
 
   if (filters.category) {
-    const cat = String(filters.category).trim().replace(/[%,{}"]/g, '')
+    const cat = String(filters.category).trim().replace(/[%,{}"()]/g, '')
     if (cat) {
       const capitalized = cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase()
       // Le virgolette servono alle categorie multi-parola ("Street Food"):
