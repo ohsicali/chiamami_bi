@@ -435,13 +435,16 @@ export function dropCard({
  * posti, niente conto alla rovescia, niente "ne restano sei". Una
  * convenzione non scade e i posti non finiscono: metterceli sarebbe una
  * bugia, e una bugia che si smaschera da sola alla seconda email. Al loro
- * posto il chip mint, che dice la cosa opposta ed è comunque una buona
- * notizia — "questo te lo tieni".
+ * posto il chip mint, che dice quando vale — "valido solo a cena · fino al
+ * 30 novembre" — e che è comunque una buona notizia: "questo te lo tieni".
+ * Il testo lo scrive `conventionValidity()` in content.js; qui non si
+ * inventa: "sempre valido" sopra una condizione "solo il mercoledì" era
+ * una contraddizione nella stessa card.
  *
  * Il bottone sotto resta corallo come nel drop: il corallo è il colore
  * dell'azione, cambia il blocco dello sconto, non la chiamata.
  */
-export function conventionOffer({ value, perk, conditions }) {
+export function conventionOffer({ value, perk, conditions, validity = '' }) {
   return `<tr><td style="padding:16px 20px 0;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;background-color:${COLORS.cream};border-radius:12px;border-left:4px solid ${COLORS.oroDeep};">
       <tr><td style="padding:16px 18px;">
@@ -449,9 +452,9 @@ export function conventionOffer({ value, perk, conditions }) {
           ${value ? `<td valign="middle" style="font-family:${FONT_DISPLAY};font-size:38px;line-height:1;font-weight:800;letter-spacing:-1.5px;color:${COLORS.ink};padding-right:12px;white-space:nowrap;">${esc(value)}</td>` : ''}
           <td valign="middle" style="font-family:${FONT_BODY};font-size:14px;line-height:1.35;font-weight:700;color:${COLORS.ink};">${esc(perk || conditions || '')}${perk && conditions ? `<span style="display:block;font-size:11.5px;font-weight:500;color:${COLORS.ink70};margin-top:2px;">${esc(conditions)}</span>` : ''}</td>
         </tr></table>
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:13px 0 0;"><tr>
-          <td style="background-color:${COLORS.mint};border-radius:999px;padding:5px 12px;font-family:${FONT_BODY};font-size:10.5px;line-height:1.2;font-weight:800;letter-spacing:.06em;color:${COLORS.ink};">✓ SEMPRE VALIDO · NESSUNA SCADENZA</td>
-        </tr></table>
+        ${validity ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:13px 0 0;"><tr>
+          <td style="background-color:${COLORS.mint};border-radius:999px;padding:5px 12px;font-family:${FONT_BODY};font-size:10.5px;line-height:1.35;font-weight:800;letter-spacing:.06em;color:${COLORS.ink};">✓ ${esc(String(validity).toLocaleUpperCase('it-IT'))}</td>
+        </tr></table>` : ''}
       </td></tr>
     </table>
   </td></tr>`

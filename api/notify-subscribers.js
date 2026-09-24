@@ -161,7 +161,7 @@ async function loadPayload(admin, type, id) {
   if (type === 'discount' || type === 'drop') {
     const { data: d, error } = await admin
       .from('discounts')
-      .select('id, title, description, conditions, discount_type, discount_value, valid_until, is_drop, drop_starts_at, drop_ends_at, max_quantity, max_redemptions, claimed_count, total_redeemed, restaurant_id, is_active')
+      .select('id, title, description, conditions, discount_type, discount_value, valid_until, valid_days, valid_meal_slots, valid_time_from, valid_time_to, is_drop, drop_starts_at, drop_ends_at, max_quantity, max_redemptions, claimed_count, total_redeemed, restaurant_id, is_active')
       .eq('id', id)
       .single()
     if (error || !d) throw new Error('Discount not found')
@@ -270,6 +270,15 @@ function buildMail(type, p, unsubUrl) {
     countdown: isDrop ? countdownWords(discountEndsAt(d)) : null,
     taken: left === null ? null : claimedCount(d),
     left,
+    // Quando vale davvero: il chip della convenzione (pranzo, cena, giorni,
+    // scadenza) e la riga del drop ("valido solo a cena") vengono da qui.
+    validity: {
+      days: d.valid_days,
+      slots: d.valid_meal_slots,
+      timeFrom: d.valid_time_from,
+      timeTo: d.valid_time_to,
+      until: d.valid_until,
+    },
     unsubscribeUrl: unsubUrl,
   })
 }

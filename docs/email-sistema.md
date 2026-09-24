@@ -76,7 +76,13 @@ divisore.
   dentro, badge a cavallo del bordo, pillola "scade tra…", barra dei posti.
   Crema `#FAF7F2` con il filetto d'oro `#8E6B3E` **per le convenzioni** (non
   scadono): niente barra, niente countdown, niente conteggio — al loro posto il
-  chip mint "✓ sempre valido". Vestire da drop uno sconto permanente brucia
+  chip mint che dice **quando vale**: "✓ valido solo a cena · fino al 30
+  novembre", "✓ valido a pranzo e a cena · nessuna scadenza". Lo scrive
+  `conventionValidity()` in `_email/content.js` dalle colonne `valid_*`
+  dello sconto (fascia o orario, giorni se le condizioni non li dicono già,
+  `valid_until`). Mai più "sempre valido" fisso: finiva sopra condizioni
+  come "solo il mercoledì e il giovedì" e si smentiva nella stessa card.
+  Vestire da drop uno sconto permanente brucia
   l'urgenza anche sui drop veri: dopo due email chi legge impara che la fretta
   è finta. **Il bottone resta corallo in tutti e due**: il corallo è il colore
   dell'azione, cambia il blocco dello sconto, non la chiamata.
