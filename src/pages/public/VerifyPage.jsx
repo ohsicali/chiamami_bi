@@ -882,14 +882,16 @@ function ImpostazioniTab({ restaurant, deviceToken, onLogout, onSessionExpired }
     let cancelled = false
     async function load() {
       try {
-        const { data, error } = await supabase
-          .from('restaurants')
-          .select('email, opening_hours, hours_cache, place_id_verified_at')
-          .eq('id', restaurant.id)
-          .maybeSingle()
+        // Via RPC col device_token: la select diretta su restaurants chiedeva
+        // `email`, colonna che non esiste (rispondeva 400 e gli orari non si
+        // precompilavano mai), e l'email del ristoratore — `partner_email` —
+        // dal browser non si legge.
+        const { data, error } = await supabase.rpc('verify_get_restaurant_meta', {
+          p_device_token: deviceToken,
+        })
         if (cancelled) return
-        if (error) {
-          console.warn('load meta error', error)
+        if (error || data?.error) {
+          console.warn('load meta error', error || data.error)
         }
         setEmail(data?.email || '')
         // Pre-popolazione orari, in ordine di priorità:
@@ -911,7 +913,7 @@ function ImpostazioniTab({ restaurant, deviceToken, onLogout, onSessionExpired }
     }
     load()
     return () => { cancelled = true }
-  }, [restaurant.id])
+  }, [restaurant.id, deviceToken])
 
   const handleSaveMeta = async () => {
     setSavingMeta(true)

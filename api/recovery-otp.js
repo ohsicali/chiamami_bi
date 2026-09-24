@@ -70,8 +70,15 @@ async function handleRequest({ adminClient, body, req, res }) {
 
   // Captcha required only on the "request" step — the verify step is gated
   // by knowledge of the OTP itself and the failed_attempts cap.
-  const captcha = await verifyTurnstile(req)
-  if (!captcha.ok) return res.status(captcha.status).json({ error: captcha.error })
+  // Chi è già loggato e chiede il codice per il proprio account (cambio
+  // email dalle Impostazioni) non passa dal captcha: la pagina non lo
+  // mostra, e la sessione valida dice già che non è un bot. Il codice va
+  // comunque all'email di recupero, non a chi chiama.
+  const loggedInOwner = await isLoggedInOwner(req, adminClient, email)
+  if (!loggedInOwner) {
+    const captcha = await verifyTurnstile(req)
+    if (!captcha.ok) return res.status(captcha.status).json({ error: captcha.error })
+  }
 
   const resendKey = process.env.RESEND_API_KEY
 
@@ -235,6 +242,19 @@ async function handleVerify({ adminClient, body, res }) {
   } catch (err) {
     console.error('Verify recovery OTP error:', err)
     return res.status(500).json({ error: 'Internal error' })
+  }
+}
+
+/** La richiesta porta il token di sessione dell'account di `email`? */
+async function isLoggedInOwner(req, adminClient, email) {
+  const auth = req.headers?.authorization || ''
+  if (!auth.startsWith('Bearer ') || typeof email !== 'string') return false
+  try {
+    const { data } = await adminClient.auth.getUser(auth.slice(7))
+    const own = data?.user?.email
+    return !!own && own.toLowerCase() === email.trim().toLowerCase()
+  } catch {
+    return false
   }
 }
 

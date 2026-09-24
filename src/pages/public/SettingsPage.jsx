@@ -3,6 +3,7 @@ import { useNavigate, Navigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import { fetchAnnouncementsEnabled, setAnnouncementsEnabled } from '../../lib/emailPrefs'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import Footer from '../../components/Layout/Footer'
 
@@ -173,18 +174,13 @@ export default function SettingsPage() {
   }, [profile])
 
   useEffect(() => {
-    if (!user?.email || !isSupabaseConfigured()) { setLoadingNewsletter(false); return }
-    supabase
-      .from('newsletter_subscribers')
-      .select('subscribed')
-      .eq('email', user.email)
-      .maybeSingle()
-      .then(({ data }) => {
-        // Row absent → not subscribed. Row present → use subscribed field (default true).
-        setNewsletterEnabled(data ? (data.subscribed !== false) : false)
-        setLoadingNewsletter(false)
-      })
-  }, [user?.email])
+    if (!user?.id || !isSupabaseConfigured()) { setLoadingNewsletter(false); return }
+    // Lo stato vero delle email di annuncio: vedi lib/emailPrefs.js.
+    fetchAnnouncementsEnabled(user.id)
+      .then((on) => setNewsletterEnabled(on))
+      .catch(() => {})
+      .finally(() => setLoadingNewsletter(false))
+  }, [user?.id])
 
   // Scroll to #newsletter anchor when hash is present
   useEffect(() => {
@@ -252,7 +248,15 @@ export default function SettingsPage() {
     if (!newEmail.trim()) return
     setEmailLoading(true); setEmailStatus(null)
     try {
-      const resp = await fetch('/api/recovery-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: user.email, action: 'verify_recovery' }) })
+      // Col token di sessione il server salta il captcha, che questa pagina
+      // non ha: senza, con Turnstile attivo la richiesta veniva respinta.
+      const { data: sess } = await supabase.auth.getSession()
+      const token = sess?.session?.access_token
+      const resp = await fetch('/api/recovery-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ email: user.email, action: 'verify_recovery' }),
+      })
       const data = await resp.json()
       if (data.no_recovery) { setEmailStatus({ type: 'error', text: 'Nessuna email di recupero configurata. Contatta supporto@chiamamibi.com' }) }
       else if (data.success) { setEmailStep('recovery_otp'); setEmailStatus({ type: 'success', text: `Codice inviato a ${data.masked_email}` }) }
@@ -361,18 +365,11 @@ export default function SettingsPage() {
     if (!user?.email || !isSupabaseConfigured()) return
     const newState = !newsletterEnabled
     setNewsletterEnabled(newState)
-    await supabase
-      .from('newsletter_subscribers')
-      .upsert(
-        {
-          email: user.email.toLowerCase(),
-          user_id: user.id,
-          source: 'profile_toggle',
-          subscribed: newState,
-          opted_out_at: newState ? null : new Date().toISOString(),
-        },
-        { onConflict: 'email' }
-      )
+    try {
+      await setAnnouncementsEnabled(user.id, newState)
+    } catch {
+      setNewsletterEnabled(!newState) // non salvato: l'interruttore torna com'era
+    }
   }
 
   // ── Handlers: Delete ──

@@ -241,24 +241,8 @@ export function useUserRedemption(discountId, userId) {
       throw error
     }
 
-    // Increment total_redeemed counter (no-op when a DB trigger already
-    // increments it; kept for environments without the trigger).
-    const { error: rpcError } = await supabase.rpc('increment_discount_redeemed', { discount_uuid: discountId })
-    if (rpcError) {
-      // Fallback: manual increment if RPC doesn't exist
-      const { data: d } = await supabase
-        .from('discounts')
-        .select('total_redeemed')
-        .eq('id', discountId)
-        .maybeSingle()
-      if (d) {
-        await supabase
-          .from('discounts')
-          .update({ total_redeemed: (d.total_redeemed || 0) + 1 })
-          .eq('id', discountId)
-      }
-    }
-
+    // Il contatore delle prese lo alza il trigger all'INSERT: niente +1 da
+    // qui (fix-verify-and-counters-2026-09-24.sql).
     setRedemption(data)
     return data
   }, [discountId, userId])
@@ -506,25 +490,7 @@ export async function verifyQRCode(qrCode, pinCode) {
     return { valid: false, error: 'update_failed', message: 'Errore durante la validazione' }
   }
 
-  // 6. Increment total_redeemed on the discount
-  const discountId = redemption.discount?.id || redemption.discount_id
-  if (discountId) {
-    const { error: rpcErr } = await supabase.rpc('increment_discount_redeemed', { discount_uuid: discountId })
-    if (rpcErr) {
-      // Fallback: manual increment
-      const { data: d } = await supabase
-        .from('discounts')
-        .select('total_redeemed')
-        .eq('id', discountId)
-        .single()
-      if (d) {
-        await supabase
-          .from('discounts')
-          .update({ total_redeemed: (d.total_redeemed || 0) + 1 })
-          .eq('id', discountId)
-      }
-    }
-  }
+  // total_redeemed conta le prese, non gli usi: qui non si tocca.
 
   return {
     valid: true,

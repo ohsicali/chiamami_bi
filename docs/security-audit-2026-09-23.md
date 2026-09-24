@@ -144,25 +144,51 @@ non segue più i redirect fuori da Instagram.
 - Linter Supabase: revocato EXECUTE sulle funzioni-trigger (i trigger continuano
   a funzionare, verificato), `search_path` fissato su 4 funzioni.
 
+## 24/09 — bug trovati dopo l'audit, sistemati
+
+Cercati nei log di Supabase e Vercel e confrontando ogni query del sito con
+lo schema reale del DB (script usa-e-getta: select/filtri/insert contro le
+colonne esistenti, e ogni `.rpc()` contro le funzioni e i loro parametri).
+SQL in `supabase/fix-verify-and-counters-2026-09-24.sql` (applicata).
+
+- **Dashboard ristoratori: impostazioni e cambio PIN non hanno mai
+  funzionato.** Le RPC volevano il device_token come `uuid`, ma verify_login
+  crea token da 64 caratteri: Postgres rifiutava la chiamata. In più il
+  salvataggio scriveva in `restaurants.email` (non esiste: è
+  `partner_email`) e la pagina leggeva quella colonna con una select diretta
+  (400). Ora RPC con token `text` e `verify_get_restaurant_meta` per leggere.
+- **Sconti contati due volte**: +1 alla presa (trigger) e +1 alla scansione
+  (verify_redeem_qr), più un +1 dal browser per gli admin. Ora
+  `total_redeemed` = prese, alzato solo dal trigger; i contatori esistenti
+  ricalcolati sui riscatti reali.
+- **Interruttore "Newsletter" finto** in Impostazioni e Profilo desktop:
+  leggeva/scriveva `newsletter_subscribers` (lista vecchia, SELECT solo admin,
+  scrittura in 400) mentre le email partono da `email_preferences`. Chi lo
+  spegneva continuava a ricevere gli annunci. Ora agisce su
+  `email_preferences` (`src/lib/emailPrefs.js`); anche la spunta alla
+  registrazione. Tolta l'iscrizione automatica alla lista vecchia che
+  rispondeva 400 a ogni registrazione.
+- **Suggerimenti senza account rifiutati**: l'insert chiedeva la riga
+  indietro (`.select('id')`) ma chi non ha account non può rileggerla → 401.
+  Ora l'id lo genera il browser.
+- **Cambio email dalle Impostazioni** respinto dal captcha (la pagina non lo
+  ha): ora `/api/recovery-otp` salta il captcha se la richiesta porta la
+  sessione dell'account stesso.
+
+Non sono bug del codice, ma si vedono nei log: timeout di `/api/track` e
+`/api/img` quando Supabase è lento (il 22/09 soprattutto), e l'avviso
+`DEP0169 url.parse()` che viene da una dipendenza del runtime Vercel.
+
 ## Da fare
 
-- **Supabase → Auth → "Leaked password protection"**: attivarla (impostazione del
-  dashboard, non SQL).
-- **Verificare che `TURNSTILE_SECRET_KEY` sia impostata su Vercel in produzione**
-  (non avevo i permessi per leggerlo). Se manca, captcha e form sono senza difese
-  — i log ora lo dicono.
-- `SettingsPage` chiama `/api/recovery-otp` senza `captcha_token`: se Turnstile è
-  attivo, "cambia email via recupero" dalle impostazioni fallisce (bug funzionale
-  preesistente).
-- `total_redeemed` conta due volte lo stesso sconto (+1 alla presa, +1 alla
-  scansione): un drop da 10 risulta esaurito dopo 5 usi. Non è sicurezza, ma
-  va sistemato.
+- Su Vercel `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `ANTHROPIC_API_KEY`,
+  `CRON_SECRET` sono salvate come "Config" (leggibili in chiaro dal pannello):
+  ricrearle come **Sensitive**. (Fatti il 24/09: Leaked password protection
+  attiva in Supabase; `TURNSTILE_SECRET_KEY` presente in produzione.)
 - Rate limit ancora in memoria per istanza (`_rate-limit.js`): per i form
   pubblici conta il captcha; a lungo termine Upstash/KV.
 - CSP con `'unsafe-inline' 'unsafe-eval'` negli script: stringerla richiede di
   provare Mapbox e Turnstile in browser.
-- `newsletter_subscribers`: l'upsert fatto alla registrazione da `useAuth.js`
-  risponde 400 (preesistente, vedi sopra). Toglierlo o sistemarlo.
 - `profiles.email` resta modificabile dall'utente (serve a chi entra con Google):
   il recupero account la usa per trovare il profilo, quindi un utente che si
   mette la stessa email di un altro gli blocca il recupero (non glielo ruba:
