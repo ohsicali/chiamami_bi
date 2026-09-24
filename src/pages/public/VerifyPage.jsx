@@ -451,7 +451,7 @@ function PinView({
     const lockedInner = (
       <div style={{
         background: bg,
-        padding: `24px 28px ${isDesktop ? '28px' : 'max(24px, env(safe-area-inset-bottom))'}`,
+        padding: isDesktop ? '24px 28px 28px' : 'calc(env(safe-area-inset-top, 0px) + 24px) 28px max(24px, env(safe-area-inset-bottom))',
         display: 'flex', flexDirection: 'column', justifyContent: 'flex-start',
         ...(isDesktop ? {} : { minHeight: '100dvh', boxSizing: 'border-box' }),
       }}>
@@ -530,7 +530,7 @@ function PinView({
   const normalInner = (
     <div style={{
       background: bg,
-      padding: `24px 28px ${isDesktop ? '28px' : 'max(24px, env(safe-area-inset-bottom))'}`,
+      padding: isDesktop ? '24px 28px 28px' : 'calc(env(safe-area-inset-top, 0px) + 24px) 28px max(24px, env(safe-area-inset-bottom))',
       display: 'flex', flexDirection: 'column',
       ...(isDesktop ? {} : { minHeight: '100dvh', boxSizing: 'border-box' }),
     }}>

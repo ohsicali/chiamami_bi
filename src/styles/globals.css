@@ -208,6 +208,12 @@ body {
   min-height: 100dvh;
   -webkit-overflow-scrolling: touch;
   overflow-x: clip;
+  /* iPhone in orizzontale (Safari): con viewport-fit=cover notch e Dynamic
+     Island stanno di lato, e il contenuto ci finiva sotto. In verticale, su
+     Android e su desktop valgono 0. Gli elementi `fixed` non ne sono toccati
+     e gestiscono l'area sicura per conto loro. */
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
 }
 
 /* ── Accessibilità globale (audit design 2026-06) ─────────────────────
@@ -575,6 +581,30 @@ body {
   .desktop-nav-offset {
     padding-top: 12px;
   }
+}
+
+/* Striscia sotto la status bar (orologio, Dynamic Island, notch) — vedi
+   StatusBarScrim.jsx. Con viewport-fit=cover e "black-translucent" la pagina
+   parte da y=0: gli header si spostano già dell'area sicura, ma sulle pagine
+   senza header fisso (Chi è Bi, Login, Profilo, Partner…) scorrendo il testo
+   passava dietro l'isola e l'orologio. Sotto gli header sticky (50) e sotto
+   sheet e modali (60+), che gestiscono l'area sicura per conto loro. */
+.status-bar-scrim {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top, 0px);
+  z-index: 45;
+  background: rgba(250, 247, 242, 0.94);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  backdrop-filter: saturate(180%) blur(12px);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.status-bar-scrim[data-visible] {
+  opacity: 1;
 }
 
 /* Prevent iOS Safari zoom on input focus (font-size >= 16px) */

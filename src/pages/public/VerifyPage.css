@@ -126,7 +126,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 18px 10px;
+  /* Area sicura: sotto l'orologio e la Dynamic Island nella PWA su iPhone */
+  padding: calc(env(safe-area-inset-top, 0px) + 14px) 18px 10px;
   background: var(--color-page);
 }
 .v4-top-logo {

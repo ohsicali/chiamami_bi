@@ -22,7 +22,7 @@ export default function LegalHeader() {
   }
 
   return (
-    <nav className="sticky top-0 z-40 glass">
+    <nav className="sticky top-0 z-40 glass" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       <div className="flex items-center justify-between px-4 py-3 max-w-screen-lg mx-auto">
         <button
           type="button"
