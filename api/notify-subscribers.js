@@ -270,8 +270,8 @@ function buildMail(type, p, unsubUrl) {
     countdown: isDrop ? countdownWords(discountEndsAt(d)) : null,
     taken: left === null ? null : claimedCount(d),
     left,
-    // Il chip della convenzione dice quando vale davvero: pranzo, cena,
-    // giorni e scadenza vengono da qui, non da un "sempre valido" fisso.
+    // Quando vale davvero: il chip della convenzione (pranzo, cena, giorni,
+    // scadenza) e la riga del drop ("valido solo a cena") vengono da qui.
     validity: {
       days: d.valid_days,
       slots: d.valid_meal_slots,

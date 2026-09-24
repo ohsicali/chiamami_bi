@@ -188,6 +188,22 @@ test('la convenzione dice quando vale, non "sempre valido"', () => {
   assert.match(libero.html, /✓ VALIDO TUTTI I GIORNI · NESSUNA SCADENZA/)
 })
 
+test('anche il drop dice la fascia, se ce n’è una', () => {
+  // Il drop di Shoro vale solo a cena, ma la mail mostrava solo le
+  // condizioni scritte a mano ("da lunedì a giovedì").
+  const base = { ...SAMPLE.newDiscount, isDrop: true, unsubscribeUrl: UNSUB }
+  const cena = newDiscountEmail({
+    ...base,
+    conditions: 'Valido sul menù AYCE da Lunedì a Giovedì',
+    validity: { days: [1, 2, 3, 4], slots: ['cena'] },
+  })
+  assert.match(cena.html, /da Lunedì a Giovedì · Valido solo a cena/)
+  assert.match(cena.text, /Valido solo a cena\./)
+
+  const libero = newDiscountEmail({ ...base, validity: undefined })
+  assert.ok(!/Valido tutti i giorni|Valido tutto il giorno/.test(libero.html), 'senza limiti nessuna riga in più')
+})
+
 test('un drop senza tetto non disegna una scarsità che non esiste', () => {
   const m = newDiscountEmail({ ...SAMPLE.newDiscount, isDrop: true, taken: null, left: null, unsubscribeUrl: UNSUB })
   assert.ok(!/rimasti|presi/.test(m.html), 'senza un tetto la barra racconterebbe una bugia')

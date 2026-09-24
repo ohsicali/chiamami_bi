@@ -199,7 +199,11 @@ function finoAl(until, now) {
  * `until` è la scadenza vera (`valid_until`): la verifica al bancone la
  * rispetta, quindi "nessuna scadenza" si scrive solo quando non c'è.
  *
- * @returns {{ when: string, until: string|null }}
+ * `limited` dice se c'è davvero un limite da mostrare (fascia, orario o
+ * giorni non già scritti nelle condizioni): il drop lo usa per aggiungere
+ * la riga solo quando serve, senza un "valido tutti i giorni" di troppo.
+ *
+ * @returns {{ when: string, until: string|null, limited: boolean }}
  */
 export function conventionValidity({ days, slots, timeFrom, timeTo, until, conditions } = {}, now = new Date()) {
   const fascia = fasciaWords({ slots, timeFrom, timeTo })
@@ -213,5 +217,5 @@ export function conventionValidity({ days, slots, timeFrom, timeTo, until, condi
   else if (g) when = `Valido solo ${g}`
   else when = giorni ? 'Valido tutto il giorno' : 'Valido tutti i giorni'
 
-  return { when, until: until ? finoAl(until, now) : null }
+  return { when, until: until ? finoAl(until, now) : null, limited: !!(fascia || g) }
 }
