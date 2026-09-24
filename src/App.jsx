@@ -4,6 +4,7 @@ import { lazy, Suspense, useEffect, useRef, useState, Component } from 'react'
 import { PageLoader } from './components/UI/LoadingSpinner'
 import MobileTabBar from './components/Layout/MobileTabBar'
 import DesktopNavbar from './components/Layout/DesktopNavbar'
+import StatusBarScrim from './components/Layout/StatusBarScrim'
 import { usePageTracking } from './lib/hooks/usePageTracking'
 import AdsProvider from './components/Ads/AdsProvider'
 import { useMediaQuery } from './lib/hooks/useMediaQuery'
@@ -231,6 +232,11 @@ export default function App() {
     <AdsProvider>
     {/* Desktop Navbar — hidden on mobile, hidden on admin */}
     {showDesktopNav && <DesktopNavbar />}
+
+    {/* Copre l'area di orologio e Dynamic Island mentre si scorre. Non sulla
+        mappa e sulla scheda locale (foto e mappa a tutto schermo, bottoni già
+        spostati dell'area sicura) e non in admin. */}
+    {!isEsplora && !isAdmin && <StatusBarScrim />}
 
     <Suspense fallback={<PageLoader />}>
       {/* Map page stays mounted when viewing restaurant detail — but only if

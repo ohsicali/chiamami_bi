@@ -79,7 +79,10 @@ function TopBar() {
     <div
       className="hfv4-topbar"
       style={{
-        padding: '12px 20px 14px',
+        // Con viewport-fit=cover e la status bar "black-translucent" la
+        // pagina parte da y=0, sotto l'orologio e la Dynamic Island: senza
+        // l'area sicura logo e pill finivano dietro l'isola (iPhone 14 Pro+).
+        padding: 'calc(env(safe-area-inset-top, 0px) + 12px) max(20px, env(safe-area-inset-right, 0px)) 14px max(20px, env(safe-area-inset-left, 0px))',
         display: 'flex',
         alignItems: 'center',
         gap: 10,

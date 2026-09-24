@@ -73,7 +73,7 @@ export default function ResetPasswordPage() {
     <div className="min-h-dvh bg-bg flex flex-col items-center justify-center px-5 py-10">
       <Link
         to="/"
-        className="absolute top-4 left-4 flex items-center gap-1.5 text-sm text-secondary hover:text-primary transition-colors"
+        className="absolute top-[calc(env(safe-area-inset-top,0px)+16px)] left-[max(16px,env(safe-area-inset-left,0px))] flex items-center gap-1.5 text-sm text-secondary hover:text-primary transition-colors"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M19 12H5" />
