@@ -4,6 +4,7 @@ import Footer from '../../components/Layout/Footer'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import { fetchAnnouncementsEnabled, setAnnouncementsEnabled } from '../../lib/emailPrefs'
 import SuggestRestaurantSheet from '../../components/Restaurant/SuggestRestaurantSheet'
 
 const STROKE = '1.6'
@@ -97,18 +98,21 @@ export default function DesktopProfilePage() {
   }, [user?.id])
 
   useEffect(() => {
-    if (!user?.email || !isSupabaseConfigured()) { setLoadingNewsletter(false); return }
-    supabase.from('newsletter_subscribers').select('id').eq('email', user.email).single()
-      .then(({ data }) => { setNewsletterEnabled(!!data); setLoadingNewsletter(false) })
-  }, [user?.email])
+    if (!user?.id || !isSupabaseConfigured()) { setLoadingNewsletter(false); return }
+    // Lo stato vero delle email di annuncio: vedi lib/emailPrefs.js.
+    fetchAnnouncementsEnabled(user.id)
+      .then((on) => setNewsletterEnabled(on))
+      .catch(() => {})
+      .finally(() => setLoadingNewsletter(false))
+  }, [user?.id])
 
   const handleToggleNewsletter = async () => {
     const next = !newsletterEnabled
     setNewsletterEnabled(next)
-    if (next) {
-      await supabase.from('newsletter_subscribers').upsert({ email: user.email, source: 'profile_desktop' }, { onConflict: 'email' })
-    } else {
-      await supabase.from('newsletter_subscribers').delete().eq('email', user.email)
+    try {
+      await setAnnouncementsEnabled(user.id, next)
+    } catch {
+      setNewsletterEnabled(!next) // non salvato: l'interruttore torna com'era
     }
   }
 

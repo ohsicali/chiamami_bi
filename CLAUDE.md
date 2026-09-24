@@ -102,7 +102,10 @@ legge di lì. L'unica scelta è smettere, e sta in fondo al messaggio: link
 "Scegli cosa ricevere" più l'intestazione `List-Unsubscribe` a un clic. Non
 aggiungere caselle di iscrizione e non togliere la pagina delle preferenze:
 è quella che fa spegnere un tipo di email invece di premere "segnala come
-spam", che è il colpo peggiore che il dominio possa prendere. E se tocchi `render.js` o `blocks.js`, rilancia
+spam", che è il colpo peggiore che il dominio possa prendere. L'interruttore
+"Newsletter" di Impostazioni e Profilo e la spunta alla registrazione agiscono
+su `email_preferences` (`src/lib/emailPrefs.js`); `newsletter_subscribers` è
+la lista vecchia e non decide più niente. E se tocchi `render.js` o `blocks.js`, rilancia
 `node supabase/email-templates/build.mjs`.
 
 ## Convenzioni contenuti sconti (per riferimento futuro)

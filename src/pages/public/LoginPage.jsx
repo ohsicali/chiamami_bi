@@ -5,6 +5,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase } from '../../lib/supabase'
+import { setAnnouncementsEnabled, rememberAnnouncementsOff } from '../../lib/emailPrefs'
 import Footer from '../../components/Layout/Footer'
 import BiLogoMark from '../../components/UI/BiLogoMark'
 import Turnstile from '../../components/Turnstile'
@@ -283,16 +284,16 @@ export default function LoginPage() {
         redirectAfterAuth()
       } else {
         const { needsConfirmation } = await signUp(email, password, fullName)
-        // Newsletter: dipende dalla spunta, non dalla conferma dell'indirizzo.
-        if (newsletterOptIn) {
-          supabase
-            .from('newsletter_subscribers')
-            .upsert(
-              { email: email.toLowerCase(), source: 'registration', subscribed: true },
-              { onConflict: 'email' }
-            )
-            .then(() => {})
-            .catch(() => {})
+        // La spunta "newsletter": chi si registra riceve gli annunci di
+        // default (email_preferences, creata dal DB). Chi la toglie va
+        // spento — subito se c'è già una sessione, altrimenti al primo
+        // accesso (lib/emailPrefs.js). Prima scriveva nella lista vecchia,
+        // che rispondeva 400 e comunque non decideva niente.
+        if (!newsletterOptIn) {
+          const { data: sess } = await supabase.auth.getSession()
+          const uid = sess?.session?.user?.id
+          if (uid) setAnnouncementsEnabled(uid, false).catch(() => rememberAnnouncementsOff(email))
+          else rememberAnnouncementsOff(email)
         }
         if (needsConfirmation) {
           // Niente "controlla la tua email" e basta: si resta qui e si

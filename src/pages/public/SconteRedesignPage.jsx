@@ -353,7 +353,6 @@ function SconteRedesignPageInner() {
         showClaimedQR(deal, recovered)
         return
       }
-      await supabase.rpc('increment_discount_redeemed', { discount_uuid: deal.id }).catch(() => {})
       justSavedRef.current = true
 
       // La ricevuta con il codice, per email. Parte e basta: se la posta non
@@ -450,7 +449,6 @@ function SconteRedesignPageInner() {
         if (recovered) { justSavedRef.current = true; return recovered }
         throw error
       }
-      await supabase.rpc('increment_discount_redeemed', { discount_uuid: deal.id }).catch(() => {})
       justSavedRef.current = true
       return data
     } catch (e) {

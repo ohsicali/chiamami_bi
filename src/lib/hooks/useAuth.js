@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { supabase, isSupabaseConfigured } from '../supabase'
+import { applyPendingAnnouncementsOff } from '../emailPrefs'
 
 // Single source of truth for the auth+profile state. Previously each call
 // site of `useAuth()` ran its own getSession + fetch profile effect — so
@@ -73,6 +74,9 @@ export function AuthProvider({ children }) {
         data.email = authUser.email
       }
       setProfile(data)
+      // La spunta "newsletter" tolta alla registrazione, prima di avere una
+      // sessione: si applica adesso (lib/emailPrefs.js).
+      applyPendingAnnouncementsOff(authUser.id, authUser.email)
       return data
     }
 
@@ -100,16 +104,13 @@ export function AuthProvider({ children }) {
       } else {
         setProfile(created || newProfile)
       }
-      // Auto-subscribe to newsletter + send welcome email on first registration
+      // Il benvenuto alla prima registrazione. Qui c'era anche l'iscrizione a
+      // `newsletter_subscribers`, ma rispondeva 400 a ogni registrazione (la
+      // colonna `source` non esiste, e l'upsert vuole un permesso di UPDATE
+      // che nessuno ha): la lista è quella vecchia, le email agli iscritti
+      // partono da `email_preferences`, che il DB crea da sé alla
+      // registrazione (vedi CLAUDE.md, "Chi le riceve").
       if (authUser.email) {
-        supabase
-          .from('newsletter_subscribers')
-          .upsert(
-            { email: authUser.email.toLowerCase(), user_id: authUser.id, source: 'registration', subscribed: true },
-            { onConflict: 'email' }
-          )
-          .then(() => {})
-          .catch(() => {})
         // Send welcome email (fire and forget)
         fetch('/api/send-email', {
           method: 'POST',

@@ -132,9 +132,15 @@ export default function SuggestRestaurantSheet({ userId = null, userEmail = null
         }
       }
 
-      const { data: inserted, error: insertErr } = await supabase
+      // L'id lo decidiamo noi invece di farcelo restituire: chi segnala senza
+      // account può scrivere la riga ma non rileggerla (la policy SELECT è
+      // "solo le proprie"), e con `.select('id')` PostgREST rifiutava l'intera
+      // richiesta — il suggerimento anonimo non arrivava mai.
+      const suggestionId = crypto.randomUUID()
+      const { error: insertErr } = await supabase
         .from('restaurant_suggestions')
         .insert({
+          id: suggestionId,
           user_id: isAnon ? null : userId,
           email: isAnon ? email.trim() : null,
           restaurant_name: name.trim(),
@@ -144,8 +150,6 @@ export default function SuggestRestaurantSheet({ userId = null, userEmail = null
           description: description.trim() || null,
           photo_url: photoUrl,
         })
-        .select('id')
-        .single()
 
       if (insertErr) throw insertErr
       setSuccess(true)
@@ -169,7 +173,7 @@ export default function SuggestRestaurantSheet({ userId = null, userEmail = null
               description: description.trim() || undefined,
               nome_utente: senderName,
               email_utente: recipientEmail,
-              id: inserted?.id,
+              id: suggestionId,
               captcha_token: captchaToken,
             }),
           }),
