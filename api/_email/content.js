@@ -129,3 +129,89 @@ export function perkBeyondValue(perk, value) {
   const resto = nudo(t)
   return resto && resto !== nudo(value) ? t : ''
 }
+
+/* ── Quando vale una convenzione ───────────────────────────────────── */
+
+// In ordine di orologio, non di database: "a pranzo e a cena", mai il
+// contrario. Le chiavi sono quelle di MEAL_SLOTS in src/lib/validity.js.
+const PASTI = [
+  ['colazione', 'a colazione'],
+  ['brunch', 'al brunch'],
+  ['pranzo', 'a pranzo'],
+  ['aperitivo', 'all’aperitivo'],
+  ['cena', 'a cena'],
+]
+const GIORNI = ['lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato', 'domenica']
+const NOMI_GIORNI = /lune|marte|merco|giove|vener|sabat|domen/i
+
+const elenco = (voci) => (voci.length < 2 ? voci[0] || '' : `${voci.slice(0, -1).join(', ')} e ${voci.at(-1)}`)
+
+/** "a pranzo e a cena", "solo a cena", "dalle 19:00 alle 23:00", o null. */
+function fasciaWords({ slots, timeFrom, timeTo }) {
+  // L'orario esplicito vince sulla fascia, come nell'app e nel PDF.
+  if (timeFrom && timeTo) return `dalle ${String(timeFrom).slice(0, 5)} alle ${String(timeTo).slice(0, 5)}`
+  const scelti = Array.isArray(slots) ? slots : []
+  const pasti = PASTI.filter(([k]) => scelti.includes(k)).map(([, v]) => v)
+  if (!pasti.length) return null
+  return pasti.length === 1 ? `solo ${pasti[0]}` : elenco(pasti)
+}
+
+/** "dal lunedì al giovedì", "il mercoledì e il giovedì", o null se vale sempre. */
+function giorniWords(days) {
+  const d = [...new Set((Array.isArray(days) ? days : []).filter((n) => n >= 1 && n <= 7))].sort((a, b) => a - b)
+  if (!d.length || d.length === 7) return null
+  const filati = d.every((n, i) => i === 0 || n === d[i - 1] + 1)
+  if (filati && d.length >= 3) return `dal ${GIORNI[d[0] - 1]} al ${GIORNI[d.at(-1) - 1]}`
+  return elenco(d.map((n) => `il ${GIORNI[n - 1]}`))
+}
+
+/** "fino al 30 novembre", "fino al 1° novembre", "fino all’8 dicembre". */
+function finoAl(until, now) {
+  const fine = new Date(until)
+  if (Number.isNaN(fine.getTime())) return null
+  const parti = Object.fromEntries(new Intl.DateTimeFormat('it-IT', {
+    timeZone: 'Europe/Rome', day: 'numeric', month: 'long', year: 'numeric',
+  }).formatToParts(fine).map((x) => [x.type, x.value]))
+  const annoOra = new Intl.DateTimeFormat('it-IT', { timeZone: 'Europe/Rome', year: 'numeric' }).format(now)
+  const giorno = parti.day === '1' ? '1°' : parti.day
+  const prep = ['8', '11'].includes(parti.day) ? 'all’' : 'al '
+  // Spazi non separabili: nel chip stretto "fino al 30 / novembre" andava
+  // a capo spezzato; così la scadenza scende intera sulla seconda riga.
+  return `fino ${prep}${giorno} ${parti.month}${parti.year !== annoOra ? ` ${parti.year}` : ''}`.replace(/ /g, '\u00A0')
+}
+
+/**
+ * Quando vale una convenzione, detto come lo direbbe Bi: "Valido solo a
+ * cena", "Valido a pranzo e a cena", "Valido dalle 19:00 alle 23:00".
+ *
+ * Prima il chip diceva "sempre valido" a tutte, e sotto una condizione
+ * "valido solo il mercoledì e il giovedì" lo smentiva nella riga accanto —
+ * Locanda Bellezia, che per giunta vale solo a cena. "Sempre" voleva dire
+ * "non scade", ma si legge "a ogni ora": qui si dice la fascia vera, e la
+ * scadenza a parte.
+ *
+ * I giorni entrano solo se le condizioni non li nominano già: sul database
+ * quasi tutte li scrivono ("dal lunedì al giovedì"), e ripeterli nel chip
+ * lo allunga senza dire niente di nuovo. Se non c'è nessuna fascia, il
+ * chip dice "tutto il giorno" quando i giorni sono limitati (vale per
+ * intero, ma solo in quei giorni) e "tutti i giorni" quando non lo sono.
+ *
+ * `until` è la scadenza vera (`valid_until`): la verifica al bancone la
+ * rispetta, quindi "nessuna scadenza" si scrive solo quando non c'è.
+ *
+ * @returns {{ when: string, until: string|null }}
+ */
+export function conventionValidity({ days, slots, timeFrom, timeTo, until, conditions } = {}, now = new Date()) {
+  const fascia = fasciaWords({ slots, timeFrom, timeTo })
+  const giorni = giorniWords(days)
+  const giorniDetti = giorni && NOMI_GIORNI.test(String(conditions || ''))
+  const g = giorniDetti ? null : giorni
+
+  let when
+  if (fascia && g) when = `Valido ${fascia}, ${g}`
+  else if (fascia) when = `Valido ${fascia}`
+  else if (g) when = `Valido solo ${g}`
+  else when = giorni ? 'Valido tutto il giorno' : 'Valido tutti i giorni'
+
+  return { when, until: until ? finoAl(until, now) : null }
+}

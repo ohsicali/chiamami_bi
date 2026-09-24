@@ -28,7 +28,7 @@ import {
   esc, SIGN,
 } from './blocks.js'
 import { isBareDiscountValue } from './discount.js'
-import { clipSentences, metaFor, perkBeyondValue } from './content.js'
+import { clipSentences, conventionValidity, metaFor, perkBeyondValue } from './content.js'
 
 const firstName = (name) => String(name || '').trim().split(/\s+/)[0] || ''
 
@@ -138,7 +138,8 @@ export function welcomeEmail({ name, unsubscribeUrl, attivi = null }) {
  * qualcosa da perdere.
  *
  * **Convenzione**: mosaico di foto, blocco crema con il filetto d'oro, la
- * percentuale grande e il chip mint "sempre valido". Niente barra, niente
+ * percentuale grande e il chip mint che dice quando vale ("valido solo a
+ * cena · fino al 30 novembre"). Niente barra, niente
  * conto alla rovescia, niente conteggio posti — non c'è un numero che
  * scende, e metterlo sarebbe una bugia che si smaschera da sola alla
  * seconda email. Da lì in poi l'urgenza non funziona più nemmeno sui drop
@@ -158,13 +159,16 @@ export function welcomeEmail({ name, unsubscribeUrl, attivi = null }) {
  * @param {string}   [o.countdown]    "3 giorni", già a parole
  * @param {number}   [o.taken]        posti già presi (solo drop)
  * @param {number}   [o.left]         posti rimasti (solo drop, null = senza tetto)
+ * @param {object}   [o.validity]     quando vale: { days, slots, timeFrom,
+ *                                    timeTo, until } dalle colonne valid_*
+ *                                    (solo convenzione, vedi conventionValidity)
  * @param {string[]} [o.photos]       le foto del locale, in ordine
  * @param {number}   [o.photoCount]   quante ne esistono, per il "+N"
  */
 export function newDiscountEmail({
   value, restaurantName, perk, conditions, city, cuisine, review,
   address, neighborhood, priceRange, photoUrl, photos, photoCount,
-  href, scheda, isDrop, countdown, taken = null, left = null, unsubscribeUrl,
+  href, scheda, isDrop, countdown, taken = null, left = null, validity, unsubscribeUrl,
 }) {
   const phrase = offerPhrase(value)
   const plain = String(value || '').replace(/^[−-]\s*/, '').trim()
@@ -227,10 +231,15 @@ export function newDiscountEmail({
     ? `Da oggi hai il ${plain} da ${restaurantName}`
     : (phrase ? `Da oggi da ${restaurantName}: ${phrase}` : `Uno sconto nuovo da ${restaurantName}`)
 
+  // Quando vale, detto per davvero: il chip "sempre valido" finiva sopra
+  // condizioni come "solo il mercoledì e il giovedì" e si smentiva da solo.
+  const quando = conventionValidity({ ...validity, conditions })
+  const scadenza = quando.until || 'nessuna scadenza'
+
   return {
     subject: soggetto,
     ...renderEmail({
-      preheader: 'Sempre valido, ogni volta che ci vai. Nessuna scadenza.',
+      preheader: `${quando.when}, ogni volta che ci vai. ${scadenza.charAt(0).toUpperCase()}${scadenza.slice(1)}.`,
       reason: MOTIVO.sconti,
       unsubscribeUrl,
       city,
@@ -239,7 +248,7 @@ export function newDiscountEmail({
         eyebrow('Nuova convenzione', { color: COLORS.oroDeep }),
         h1(restaurantName),
         metaLine(meta),
-        conventionOffer({ value: plain, perk: vantaggio, conditions }),
+        conventionOffer({ value: plain, perk: vantaggio, conditions, validity: `${quando.when} · ${scadenza}` }),
         button('Aggiungilo ai tuoi sconti →', link, { padding: '18px 20px 0', block: true }),
         microNote('Resta nel tuo Bi Club. Lo mostri alla cassa ogni volta che ci vai.'),
         testo ? p(`${esc(testo)}${SIGN}`, { padding: '18px 20px 0' }) : '',
@@ -251,7 +260,7 @@ export function newDiscountEmail({
         '',
         [plain, vantaggio].filter(Boolean).join(' — '),
         conditions || '',
-        'Sempre valido, nessuna scadenza.',
+        `${quando.when}, ${scadenza}.`,
         '',
         'Resta nel tuo Bi Club. Lo mostri alla cassa ogni volta che ci vai.',
         `Aggiungilo qui: ${link}`,
@@ -687,6 +696,8 @@ export const SAMPLE = {
     review: 'Il tramezzino è quello classico torinese, alto e morbido, e qui lo fanno come si deve. Ci vado quando ho quindici minuti e voglio mangiare bene lo stesso, e non mi è mai capitato di pentirmene.',
     href: `${SITE_URL}/sconti`, scheda: `${SITE_URL}/restaurant/bar-stampa`,
     isDrop: true, countdown: '3 giorni', taken: 4, left: 6,
+    // Letto solo dalla versione convenzione.
+    validity: { days: [1, 2, 3, 4, 5], slots: ['pranzo'] },
   },
   newRestaurant: {
     restaurantName: 'Bomaki Murazzi', tagline: 'Sushi fusion sul Po',

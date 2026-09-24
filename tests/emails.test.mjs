@@ -134,7 +134,7 @@ test('un drop si annuncia come drop, una convenzione no', () => {
   assert.match(conv.subject, /Bar Stampa/)
   // E la fretta finisce nel preheader, che è la riga che decide se aprono.
   assert.match(drop.html, /Quando finiscono, finiscono/)
-  assert.match(conv.html, /Nessuna scadenza/)
+  assert.match(conv.html, /Valido solo a pranzo, dal lunedì al venerdì, ogni volta che ci vai\. Nessuna scadenza\./)
 })
 
 /* ── Il colore dice il tipo di sconto ──────────────────────────────── */
@@ -152,13 +152,40 @@ test('il corallo pieno è solo dei drop, la convenzione è crema e oro', () => {
 
   assert.ok(!/background-color:#E8453C/i.test(conv.html), 'la convenzione non indossa il corallo pieno')
   assert.match(conv.html, /border-left:4px solid #8E6B3E/i, 'la convenzione ha il filetto oro')
-  assert.match(conv.html, /SEMPRE VALIDO · NESSUNA SCADENZA/)
+  assert.match(conv.html, /✓ VALIDO SOLO A PRANZO, DAL LUNEDÌ AL VENERDÌ · NESSUNA SCADENZA/)
   assert.ok(!/DROP LIVE|rimasti|SCADE TRA/.test(conv.html), 'niente barra, niente countdown, niente posti')
   // Il bottone invece resta corallo in tutti e due: il corallo è il colore
   // dell'azione, cambia il blocco dello sconto, non la chiamata.
   assert.match(conv.html, /bgcolor="#E8453C"/i)
   assert.match(drop.html, /Prendilo adesso/)
   assert.match(conv.html, /Aggiungilo ai tuoi sconti/)
+})
+
+test('la convenzione dice quando vale, non "sempre valido"', () => {
+  // Locanda Bellezia: il chip diceva "sempre valido" e la riga accanto
+  // "valido solo il mercoledì e il giovedì" — e sul database vale pure solo
+  // a cena, fino al 30 novembre. "Sempre" voleva dire "non scade", ma si
+  // leggeva "a ogni ora".
+  const base = { ...SAMPLE.newDiscount, isDrop: false, countdown: null, unsubscribeUrl: UNSUB }
+  const bellezia = newDiscountEmail({
+    ...base,
+    conditions: 'Valido solo il mercoledì e il giovedì',
+    validity: { days: [3, 4], slots: ['cena'], until: '2026-11-30T00:00:00Z' },
+  })
+  assert.ok(!/SEMPRE VALIDO|Sempre valido/.test(bellezia.html), 'niente "sempre" su uno sconto che ha giorni e orari')
+  assert.ok(!/nessuna scadenza/i.test(bellezia.html), 'con una scadenza vera non si scrive "nessuna scadenza"')
+  // I giorni sono già nelle condizioni: il chip non li ripete.
+  assert.match(bellezia.html, /✓ VALIDO SOLO A CENA · FINO\u00A0AL\u00A030\u00A0NOVEMBRE</)
+  assert.match(bellezia.text, /Valido solo a cena, fino\u00A0al\u00A030\u00A0novembre\./)
+
+  const dueFasce = newDiscountEmail({ ...base, conditions: null, validity: { slots: ['cena', 'pranzo'] } })
+  assert.match(dueFasce.html, /✓ VALIDO A PRANZO E A CENA · NESSUNA SCADENZA/, 'le fasce in ordine di orologio')
+
+  const orario = newDiscountEmail({ ...base, conditions: null, validity: { days: [1, 2, 3, 4], timeFrom: '19:00:00', timeTo: '23:00:00' } })
+  assert.match(orario.html, /VALIDO DALLE 19:00 ALLE 23:00, DAL LUNEDÌ AL GIOVEDÌ/)
+
+  const libero = newDiscountEmail({ ...base, validity: undefined })
+  assert.match(libero.html, /✓ VALIDO TUTTI I GIORNI · NESSUNA SCADENZA/)
 })
 
 test('un drop senza tetto non disegna una scarsità che non esiste', () => {

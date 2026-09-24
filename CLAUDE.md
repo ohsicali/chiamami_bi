@@ -84,7 +84,9 @@ Dalla revisione v11 (21/09) se ne aggiunge una terza, ed è quella che si
 sbaglia più facilmente: **il colore dice il tipo di sconto**. Corallo pieno
 `#E8453C` solo per i **drop** — scadono, i posti finiscono, e l'email ha la
 card con la barra e il countdown. Le **convenzioni** (`is_drop = false`) hanno
-il blocco crema con il filetto d'oro, il chip "sempre valido", e **niente**
+il blocco crema con il filetto d'oro, il chip che dice quando vale ("valido
+solo a cena", "valido a pranzo e a cena" — mai un "sempre valido" fisso, che
+contraddiceva i giorni scritti accanto), e **niente**
 barra, countdown o conteggio posti. Vestire da drop uno sconto permanente
 brucia l'urgenza anche sui drop veri. Il bottone invece resta corallo in tutti
 e due: è il colore dell'azione, non quello dello sconto.
