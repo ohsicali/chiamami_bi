@@ -17,8 +17,14 @@
     },
     "api/places-details.js": {
       "maxDuration": 60
+    },
+    "api/notify-subscribers.js": {
+      "maxDuration": 60
     }
   },
+  "crons": [
+    { "path": "/api/notify-subscribers?job=discount-reminders", "schedule": "0 9 * * *" }
+  ],
   "headers": [
     {
       "source": "/api/img",

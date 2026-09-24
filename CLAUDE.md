@@ -108,6 +108,15 @@ su `email_preferences` (`src/lib/emailPrefs.js`); `newsletter_subscribers` è
 la lista vecchia e non decide più niente. E se tocchi `render.js` o `blocks.js`, rilancia
 `node supabase/email-templates/build.mjs`.
 
+**Promemoria degli sconti non usati (24/09):** un cron Vercel al giorno
+(`/api/notify-subscribers?job=discount-reminders`) ricorda uno sconto preso da
+almeno 48 ore e mai usato — **un locale per email, al massimo una al giorno,
+ogni 3 giorni, 4 in un mese**, perché chi prende dieci sconti li prende in due
+minuti. Le regole stanno tutte in `REMINDER_RULES` (`api/_email/reminders.js`)
+e sono sotto test: se le cambi, cambia il test, non aggiungere eccezioni
+altrove. Parte a chi ha "I miei sconti" (`my_discounts`) acceso. Dettagli in
+`docs/EMAIL-FLOWS.md` §7c.
+
 ## Convenzioni contenuti sconti (per riferimento futuro)
 - **Offerte "paghi X prendi Y"** (es. 3 al posto di 2): scrivere sempre in formato `AxB` (es. `3x2`, `2x1`), mai per esteso ("Paghi 2 prendi 3 Veneziane"). Vale per `title` e `discount_value` del record in `discounts`.
 - **Sticker/badge sconto** (percentuale o importo fisso su foto/card): devono sempre avere il segno meno davanti al valore, es. `-20%`, `-1€`. Gestito centralmente da `formatDiscountBadge()` / `formatDiscountBadgeShort()` in `src/lib/utils/discountFormat.js` — quando si aggiunge un nuovo punto che mostra uno sticker sconto, usare sempre queste funzioni (mai `formatDiscountValue()` da solo, che non mette il segno).

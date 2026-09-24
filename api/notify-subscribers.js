@@ -2,11 +2,20 @@
  * Vercel Serverless Function — Broadcast notification to newsletter subscribers
  *
  * POST body: { type: 'restaurant' | 'discount' | 'drop', id: uuid, force?: boolean }
+ *
  * - Admin-only (Bearer token → profiles.is_admin = true)
  * - Fetches the target item, builds an HTML email, loops over
  *   newsletter_subscribers and sends via Resend.
  * - Writes to email_notifications_log to prevent duplicate sends unless
  *   `force: true` is passed.
+ *
+ * In più, il giro quotidiano dei promemoria (sconti presi e non usati):
+ * - GET  ?job=discount-reminders  → dal cron di Vercel (vercel.json), con
+ *   `Authorization: Bearer $CRON_SECRET`. Vive qui e non in un file suo per
+ *   il cap di 12 funzioni del piano Hobby. Le regole in _email/reminders.js.
+ * - POST { type: 'discount-reminders', dryRun?: boolean } → lo stesso giro
+ *   lanciato a mano da un admin; con `dryRun` dice chi riceverebbe cosa
+ *   senza spedire niente.
  */
 import { createClient } from '@supabase/supabase-js'
 import { rateLimit, maybeCleanup } from './_rate-limit.js'
@@ -16,11 +25,13 @@ import { sendBatch, buildMessage, recipientsFor, unsubscribeUrl } from './_email
 import { formatDiscountBadge, pickPerk } from './_email/discount.js'
 import { countdownWords } from './_email/content.js'
 import { claimedCount, remainingCount, discountEndsAt } from '../src/lib/discounts.js'
+import { runDiscountReminders } from './_email/reminders.js'
 
 const SITE_URL = 'https://chiamamibi.com'
 
 export default async function handler(req, res) {
   if (applyCors(req, res)) return
+  if (req.method === 'GET' && req.query?.job === 'discount-reminders') return handleReminderCron(req, res)
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   maybeCleanup()
@@ -66,6 +77,14 @@ export default async function handler(req, res) {
   }
 
   const { type, id, force } = req.body || {}
+  if (type === 'discount-reminders') {
+    try {
+      const summary = await runDiscountReminders(admin, { dryRun: !!req.body?.dryRun })
+      return res.status(200).json(summary)
+    } catch (err) {
+      return res.status(500).json({ error: err.message })
+    }
+  }
   if (!type || !id) return res.status(400).json({ error: 'type and id required' })
   if (!['restaurant', 'discount', 'drop'].includes(type)) {
     return res.status(400).json({ error: 'Invalid type' })
@@ -139,6 +158,36 @@ export default async function handler(req, res) {
     )
 
   return res.status(200).json({ sent, errors, total: emails.length, errorDetails })
+}
+
+/**
+ * Il giro dei promemoria lanciato dal cron di Vercel.
+ *
+ * Vercel chiama con GET e mette da sé `Authorization: Bearer $CRON_SECRET`.
+ * Senza la variabile impostata il giro non parte affatto: un endpoint che
+ * spedisce email a centinaia di persone non resta aperto per distrazione.
+ */
+async function handleReminderCron(req, res) {
+  const secret = process.env.CRON_SECRET
+  if (!secret || req.headers.authorization !== `Bearer ${secret}`) {
+    return res.status(401).json({ error: 'Unauthorized' })
+  }
+  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!supabaseUrl || !serviceRoleKey || !process.env.RESEND_API_KEY) {
+    return res.status(500).json({ error: 'Server configuration error' })
+  }
+  const admin = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+  try {
+    const summary = await runDiscountReminders(admin)
+    console.log('[discount-reminders]', JSON.stringify({ ...summary, errors: summary.errors.slice(0, 5) }))
+    return res.status(200).json(summary)
+  } catch (err) {
+    console.error('[discount-reminders]', err.message)
+    return res.status(500).json({ error: err.message })
+  }
 }
 
 // ---------------------------------------------------------------

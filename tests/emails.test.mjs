@@ -13,7 +13,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
   welcomeEmail, newDiscountEmail, newRestaurantEmail,
-  discountClaimedEmail, discountUsedEmail, SAMPLE,
+  discountClaimedEmail, discountUsedEmail, discountReminderEmail, SAMPLE,
 } from '../api/_email/templates.js'
 import { KINDS, unsubscribeUrl, oneClickUrl, listUnsubscribeHeaders } from '../api/_email/send.js'
 
@@ -23,6 +23,11 @@ const ANNUNCI = [
   ['benvenuto', () => welcomeEmail({ ...SAMPLE.welcome, unsubscribeUrl: UNSUB })],
   ['nuovo sconto', () => newDiscountEmail({ ...SAMPLE.newDiscount, unsubscribeUrl: UNSUB })],
   ['nuovo locale', () => newRestaurantEmail({ ...SAMPLE.newRestaurant, unsubscribeUrl: UNSUB })],
+  // Il promemoria non risponde a un gesto di adesso: è un annuncio, e si spegne.
+  ['promemoria convenzione', () => discountReminderEmail({ ...SAMPLE.discountReminder, unsubscribeUrl: UNSUB })],
+  ['promemoria drop', () => discountReminderEmail({
+    ...SAMPLE.discountReminder, isDrop: true, endsAt: '2026-09-26T20:00:00Z', unsubscribeUrl: UNSUB,
+  })],
 ]
 const RICEVUTE = [
   ['sconto preso', () => discountClaimedEmail(SAMPLE.discountClaimed)],

@@ -46,6 +46,7 @@ Questo doc descrive **cosa parte quando e perché**. Serve per:
 | 6b | Utente chiede reset password (forgot) | Email utente | ~~`{otp} — Codice di recupero ChiamamiBi`~~ → `{otp} è il tuo codice ChiamamiBi` | `POST /api/recovery-otp` | `src/pages/public/LoginPage.jsx` |
 | 7 | Admin pubblica un nuovo drop | Iscritti agli avvisi sconti (batch) | `Ho acceso un drop da {Locale}` | `POST /api/notify-subscribers` type=`drop` | `src/pages/admin/DiscountManager.jsx` |
 | 7b | Admin pubblica una convenzione (sconto non-drop) | Iscritti agli avvisi sconti | `Da oggi hai il {valore} da {Locale}` | `POST /api/notify-subscribers` type=`discount` | `src/pages/admin/DiscountManager.jsx` |
+| 7c | Ogni giorno alle ~11 (cron Vercel): sconti presi da ≥48 ore e mai usati | Chi li ha presi, se ha "I miei sconti" acceso | `Il tuo sconto da {Locale} ti aspetta` · drop: `Il tuo drop da {Locale} scade tra {X}` | `GET /api/notify-subscribers?job=discount-reminders` (Bearer `CRON_SECRET`) | nessuno — parte da sola (`vercel.json` → `crons`) |
 | ~~8~~ | ~~Newsletter manuale (edge function)~~ | — | — | ~~Edge Function `send-newsletter`~~ | **Rimossa il 21/09/2026** — vedi §"Chi riceve le email" |
 
 ### Trigger dormant / gap identificati
@@ -55,7 +56,7 @@ Questo doc descrive **cosa parte quando e perché**. Serve per:
 | 9 | Admin pubblica nuovo ristorante → notifica iscritti | **Gap** — il callsite `notify-subscribers` type=`restaurant` vive solo in `RestaurantForm.jsx` (dead code) | Dopo PR #89 il nuovo admin NON lo invoca più. Da reinserire nella nuova pagina Nuovo ristorante se Augusto lo vuole riattivare |
 | 10 | Admin pubblica sconto statico (non drop) → notifica iscritti | **Potenzialmente gap** — verificare in `DiscountManager.jsx` se il call fa distinzione tra `type=discount` e `type=drop` | notify-subscribers accetta sia `restaurant`, `discount`, `drop` come input validi |
 | 11 | Newsletter periodica (template #4 manifesto) | **Non implementato** | Scope fuori da v4 PR corrente. Tracciato in memory `project_resend_live.md` |
-| 12 | Reminder scadenza drop ristoratore | **Non implementato** | Feature ipotizzata ma mai schedulata |
+| 12 | Reminder scadenza drop ristoratore | **Non implementato** | Feature ipotizzata ma mai schedulata. (Il promemoria *all'utente* per gli sconti presi e non usati invece c'è dal 24/09: vedi #7c.) |
 | 13 | Reminder scadenza PIN ristoratore (rotation policy) | **Non implementato** | Il `CredenzialiTab` mostra "ultima rotazione" ma non invia reminder automatico |
 
 ---
@@ -142,6 +143,50 @@ Questo doc descrive **cosa parte quando e perché**. Serve per:
   - Se chiami senza `force: true` e la combinazione type+id è già stata notificata, restituisce errore → serve a evitare doppi invii per errore.
 - **Mittente:** `Bi <ciao@chiamamibi.com>` · **Reply-to:** `info@chiamamibi.com`
 
+### 7c. Promemoria — sconto preso e non ancora usato (24/09/2026)
+
+- **Perché:** il 24/09 i riscatti erano 192 e solo 4 usati. Chi prende uno
+  sconto spesso se ne dimentica.
+- **Quando:** un giro al giorno, cron Vercel `0 9 * * *` (11:00 d'estate,
+  10:00 d'inverno; sul piano Hobby parte "entro l'ora"). Una volta al giorno
+  è il massimo che Hobby concede, ed è anche il ritmo giusto.
+- **Endpoint:** `GET /api/notify-subscribers?job=discount-reminders` con
+  `Authorization: Bearer $CRON_SECRET` (lo mette Vercel da sé). Senza
+  `CRON_SECRET` impostata risponde 401 e non spedisce niente. A mano, da
+  admin: `POST /api/notify-subscribers` `{ type: 'discount-reminders',
+  dryRun: true }` dice chi riceverebbe cosa senza spedire.
+- **Regole** (`api/_email/reminders.js`, `REMINDER_RULES`, sotto test in
+  `tests/discount-reminders.test.mjs`):
+  - uno sconto si ricorda solo dopo **48 ore** da quando è stato preso, e
+    non oltre **30 giorni**; **una volta sola** per riscatto;
+  - **un promemoria al giorno** per persona, **un locale per email**;
+  - fra due promemoria alla stessa persona almeno **3 giorni**, e al massimo
+    **4 in 30 giorni** — chi prende dieci sconti in due minuti (succede: è
+    il caso normale) li riceve uno alla volta, e in fondo a ogni email c'è
+    "hai altri N sconti presi e non ancora usati";
+  - se nelle ultime **20 ore** le abbiamo già scritto per altro (codice di
+    uno sconto appena preso, sconto usato, benvenuto) si aspetta domani;
+  - l'ordine: prima un **drop che scade entro 48 ore** (l'unico che può
+    saltare l'attesa dei 3 giorni, non quella del giorno), poi uno sconto
+    che **vale oggi** (`valid_days`), poi il **più vecchio**;
+  - niente promemoria per sconti spenti, scaduti, di locali non pubblicati,
+    o già usati con un altro codice.
+- **Chi:** chi ha `email_preferences.my_discounts = true` — l'interruttore
+  "I miei sconti", che nella pagina preferenze diceva già "Promemoria sugli
+  sconti che hai preso e non ancora usato". È un annuncio, non una
+  ricevuta: porta "Scegli cosa ricevere" e `List-Unsubscribe`.
+- **Registro:** `email_sent_log` con `kind = 'discount-reminder'` e `ref_id`
+  = il riscatto. La riga si scrive **prima** dell'invio (due giri insieme →
+  il secondo trova l'indice unico e salta); se Resend rifiuta, torna
+  `ok = false` e il giorno dopo si riprova. Nessuna tabella nuova, nessun SQL.
+- **Template:** `discountReminderEmail()` — convenzione crema col chip di
+  quando vale, drop con la card corallo e il countdown (senza barra dei
+  posti: il codice ce l'ha già). Bottone "Apri il QR" →
+  `/sconti?tab=miei&open=<discount_id>`, che apre direttamente il QR; sotto,
+  il codice a sei caratteri da dettare.
+- **Il primo giro** trova l'arretrato: stimati ~100 destinatari (un'email a
+  testa), poi il resto si distribuisce nei giorni seguenti.
+
 ### ~~8. Newsletter standalone (edge function Supabase)~~ · RIMOSSA il 21/09/2026
 
 `supabase/functions/send-newsletter/index.ts` non esiste più. Perché, in
@@ -184,6 +229,7 @@ Tutte in Vercel Production (e Preview per smoke test) + Supabase Functions env:
 | `VITE_SUPABASE_URL` / `SUPABASE_URL` | Admin auth check in partner + notify-subscribers | |
 | `VITE_SUPABASE_ANON_KEY` / `SUPABASE_ANON_KEY` | Verifica token utente | |
 | `SUPABASE_SERVICE_ROLE_KEY` | Update `magic_token` su restaurants + write `email_notifications_log` + fetch `newsletter_subscribers` | **Mai esporre client-side** |
+| `CRON_SECRET` | Il cron dei promemoria (#7c) e `places-details` | Già presente su Vercel. Senza, il giro dei promemoria non parte |
 
 ---
 

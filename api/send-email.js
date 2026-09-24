@@ -27,7 +27,7 @@ import { applyCors } from './_cors.js'
 import { verifyTurnstile } from './_turnstile.js'
 import {
   welcomeEmail, newDiscountEmail, newRestaurantEmail,
-  discountClaimedEmail, discountUsedEmail, partnerWelcomeEmail,
+  discountClaimedEmail, discountUsedEmail, discountReminderEmail, partnerWelcomeEmail,
   suggestionConfirmationEmail, partnerApplicationConfirmationEmail,
   recoveryOtpEmail, internalSuggestionEmail, internalPartnerApplicationEmail, SAMPLE,
 } from './_email/templates.js'
@@ -302,6 +302,13 @@ async function handlePreview(req, res) {
     'new-place': () => newRestaurantEmail({ ...SAMPLE.newRestaurant, unsubscribeUrl: u }),
     'discount-claimed': () => discountClaimedEmail(SAMPLE.discountClaimed),
     'discount-used': () => discountUsedEmail(SAMPLE.discountUsed),
+    // Il promemoria ha due vesti come l'annuncio: crema per la convenzione,
+    // corallo col countdown per il drop. Si provano tutte e due.
+    'discount-reminder': () => discountReminderEmail({ ...SAMPLE.discountReminder, now: new Date(), claimedAt: new Date(Date.now() - 4 * 86_400_000).toISOString(), unsubscribeUrl: u }),
+    'discount-reminder-drop': () => discountReminderEmail({
+      ...SAMPLE.discountReminder, now: new Date(), claimedAt: new Date(Date.now() - 3 * 86_400_000).toISOString(),
+      isDrop: true, endsAt: new Date(Date.now() + 40 * 3_600_000).toISOString(), unsubscribeUrl: u,
+    }),
     partner: () => partnerWelcomeEmail(SAMPLE.partnerWelcome),
     suggestion: () => suggestionConfirmationEmail(SAMPLE.suggestionConfirmation),
     'partner-application': () => partnerApplicationConfirmationEmail(SAMPLE.partnerApplicationConfirmation),

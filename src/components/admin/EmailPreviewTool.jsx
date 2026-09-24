@@ -20,6 +20,8 @@ const TEMPLATES = [
   { key: 'new-place', label: 'Nuovo locale', hint: 'Parte da sola quando pubblichi un locale.' },
   { key: 'discount-claimed', label: 'Sconto preso (col codice)', hint: 'Quando l’utente sblocca uno sconto.' },
   { key: 'discount-used', label: 'Sconto usato', hint: 'Quando il locale scansiona il QR.' },
+  { key: 'discount-reminder', label: 'Promemoria — sconto non usato', hint: 'Parte da sola alle 11: 48 ore dopo, un locale per email, al massimo ogni 3 giorni.' },
+  { key: 'discount-reminder-drop', label: 'Promemoria — drop in scadenza', hint: 'Lo stesso promemoria per un drop: card corallo e countdown.' },
   { key: 'partner', label: 'Benvenuto ristoratore (col PIN)', hint: 'Quando aggiungi un locale e generi il PIN.' },
   { key: 'suggestion', label: 'Conferma suggerimento', hint: 'A chi ti segnala un locale dal sito.' },
   { key: 'partner-application', label: 'Conferma candidatura', hint: 'A chi candida il proprio locale da /partner.' },
