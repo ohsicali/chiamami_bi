@@ -20,7 +20,7 @@
  *
  * Edge runtime: NON conta nel limite 12 Serverless del piano Hobby. Come
  * funzione Node era la tredicesima, e su Hobby un file in più fa fallire il
- * deploy dell'intero sito (25/09, ritorno da Pro a Hobby).
+ * deploy dell'intero sito (25/09: così il sito resta pronto per Hobby).
  */
 
 import { publicQueryParams } from '../src/lib/publicQueries.js'

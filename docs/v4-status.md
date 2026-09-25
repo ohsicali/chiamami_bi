@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-25 (ritorno a Vercel Hobby: `api/public.js` in edge)
+Ultima modifica: 2026-09-25 (`api/public.js` in edge, si resta su Pro)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -32,12 +32,15 @@ dove siamo. Aggiorna a ogni step importante.
 | Bi Club — chiarezza "Tutti gli sconti" / "I miei vantaggi" | #285 | ✅ Merged | Nessun SQL. Vedi sezione "22/09 — Bi Club: dove finiscono gli sconti" sotto. |
 | Admin Analytics — numeri veri e più chiari | — | 🚧 In review | SQL `supabase/admin-analytics-2026-09-23.sql` **già eseguito** (connettore Supabase). Vedi sezione "23/09 — admin Analytics" sotto. |
 
-## 25/09 — ritorno a Vercel Hobby: `api/public.js` diventa edge
+## 25/09 — `api/public.js` diventa edge: il sito sta nei limiti di Hobby
 
 **Perché.** Dopo il lancio il team Vercel era passato a Pro, ma il
 pagamento con la carta di debito falliva: fattura "Overdue", sito in pausa
-("This deployment is temporarily paused") quasi ogni sera. Decisione del
-25/09: tornare a Hobby, e ripassare a Pro solo se si blocca per i limiti.
+("This deployment is temporarily paused") quasi ogni sera. Si è valutato di
+tornare a Hobby; il downgrade non è passato (fattura aperta) e il 25/09 si
+è deciso di **restare su Pro** sistemando il pagamento (carta di credito, o
+debito abilitata ai pagamenti esteri/ricorrenti). La modifica resta come
+rete di sicurezza: se il piano torna Hobby, i deploy continuano a passare.
 
 **Il problema tecnico.** Hobby ammette 12 funzioni Serverless per deploy.
 `api/public.js` (nato il 22/09) era la tredicesima: su Hobby il deploy
@@ -48,15 +51,15 @@ dell'intero sito sarebbe fallito.
 Stesso indirizzo, stessi parametri, stesse intestazioni `Cache-Control`
 (cache CDN `s-maxage` + `stale-while-revalidate` + `stale-if-error`),
 quindi nessuna modifica lato client. Funzioni Node ora: **12 su 12** —
-**una nuova funzione in `api/` rompe il deploy**: va unita a una esistente
+**su Hobby una nuova funzione in `api/` romperebbe il deploy**: va unita a una esistente
 (dispatch su `action`, come `admin-actions.js`) o scritta edge.
 
-**Rischio da tenere d'occhio.** Stima dai dati di `page_views`: circa
+**Se un giorno si passa a Hobby.** Stima dai dati di `page_views`: circa
 1,5–2,5 milioni di richieste al mese con il traffico del 24/09
 (612 sessioni, 2.506 pagine viste), contro il limite Hobby di circa 1
-milione. Misurato sul sito: una prima visita sono ~107 richieste da mobile
-(87 file JS/CSS) e ~72 da desktop. Se il sito va in pausa per i limiti:
-ripassare a Pro. Ridurre il numero di chunk JS dimezzerebbe le richieste.
+milione: su Hobby il sito andrebbe in pausa prima di fine mese.
+Misurato sul sito: una prima visita sono ~107 richieste da mobile
+(87 file JS/CSS) e ~72 da desktop. Ridurre il numero di chunk JS dimezzerebbe le richieste.
 
 ## 23/09 — admin Analytics: numeri calcolati nel DB
 
