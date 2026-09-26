@@ -28,7 +28,7 @@ import {
   esc, SIGN,
 } from './blocks.js'
 import { isBareDiscountValue } from './discount.js'
-import { clipSentences, conventionValidity, metaFor, perkBeyondValue } from './content.js'
+import { claimedWords, clipSentences, conventionValidity, countdownWords, metaFor, perkBeyondValue } from './content.js'
 
 const firstName = (name) => String(name || '').trim().split(/\s+/)[0] || ''
 
@@ -61,6 +61,7 @@ const MOTIVO = {
   sconti: `Ricevi questa email perché hai un account su ${BRAND.name} e gli avvisi sui nuovi sconti sono accesi.`,
   locali: `Ricevi questa email perché hai un account su ${BRAND.name} e gli avvisi sui nuovi locali sono accesi.`,
   ricevuta: `Ricevi questa email perché hai preso questo sconto dal tuo account ${BRAND.name}.`,
+  promemoria: `Ricevi questa email perché hai preso questo sconto dal tuo account ${BRAND.name} e i promemoria sui tuoi sconti sono accesi.`,
   partner: `Ricevi questa email perché il tuo locale è nella Guida di Bi.`,
   sicurezza: `Ricevi questa email perché è stata chiesta una modifica al tuo account ${BRAND.name}.`,
   interna: 'Notifica automatica del sito, non serve rispondere.',
@@ -430,6 +431,163 @@ export function discountUsedEmail({ value, restaurantName, whenLabel, href = `${
 }
 
 /* ================================================================== */
+/*  5-bis. Promemoria — lo sconto preso e non ancora usato             */
+/* ================================================================== */
+
+/**
+ * Il promemoria di uno sconto preso da almeno due giorni e mai usato.
+ *
+ * Non è una ricevuta: non risponde a un gesto di adesso, arriva da sé. Per
+ * questo porta il link "Scegli cosa ricevere" e parte solo a chi ha acceso
+ * "I miei sconti" (`email_preferences.my_discounts`). Chi lo manda, quando e
+ * a chi lo decide `api/_email/reminders.js` — qui c'è solo l'email.
+ *
+ * Un promemoria = un locale. Chi prende dieci sconti li prende in due
+ * minuti, e dieci locali nella stessa email sono un elenco che non si legge:
+ * uno alla volta, a giorni di distanza, e in fondo la riga che dice quanti
+ * altri ne restano nel Bi Club.
+ *
+ * Il colore segue la regola di sempre: il drop ha la card corallo col
+ * countdown, la convenzione il blocco crema col chip di quando vale. Mai
+ * una convenzione vestita da drop per mettere fretta — la fretta finta
+ * brucia quella vera.
+ *
+ * @param {object}   o
+ * @param {string}   o.value          badge dello sconto ("−20%", "3x2")
+ * @param {string}   o.restaurantName
+ * @param {string}   [o.perk]         pickPerk dello sconto
+ * @param {string}   [o.conditions]
+ * @param {string}   [o.review]       our_review del locale
+ * @param {boolean}  [o.isDrop]
+ * @param {string}   [o.endsAt]       fine dello sconto, grezza (discountEndsAt)
+ * @param {object}   [o.validity]     { days, slots, timeFrom, timeTo, until }
+ * @param {string}   o.claimedAt      generated_at del riscatto, grezzo
+ * @param {string}   [o.code]         short code già formattato ("K48 213")
+ * @param {string}   o.href           dove si apre il QR
+ * @param {number}   [o.others]       quanti altri sconti presi e non usati
+ * @param {string}   [o.othersHref]   "I miei vantaggi" nel Bi Club
+ * @param {string[]} [o.photos]
+ */
+export function discountReminderEmail({
+  value, restaurantName, perk, conditions, review, city, cuisine, priceRange,
+  address, neighborhood, photos, isDrop, endsAt, validity, claimedAt, code,
+  href, others = 0, othersHref, unsubscribeUrl, now = new Date(),
+}) {
+  const plain = String(value || '').replace(/^[−-]\s*/, '').trim()
+  const meta = metaFor({ cuisine, priceRange, address, neighborhood, city })
+  const testo = clip(review)
+  const vantaggio = perkBeyondValue(perk, plain)
+  const quando = claimedWords(claimedAt, now) || 'qualche giorno fa'
+  const validita = conventionValidity({ ...validity, conditions }, now)
+  const link = href || `${SITE_URL}/sconti?tab=miei`
+  const tutti = othersHref || `${SITE_URL}/sconti?tab=miei`
+  const altri = Number.isFinite(others) && others > 0 ? others : 0
+  const frase = altri === 1
+    ? 'Nel tuo Bi Club hai un altro sconto preso e non ancora usato.'
+    : `Nel tuo Bi Club hai altri ${altri} sconti presi e non ancora usati.`
+  const codice = code ? `Se la fotocamera non legge il QR, detta il codice ${code}.` : ''
+  const coda = [
+    testo ? `${testo}\n\n— Bi` : '— Bi',
+    altri ? `\n${frase}\nLi trovi qui: ${tutti}` : '',
+  ]
+
+  /* ── Drop ─────────────────────────────────────────────────────── */
+  if (isDrop) {
+    const cd = countdownWords(endsAt, now)
+    const tra = cd === '1 giorno' ? 'un giorno' : cd
+    const fascia = validita.limited ? validita.when : ''
+    const subject = tra
+      ? `Il tuo drop da ${restaurantName} scade tra ${tra}`
+      : `Il tuo drop da ${restaurantName} è ancora lì`
+    return {
+      subject,
+      ...renderEmail({
+        preheader: `L’hai preso ${quando} e non l’hai ancora usato.${tra ? ` Scade tra ${tra}.` : ''}`,
+        reason: MOTIVO.promemoria,
+        unsubscribeUrl,
+        city,
+        blocks: [
+          eyebrow('Ancora da usare', { padding: '22px 20px 0' }),
+          lede(`L’hai preso ${quando} e non l’hai ancora usato. Il QR è pronto: lo mostri alla cassa e lo scalano loro.`),
+          dropCard({
+            badge: plain && isBareDiscountValue(plain) ? `−${plain}` : '',
+            restaurantName,
+            perk: vantaggio,
+            meta: [meta, conditions, fascia].filter(Boolean).join(' · '),
+            countdown: tra,
+            photoUrl: photos?.[0] || null,
+            cuisine,
+            href: link,
+            label: 'Apri il QR',
+            footnote: codice,
+          }),
+          testo ? p(`${esc(testo)}${SIGN}`, { padding: '16px 20px 0' }) : '',
+          altri ? p(esc(frase), { size: 13, padding: '16px 20px 0' }) : '',
+          altri ? textLink('Vedi i tuoi sconti →', tutti, { padding: '6px 20px 0' }) : '',
+          spacer(20),
+        ],
+        text: [
+          `L’hai preso ${quando} e non l’hai ancora usato: il drop da ${restaurantName}.`,
+          '',
+          [plain, vantaggio].filter(Boolean).join(' — '),
+          meta,
+          conditions || '',
+          fascia ? `${fascia}.` : '',
+          tra ? `Scade tra ${tra}.` : '',
+          '',
+          `Apri il QR: ${link}`,
+          codice,
+          '',
+          ...coda,
+        ].filter((l) => l !== '').join('\n'),
+      }),
+    }
+  }
+
+  /* ── Convenzione ──────────────────────────────────────────────── */
+  const scadenza = validita.until || 'nessuna scadenza'
+  const subject = `Il tuo sconto da ${restaurantName} ti aspetta`
+  return {
+    subject,
+    ...renderEmail({
+      preheader: `L’hai preso ${quando} e non l’hai ancora usato. Il QR è pronto, basta mostrarlo alla cassa.`,
+      reason: MOTIVO.promemoria,
+      unsubscribeUrl,
+      city,
+      blocks: [
+        // Una foto sola, la grande: qui serve a ricordare il posto, non a
+        // presentarlo — il mosaico è dell'email che lo annuncia.
+        photoMosaic({ photos: (photos || []).slice(0, 1), total: 1, alt: restaurantName, cuisine }),
+        eyebrow('Ancora da usare', { color: COLORS.oroDeep }),
+        h1(restaurantName),
+        metaLine(meta),
+        lede(`L’hai preso ${quando} e non l’hai ancora usato. È ancora tuo: quando passi, mostri il QR alla cassa e lo scalano loro.`),
+        conventionOffer({ value: plain, perk: vantaggio, conditions, validity: `${validita.when} · ${scadenza}` }),
+        button('Apri il QR →', link, { padding: '18px 20px 0', block: true }),
+        microNote(codice),
+        testo ? p(`${esc(testo)}${SIGN}`, { padding: '18px 20px 0' }) : '',
+        altri ? p(esc(frase), { size: 13, padding: '16px 20px 0' }) : '',
+        altri ? textLink('Vedi i tuoi sconti →', tutti, { padding: '6px 20px 0' }) : '',
+        spacer(22),
+      ],
+      text: [
+        `L’hai preso ${quando} e non l’hai ancora usato: lo sconto da ${restaurantName}.`,
+        meta,
+        '',
+        [plain, vantaggio].filter(Boolean).join(' — '),
+        conditions || '',
+        `${validita.when}, ${scadenza}.`,
+        '',
+        `Apri il QR: ${link}`,
+        codice,
+        '',
+        ...coda,
+      ].filter((l) => l !== '').join('\n'),
+    }),
+  }
+}
+
+/* ================================================================== */
 /*  6. Benvenuto ristoratore, col PIN                                  */
 /* ================================================================== */
 
@@ -718,6 +876,19 @@ export const SAMPLE = {
     address: 'Via Antonio Giuseppe Bertola 2',
     code: 'K48 213', expiryLabel: 'Scade il 14 settembre',
     href: `${SITE_URL}/sconti`,
+  },
+  discountReminder: {
+    value: '−20%', restaurantName: 'Locanda Bellezia', perk: '20% sul conto',
+    conditions: 'Valido dal martedì al giovedì',
+    review: 'Cucina piemontese vera, di quella che non ha bisogno di spiegazioni. Il vitello tonnato è il migliore che ho mangiato quest’anno.',
+    city: 'Torino', cuisine: 'Piemontese', priceRange: 2,
+    address: 'Via Bellezia 23, 10122 Torino TO, Italy',
+    isDrop: false, endsAt: null,
+    validity: { days: [2, 3, 4], slots: ['cena'], until: '2026-11-30T22:59:00Z' },
+    claimedAt: '2026-09-20T18:40:00Z', now: new Date('2026-09-24T09:00:00Z'),
+    code: 'K48 213', others: 2,
+    href: `${SITE_URL}/sconti?tab=miei&open=00000000-0000-0000-0000-000000000000`,
+    othersHref: `${SITE_URL}/sconti?tab=miei`,
   },
   discountUsed: {
     value: '−50%', restaurantName: 'Bar Stampa',

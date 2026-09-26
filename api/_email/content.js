@@ -219,3 +219,31 @@ export function conventionValidity({ days, slots, timeFrom, timeTo, until, condi
 
   return { when, until: until ? finoAl(until, now) : null, limited: !!(fascia || g) }
 }
+
+/**
+ * Quando è stato preso uno sconto, detto come lo direbbe una persona:
+ * "ieri", "l'altro ieri", "sabato", "il 12 settembre".
+ *
+ * Serve al promemoria ("L'hai preso sabato e non l'hai ancora usato"). I
+ * giorni si contano sul calendario di Roma, non a blocchi di 24 ore: preso
+ * lunedì alle 23 e ricordato mercoledì alle 11 è "l'altro ieri", anche se
+ * le ore sono 36. Il nome del giorno vale solo entro la settimana — oltre,
+ * "martedì" direbbe il martedì sbagliato — e da lì in poi c'è la data.
+ */
+export function claimedWords(generatedAt, now = new Date()) {
+  const t = new Date(generatedAt)
+  if (!generatedAt || Number.isNaN(t.getTime())) return null
+  const giornoRoma = (d) => new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Rome', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(d)
+  const diff = Math.round((Date.parse(giornoRoma(now)) - Date.parse(giornoRoma(t))) / 86_400_000)
+  if (diff <= 0) return 'oggi'
+  if (diff === 1) return 'ieri'
+  if (diff === 2) return 'l’altro ieri'
+  if (diff <= 6) return new Intl.DateTimeFormat('it-IT', { timeZone: 'Europe/Rome', weekday: 'long' }).format(t)
+  const parti = Object.fromEntries(new Intl.DateTimeFormat('it-IT', {
+    timeZone: 'Europe/Rome', day: 'numeric', month: 'long',
+  }).formatToParts(t).map((x) => [x.type, x.value]))
+  const art = ['8', '11'].includes(parti.day) ? 'l’' : 'il '
+  return `${art}${parti.day === '1' ? '1°' : parti.day} ${parti.month}`
+}
