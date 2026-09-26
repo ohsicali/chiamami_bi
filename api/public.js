@@ -17,9 +17,15 @@
  *
  * Solo la chiave anon: stesso perimetro RLS/GRANT del browser, niente
  * service role.
+ *
+ * Edge runtime: NON conta nel limite 12 Serverless del piano Hobby. Come
+ * funzione Node era la tredicesima, e su Hobby un file in più fa fallire il
+ * deploy dell'intero sito (25/09: così il sito resta pronto per Hobby).
  */
 
 import { publicQueryParams } from '../src/lib/publicQueries.js'
+
+export const config = { runtime: 'edge' }
 
 // Secondi di freschezza per risorsa. Gli sconti cambiano (posti di un drop
 // che finiscono) e stanno più corti; il limite vero lo applica comunque il DB
@@ -27,33 +33,40 @@ import { publicQueryParams } from '../src/lib/publicQueries.js'
 const MAX_AGE = { restaurants: 120, categories: 600, discounts: 30, ads: 120 }
 const STALE = 86400
 
-export default async function handler(req, res) {
+function json(body, status, cacheControl) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': cacheControl },
+  })
+}
+
+export default async function handler(req) {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
-    return res.status(405).json({ error: 'Method not allowed' })
+    return json({ error: 'Method not allowed' }, 405, 'no-store')
   }
 
-  const resource = String(req.query?.r || '')
+  const resource = new URL(req.url).searchParams.get('r') || ''
   const q = publicQueryParams(resource, new Date().toISOString())
-  if (!q) return res.status(400).json({ error: 'Unknown resource' })
+  if (!q) return json({ error: 'Unknown resource' }, 400, 'no-store')
 
   const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
   const anonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
   if (!supabaseUrl || !anonKey) {
-    res.setHeader('Cache-Control', 'no-store')
-    return res.status(500).json({ error: 'Supabase not configured' })
+    return json({ error: 'Supabase not configured' }, 500, 'no-store')
   }
 
   const url = `${supabaseUrl}/rest/v1/${q.table}?${new URLSearchParams(q.params)}`
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), 9000)
   try {
     const upstream = await fetch(url, {
       headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}`, Accept: 'application/json' },
-      signal: AbortSignal.timeout(9000),
+      signal: ctrl.signal,
     })
     if (!upstream.ok) {
       const text = (await upstream.text()).slice(0, 300)
       console.error(`public ${resource} upstream ${upstream.status}: ${text}`)
-      res.setHeader('Cache-Control', 'no-store')
-      return res.status(502).json({ error: 'Upstream error' })
+      return json({ error: 'Upstream error' }, 502, 'no-store')
     }
     const data = await upstream.json()
     const maxAge = MAX_AGE[resource] || 60
@@ -63,11 +76,11 @@ export default async function handler(req, res) {
     // un errore (riavvio per cambio compute, sovraccarico) la CDN continua a
     // dare l'ultima copia buona invece del 502/504 — senza, il 22/09 durante
     // il passaggio a Small i visitatori nuovi vedevano la lista vuota.
-    res.setHeader('Cache-Control', `public, max-age=0, s-maxage=${maxAge}, stale-while-revalidate=${STALE}, stale-if-error=${STALE}`)
-    return res.status(200).json(data)
+    return json(data, 200, `public, max-age=0, s-maxage=${maxAge}, stale-while-revalidate=${STALE}, stale-if-error=${STALE}`)
   } catch (err) {
     console.error(`public ${resource} error:`, err?.name || '', err?.message || err)
-    res.setHeader('Cache-Control', 'no-store')
-    return res.status(504).json({ error: 'Upstream timeout' })
+    return json({ error: 'Upstream timeout' }, 504, 'no-store')
+  } finally {
+    clearTimeout(timer)
   }
 }
