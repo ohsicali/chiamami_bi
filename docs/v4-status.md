@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-23 (Admin Analytics: numeri calcolati nel DB)
+Ultima modifica: 2026-09-24 (Promemoria email per gli sconti presi e non usati)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -30,7 +30,39 @@ dove siamo. Aggiorna a ogni step importante.
 | Lancio — Supabase saturo, letture in cache CDN | #278, #280, #281 | ✅ Merged | Vedi sezione "22/09 — lancio: Supabase saturo" sotto. |
 | Admin — sconti presi/utilizzati in tempo reale | #284 | ✅ Merged | Nessun SQL. Vedi sezione "22/09 — admin: sconti in diretta" sotto. |
 | Bi Club — chiarezza "Tutti gli sconti" / "I miei vantaggi" | #285 | ✅ Merged | Nessun SQL. Vedi sezione "22/09 — Bi Club: dove finiscono gli sconti" sotto. |
+| Promemoria sconti presi e non usati | — | 🚧 In review | Branch `claude/reminder-unused-discount-rj5sx6`. **Nessun SQL.** Cron Vercel giornaliero. Vedi sezione "24/09 — promemoria" sotto. |
 | Admin Analytics — numeri veri e più chiari | — | 🚧 In review | SQL `supabase/admin-analytics-2026-09-23.sql` **già eseguito** (connettore Supabase). Vedi sezione "23/09 — admin Analytics" sotto. |
+
+## 24/09 — promemoria: sconti presi e non ancora usati
+
+Richiesta: a chi ha preso uno sconto e non l'ha usato arriva un'email dopo
+~48 ore; chi ne salva tanti insieme non deve riceverle tutte lo stesso giorno.
+
+**I numeri del 24/09** (DB live): 192 riscatti, **188 mai usati**, 106
+persone. Chi ne ha più di uno li ha presi quasi sempre nel giro di 1-3
+minuti (una persona ne ha 10, tre ne hanno 7).
+
+**Fatto** (regole e perché in `docs/EMAIL-FLOWS.md` §7c):
+- `api/_email/reminders.js`: `planReminders()` (pura, sotto test) decide chi
+  riceve cosa; `runDiscountReminders()` legge dal DB, prenota la riga in
+  `email_sent_log` (`kind = 'discount-reminder'`), spedisce a blocchi.
+- Regole: dopo 48h, un locale per email, max 1 al giorno, ≥3 giorni fra due,
+  max 4 in 30 giorni, niente se le abbiamo scritto nelle ultime 20h; prima i
+  drop in scadenza, poi chi vale oggi, poi il più vecchio.
+- `discountReminderEmail()` in `templates.js` (crema per le convenzioni,
+  corallo + countdown per i drop), `claimedWords()` in `content.js`.
+- Endpoint: `GET /api/notify-subscribers?job=discount-reminders` (Bearer
+  `CRON_SECRET`), più `POST {type:'discount-reminders', dryRun}` da admin.
+  Nessuna funzione nuova (cap Hobby).
+- `vercel.json`: `crons` `0 9 * * *` e `maxDuration: 60` su notify-subscribers.
+- Anteprima: due voci nuove in `/admin/settings` → "Provala" e in
+  `docs/email-preview/`.
+
+**Dopo il merge:**
+- verificare che su Vercel ci sia `CRON_SECRET` (c'è, dall'audit 23/09) e che
+  in Settings → Cron Jobs compaia il job;
+- prima del primo giro vero, un `dryRun` dal pannello o con curl da admin;
+- il primo giro trova l'arretrato: ~100 email, una a testa.
 
 ## 23/09 — admin Analytics: numeri calcolati nel DB
 
