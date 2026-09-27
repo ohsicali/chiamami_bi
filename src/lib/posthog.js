@@ -18,10 +18,15 @@
  *   da sé (registrazione sessioni, sondaggi).
  *
  * L'admin (`/admin/...`) non viene contato, come in `usePageTracking`.
- * Senza `VITE_POSTHOG_KEY` non parte niente.
+ *
+ * La chiave di progetto è pubblica per natura (sta comunque nel JavaScript
+ * servito al browser), quindi è scritta qui. Parte solo su chiamamibi.com:
+ * anteprime Vercel e `localhost` non sporcano i numeri. `VITE_POSTHOG_KEY`,
+ * se impostata, la sostituisce e fa partire PostHog anche fuori produzione.
  */
 
-const KEY = import.meta.env.VITE_POSTHOG_KEY
+const PROJECT_KEY = 'phc_zS9aMGPuNLKzuxytwmibmfa6wzqJPSvL6ftYoARBKYQw'
+const ENV_KEY = import.meta.env.VITE_POSTHOG_KEY
 const CONSENT_COOKIE = 'chiamamibi_cookie_consent'
 
 let client = null
@@ -46,8 +51,15 @@ function isAdminUrl(url) {
   }
 }
 
+function isProductionHost() {
+  const host = window.location.hostname
+  return host === 'chiamamibi.com' || host.endsWith('.chiamamibi.com')
+}
+
 export function initPostHog() {
-  if (!KEY || loading) return loading
+  if (loading) return loading
+  const KEY = ENV_KEY || (isProductionHost() ? PROJECT_KEY : null)
+  if (!KEY) return null
   loading = import('posthog-js').then(({ default: posthog }) => {
     posthog.init(KEY, {
       api_host: '/ingest',

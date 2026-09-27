@@ -174,7 +174,8 @@ Resoconto completo: `docs/security-audit-2026-09-23.md`.
 
 ## Analisi del sito — PostHog (27/09)
 `src/lib/posthog.js`, avviato da `main.jsx` a browser libero (chunk a parte).
-Parte solo se c'è `VITE_POSTHOG_KEY` su Vercel. Gli eventi passano da
+La chiave di progetto (pubblica) è nel file e parte solo su chiamamibi.com;
+`VITE_POSTHOG_KEY` la sostituisce e la accende anche in locale/anteprima. Gli eventi passano da
 `/ingest` (rewrite in `vercel.json` verso i server **US** di PostHog, dove sta
 il progetto; se un giorno passa a EU vanno cambiati lì e `ui_host`). Senza "Accetta tutti"
 nel banner la persistenza è `memory` (niente cookie): non toglierlo, il banner
