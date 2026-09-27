@@ -187,6 +187,14 @@ Supabase e solo con consenso; `/admin` non si conta. Eventi su misura:
 `track('nome_evento', { ... })`. Error tracking: `capture_exceptions` prende gli
 errori non gestiti; quelli che React ferma nell'ErrorBoundary passano da
 `captureError()` — un nuovo boundary deve chiamarla anche lui.
+**Mappa nei replay (27/09):** la mappa è un canvas WebGL e PostHog di suo non
+registra i canvas — nei replay Esplora sembrava vuota per tutti. Ora
+`session_recording.captureCanvas` è acceso (2 fps, metà risoluzione) e la mappa
+ha `preserveDrawingBuffer: true`: **non toglierlo**, perché senza il
+registratore fa `clear()` sul canvas a ogni fotogramma e la mappa diventa
+bianca davvero, anche sullo schermo di chi la usa. Se la mappa non parte lo
+dicono gli eventi `map_loaded` (con `ms`), `map_error`, `map_failed` (niente
+WebGL: compare il rimando all'elenco) e `map_context_lost`.
 
 ## Connettori disponibili — USALI SE ATTIVI
 - **GitHub** — PR, issues, merge (funziona via `gh` CLI, testato e operativo)

@@ -1,8 +1,10 @@
-import { useEffect, useRef, useImperativeHandle, forwardRef, useCallback } from 'react'
+import { useEffect, useRef, useImperativeHandle, forwardRef, useCallback, useState } from 'react'
+import { Link } from 'react-router-dom'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import Supercluster from 'supercluster'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
+import { track } from '../../lib/posthog'
 
 const TORINO_CENTER = [7.6869, 45.0703]
 const ACCENT_COLOR = '#E8453C'
@@ -234,6 +236,35 @@ function PlaceholderMap({ restaurants, className }) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Map unavailable — WebGL assente o rifiutato dal dispositivo        */
+/* ------------------------------------------------------------------ */
+function MapUnavailable({ className }) {
+  return (
+    <div className={className} style={{
+      width: '100%', height: '100%', display: 'flex', alignItems: 'center',
+      justifyContent: 'center', background: '#F9FAFB', padding: 24,
+    }}>
+      <div style={{ textAlign: 'center', maxWidth: 320 }}>
+        <div style={{ fontSize: 32, marginBottom: 12 }}>🗺️</div>
+        <p style={{ fontSize: 15, fontWeight: 600, color: '#1F2937', margin: '0 0 6px' }}>
+          La mappa non si è caricata
+        </p>
+        <p style={{ fontSize: 14, color: '#6B7280', margin: '0 0 16px', lineHeight: 1.5 }}>
+          Questo dispositivo non riesce a disegnarla. I locali sono tutti nell'elenco.
+        </p>
+        <Link to="/list" style={{
+          display: 'inline-block', padding: '10px 18px', borderRadius: 999,
+          background: ACCENT_COLOR, color: '#fff', fontSize: 14, fontWeight: 600,
+          textDecoration: 'none',
+        }}>
+          Vedi l'elenco
+        </Link>
+      </div>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
 /*  MapView — supercluster + animated HTML markers                     */
 /* ------------------------------------------------------------------ */
 const MapView = forwardRef(function MapView({
@@ -249,6 +280,7 @@ const MapView = forwardRef(function MapView({
   const debounceTimer = useRef(null)
   const crossfadeTimer = useRef(null)
   const token = import.meta.env.VITE_MAPBOX_TOKEN
+  const [failed, setFailed] = useState(false)
   const onSelectRef = useRef(onSelectRestaurant)
   onSelectRef.current = onSelectRestaurant
   const onVisibleRef = useRef(onVisibleRestaurantsChange)
@@ -487,17 +519,47 @@ const MapView = forwardRef(function MapView({
     ensureStyles()
     mapboxgl.accessToken = token
 
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: MAP_STYLE,
-      center: TORINO_CENTER,
-      zoom: 13,
-      pitch: 15,
+    const startedAt = performance.now()
+    try {
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: MAP_STYLE,
+        center: TORINO_CENTER,
+        zoom: 13,
+        pitch: 15,
+        // Il replay di PostHog fotografa il canvas della mappa: senza questo
+        // il buffer WebGL è già vuoto quando lo legge, e per leggerlo lo
+        // svuota con `clear()` — la mappa diventa bianca anche per chi la
+        // sta usando. Vedi `session_recording` in lib/posthog.js.
+        preserveDrawingBuffer: true,
+      })
+    } catch (err) {
+      // Senza WebGL (disattivato, GPU in blacklist, contesti esauriti)
+      // Mapbox lancia qui: meglio un messaggio e l'elenco che una pagina rotta.
+      track('map_failed', { reason: String(err?.message || err).slice(0, 200) })
+      setFailed(true)
+      return
+    }
+
+    // Quanto ci mette la mappa a comparire, e quando non ci arriva: il replay
+    // da solo non basta a dirlo.
+    let loaded = false
+    let errorSent = false
+    map.current.on('error', (e) => {
+      if (loaded || errorSent) return
+      errorSent = true
+      track('map_error', {
+        message: String(e?.error?.message || 'unknown').slice(0, 200),
+        status: e?.error?.status ?? null,
+      })
     })
+    map.current.on('webglcontextlost', () => track('map_context_lost', { loaded }))
 
     map.current.on('load', () => {
       const m = map.current
       if (!m) return
+      loaded = true
+      track('map_loaded', { ms: Math.round(performance.now() - startedAt) })
 
       // Hide POI labels
       m.getStyle().layers.forEach((layer) => {
@@ -613,6 +675,7 @@ const MapView = forwardRef(function MapView({
   }, [userPosition])
 
   if (!token) return <PlaceholderMap restaurants={restaurants} className={className} />
+  if (failed) return <MapUnavailable className={className} />
 
   return (
     <div ref={mapContainer} className={className} style={{ width: '100%', height: '100%' }} />
