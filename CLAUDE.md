@@ -172,6 +172,16 @@ Resoconto completo: `docs/security-audit-2026-09-23.md`.
   riscatti li crea il browser ma li segna usati solo il locale (RPC `verify_*`);
   nel bucket `photos` scrive solo l'admin.
 
+## Analisi del sito — PostHog (27/09)
+`src/lib/posthog.js`, avviato da `main.jsx` a browser libero (chunk a parte).
+Parte solo se c'è `VITE_POSTHOG_KEY` su Vercel. Gli eventi passano da
+`/ingest` (rewrite in `vercel.json` verso i server **EU** di PostHog — se il
+progetto PostHog fosse US, vanno cambiati lì e `ui_host`). Senza "Accetta tutti"
+nel banner la persistenza è `memory` (niente cookie): non toglierlo, il banner
+promette "non utilizziamo cookie di profilazione". `identify` solo con l'id
+Supabase e solo con consenso; `/admin` non si conta. Eventi su misura:
+`track('nome_evento', { ... })`.
+
 ## Connettori disponibili — USALI SE ATTIVI
 - **GitHub** — PR, issues, merge (funziona via `gh` CLI, testato e operativo)
 - **Supabase** — se il connettore è attivo, esegui query SQL direttamente. Se non funziona, fornisci SQL all'utente da eseguire nel dashboard Supabase. CLI disponibile (`npx supabase`) ma richiede login/token.

@@ -81,6 +81,7 @@ export default function PrivacyPage() {
               <li><strong style={{ color: 'var(--color-ink)' }}>Mapbox</strong> (mappe) — USA</li>
               <li><strong style={{ color: 'var(--color-ink)' }}>Google</strong> (OAuth, Places API) — USA</li>
               <li><strong style={{ color: 'var(--color-ink)' }}>Anthropic</strong> (traduzione AI contenuti) — USA</li>
+              <li><strong style={{ color: 'var(--color-ink)' }}>PostHog</strong> (statistiche d'uso del sito) — UE</li>
             </ul>
           </LegalSection>
 

@@ -95,6 +95,8 @@ self.addEventListener('fetch', (event) => {
 
   if (url.pathname.startsWith('/api/')) return
   if (url.pathname.startsWith('/auth/')) return
+  // PostHog (proxy in vercel.json): eventi e script suoi, mai dalla cache
+  if (url.pathname.startsWith('/ingest/')) return
 
   // Navigation (HTML) → network-first, fallback to cached index
   if (request.mode === 'navigate') {
