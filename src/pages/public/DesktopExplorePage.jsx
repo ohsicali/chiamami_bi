@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect, lazy, Suspense } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo, lazy, Suspense } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 // Mapbox-gl is ~600KB gzipped — load only when this page actually mounts so
 // users that never open the map don't pay the bytes upfront.
@@ -244,10 +244,15 @@ export default function DesktopExplorePage() {
   const { saveGateFor, openSaveGate, closeSaveGate } = useSaveGate({ user, addSave })
   const { discounts: activeDiscounts } = useActiveDiscounts()
 
-  const discountRestaurantIds = new Set(activeDiscounts.map(d => d.restaurant_id))
-  const discountLabelMap = Object.fromEntries(
-    activeDiscounts.map(d => [d.restaurant_id, formatDiscountBadge(d)])
+  // Memo: da qui discende la lista passata alla mappa, che a ogni lista nuova
+  // rifà tutti i pin (vedi HomePage).
+  const discountRestaurantIds = useMemo(
+    () => new Set(activeDiscounts.map(d => d.restaurant_id)),
+    [activeDiscounts],
   )
+  const discountLabelMap = useMemo(() => Object.fromEntries(
+    activeDiscounts.map(d => [d.restaurant_id, formatDiscountBadge(d)])
+  ), [activeDiscounts])
   const discountMap = Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id, d]))
 
   const {
@@ -271,17 +276,19 @@ export default function DesktopExplorePage() {
   const listRef = useRef(null)
   const cardRefs = useRef({})
 
-  let filteredRestaurants = activeCat
-    ? restaurants.filter(r => {
-        const cats = r.category || (r.cuisine_type ? [r.cuisine_type] : [])
-        return cats.some(c => c.toLowerCase().includes(activeCat.toLowerCase()))
-      })
-    : restaurants
-  if (showDealsOnly) {
-    filteredRestaurants = filteredRestaurants.filter(r => discountRestaurantIds.has(r.id))
-  }
-  // Locali della città attiva prima, poi gli altri (ordine interno invariato).
-  filteredRestaurants = sortByActiveCity(filteredRestaurants, activeCity)
+  const filteredRestaurants = useMemo(() => {
+    let result = activeCat
+      ? restaurants.filter(r => {
+          const cats = r.category || (r.cuisine_type ? [r.cuisine_type] : [])
+          return cats.some(c => c.toLowerCase().includes(activeCat.toLowerCase()))
+        })
+      : restaurants
+    if (showDealsOnly) {
+      result = result.filter(r => discountRestaurantIds.has(r.id))
+    }
+    // Locali della città attiva prima, poi gli altri (ordine interno invariato).
+    return sortByActiveCity(result, activeCity)
+  }, [restaurants, activeCat, showDealsOnly, discountRestaurantIds, activeCity])
 
   const selectedRestaurant = selectedId ? allRestaurants.find(r => r.id === selectedId) : null
 

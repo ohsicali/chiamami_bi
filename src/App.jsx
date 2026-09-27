@@ -10,6 +10,7 @@ import AdsProvider from './components/Ads/AdsProvider'
 import { useMediaQuery } from './lib/hooks/useMediaQuery'
 import { useAuth } from './lib/hooks/useAuth'
 import { captureError, posthogConsentDenied, posthogConsentGranted, posthogIdentify } from './lib/posthog'
+import { prewarmExplore, scheduleExplorePrewarm } from './lib/prewarmExplore'
 
 // CookieConsent is rendered after first paint via requestIdleCallback so it
 // doesn't compete with the LCP. The library + its CSS adds ~20 kB to the
@@ -147,6 +148,16 @@ export default function App() {
     const timer = setTimeout(preloadRestaurantPage, 1000)
     return () => clearTimeout(timer)
   }, [])
+
+  // Esplora pronta prima di arrivarci: la mappa si crea in anticipo e resta
+  // viva per tutta la visita (vedi src/lib/prewarmExplore.js). Su /esplora
+  // aperta direttamente parte subito; dalle pagine pubbliche a browser libero;
+  // non dalle pagine di admin e ristoratori, che la mappa non la usano.
+  useEffect(() => {
+    const p = location.pathname
+    if (p === '/esplora') prewarmExplore()
+    else if (!p.startsWith('/admin') && p !== '/verify' && p !== '/partner') scheduleExplorePrewarm()
+  }, [location.pathname])
 
   // Defer the cookie banner until the browser is idle. If the user has already
   // chosen, the lib short-circuits internally and renders nothing.

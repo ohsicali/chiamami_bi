@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
+import { prewarmExplore } from '../../lib/prewarmExplore'
 
 const TAB_BAR_HEIGHT = 68
 
@@ -275,6 +276,9 @@ export default function MobileTabBar() {
           key={tab.key}
           type="button"
           onClick={tab.onClick}
+          // Al primo contatto col dito su Esplora la mappa comincia a
+          // prepararsi, prima ancora che il tocco diventi un click.
+          onPointerDown={tab.key === 'explore' ? prewarmExplore : undefined}
           className={`nav-item${tab.active ? ' active' : ''}`}
           aria-label={tab.label}
           aria-current={tab.active ? 'page' : undefined}
