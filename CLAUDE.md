@@ -184,7 +184,9 @@ il POST prendeva 405 — config caricata, zero eventi. Senza "Accetta tutti"
 nel banner la persistenza è `memory` (niente cookie): non toglierlo, il banner
 promette "non utilizziamo cookie di profilazione". `identify` solo con l'id
 Supabase e solo con consenso; `/admin` non si conta. Eventi su misura:
-`track('nome_evento', { ... })`.
+`track('nome_evento', { ... })`. Error tracking: `capture_exceptions` prende gli
+errori non gestiti; quelli che React ferma nell'ErrorBoundary passano da
+`captureError()` — un nuovo boundary deve chiamarla anche lui.
 
 ## Connettori disponibili — USALI SE ATTIVI
 - **GitHub** — PR, issues, merge (funziona via `gh` CLI, testato e operativo)

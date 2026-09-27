@@ -68,6 +68,9 @@ export function initPostHog() {
       // web vitals: i default consigliati di PostHog a questa data.
       defaults: '2026-08-30',
       person_profiles: 'identified_only',
+      // Errori JavaScript non gestiti e promise rifiutate → Error tracking.
+      // Quelli presi dall'ErrorBoundary di React li manda `captureError`.
+      capture_exceptions: true,
       persistence: hasConsent() ? 'localStorage+cookie' : 'memory',
       before_send: (event) =>
         event && isAdminUrl(event.properties?.$current_url) ? null : event,
@@ -104,6 +107,12 @@ function applyIdentity() {
   } else if (client.get_property('$user_state') === 'identified') {
     client.reset()
   }
+}
+
+/** Errore già intercettato (es. ErrorBoundary): senza questa chiamata
+ *  React lo trattiene e PostHog non lo vedrebbe. */
+export function captureError(error, properties) {
+  client?.captureException(error, properties)
 }
 
 /** Evento su misura, es. `track('discount_claimed', { restaurant_id })`.

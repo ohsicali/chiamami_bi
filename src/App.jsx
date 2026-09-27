@@ -9,7 +9,7 @@ import { usePageTracking } from './lib/hooks/usePageTracking'
 import AdsProvider from './components/Ads/AdsProvider'
 import { useMediaQuery } from './lib/hooks/useMediaQuery'
 import { useAuth } from './lib/hooks/useAuth'
-import { posthogConsentDenied, posthogConsentGranted, posthogIdentify } from './lib/posthog'
+import { captureError, posthogConsentDenied, posthogConsentGranted, posthogIdentify } from './lib/posthog'
 
 // CookieConsent is rendered after first paint via requestIdleCallback so it
 // doesn't compete with the LCP. The library + its CSS adds ~20 kB to the
@@ -36,7 +36,8 @@ class ErrorBoundary extends Component {
   static getDerivedStateFromError(error) {
     return { hasError: true, error }
   }
-  componentDidCatch(error) {
+  componentDidCatch(error, info) {
+    captureError(error, { component_stack: info?.componentStack })
     if (!isChunkLoadError(error)) return
     let alreadyTried = false
     try {
