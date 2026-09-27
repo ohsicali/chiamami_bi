@@ -177,7 +177,10 @@ Resoconto completo: `docs/security-audit-2026-09-23.md`.
 La chiave di progetto (pubblica) è nel file e parte solo su chiamamibi.com;
 `VITE_POSTHOG_KEY` la sostituisce e la accende anche in locale/anteprima. Gli eventi passano da
 `/ingest` (rewrite in `vercel.json` verso i server **US** di PostHog, dove sta
-il progetto; se un giorno passa a EU vanno cambiati lì e `ui_host`). Senza "Accetta tutti"
+il progetto; se un giorno passa a EU vanno cambiati lì e `ui_host`). Le regole
+usano `:path(.*)`, non `:path*`: con `:path*` gli indirizzi con la barra finale
+(`/ingest/i/v0/e/`, dove vanno gli eventi) cadevano sul rewrite della SPA e
+il POST prendeva 405 — config caricata, zero eventi. Senza "Accetta tutti"
 nel banner la persistenza è `memory` (niente cookie): non toglierlo, il banner
 promette "non utilizziamo cookie di profilazione". `identify` solo con l'id
 Supabase e solo con consenso; `/admin` non si conta. Eventi su misura:
