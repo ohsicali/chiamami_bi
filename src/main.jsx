@@ -7,6 +7,7 @@ import App from './App'
 import { ToastProvider } from './components/UI/Toast'
 import { CityProvider } from './lib/CityContext'
 import { AuthProvider } from './lib/hooks/useAuth'
+import { initPostHog } from './lib/posthog'
 // Self-hosted fonts (latin subset). Served from our own origin with immutable
 // caching instead of the Google Fonts CDN — same glyphs/weights, no extra
 // preconnect + render-blocking request chain to fonts.googleapis.com.
@@ -38,6 +39,12 @@ import './styles/globals.css'
  */
 if ('scrollRestoration' in history) {
   history.scrollRestoration = 'manual'
+}
+
+// PostHog quando il browser è libero: il primo disegno non lo aspetta.
+{
+  const idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 1500))
+  idle(() => initPostHog(), { timeout: 4000 })
 }
 
 // Register service worker for push notifications

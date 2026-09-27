@@ -8,6 +8,8 @@ import StatusBarScrim from './components/Layout/StatusBarScrim'
 import { usePageTracking } from './lib/hooks/usePageTracking'
 import AdsProvider from './components/Ads/AdsProvider'
 import { useMediaQuery } from './lib/hooks/useMediaQuery'
+import { useAuth } from './lib/hooks/useAuth'
+import { posthogConsentDenied, posthogConsentGranted, posthogIdentify } from './lib/posthog'
 
 // CookieConsent is rendered after first paint via requestIdleCallback so it
 // doesn't compete with the LCP. The library + its CSS adds ~20 kB to the
@@ -130,6 +132,14 @@ export default function App() {
 
   // Track page views (skips /admin routes internally)
   usePageTracking()
+
+  // PostHog: lega gli eventi all'account dopo il login (solo con consenso),
+  // e torna anonimo al logout. Vedi src/lib/posthog.js.
+  const { user } = useAuth()
+  const userId = user?.id ?? null
+  useEffect(() => {
+    posthogIdentify(userId)
+  }, [userId])
 
   // Preload the restaurant page chunk after initial render
   useEffect(() => {
@@ -339,6 +349,11 @@ export default function App() {
       }}
       cookieName="chiamamibi_cookie_consent"
       expires={365}
+      onAccept={() => {
+        posthogConsentGranted()
+        posthogIdentify(userId)
+      }}
+      onDecline={posthogConsentDenied}
     >
       Questo sito utilizza cookie tecnici necessari al funzionamento. Non utilizziamo cookie di profilazione.{' '}
       <Link to="/privacy" style={{ color: '#E8453C', textDecoration: 'underline' }}>Privacy Policy</Link>
