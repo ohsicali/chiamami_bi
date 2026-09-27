@@ -1,15 +1,13 @@
 import { useEffect, useRef, useImperativeHandle, forwardRef, useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
 import mapboxgl from 'mapbox-gl'
-import 'mapbox-gl/dist/mapbox-gl.css'
 import Supercluster from 'supercluster'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { track } from '../../lib/posthog'
+import { getMap, parkMap } from './mapInstance'
 
-const TORINO_CENTER = [7.6869, 45.0703]
 const ACCENT_COLOR = '#E8453C'
 const GOLD_COLOR = '#B08954'
-const MAP_STYLE = 'mapbox://styles/mapbox/streets-v12'
 const DEBOUNCE_MS = 120
 const CROSSFADE_MS = 200
 
@@ -308,6 +306,28 @@ const MapView = forwardRef(function MapView({
   }))
 
   /* -------------------------------------------------------------- */
+  /*  Tell the page which restaurants are in view                    */
+  /* -------------------------------------------------------------- */
+  // Solo quando cambia davvero qualcosa. La pagina risponde con uno stato
+  // nuovo, e se le passa alla mappa una lista ricreata a ogni render (come
+  // faceva HomePage con un filtro attivo) si innesca un giro senza fine:
+  // pin rifatti, avviso, render, pin rifatti — ~300 volte al secondo, CPU
+  // al 100% finché il filtro restava acceso.
+  const lastVisibleKey = useRef(null)
+  const notifyVisible = useCallback((m, rests) => {
+    if (!onVisibleRef.current) return
+    const bounds = m.getBounds()
+    const ids = rests
+      .filter((r) => isRestaurantVisible(r, bounds))
+      .map((r) => r.id)
+    const center = m.getCenter()
+    const key = `${center.lng.toFixed(6)},${center.lat.toFixed(6)}|${ids.join(',')}`
+    if (key === lastVisibleKey.current) return
+    lastVisibleKey.current = key
+    onVisibleRef.current(ids, { lng: center.lng, lat: center.lat })
+  }, [])
+
+  /* -------------------------------------------------------------- */
   /*  Build supercluster index                                       */
   /* -------------------------------------------------------------- */
   const buildIndex = useCallback(() => {
@@ -488,14 +508,8 @@ const MapView = forwardRef(function MapView({
     lastZoom.current = zoom
 
     // Notify parent
-    if (onVisibleRef.current) {
-      const allVisibleIds = rests
-        .filter((r) => isRestaurantVisible(r, bounds))
-        .map((r) => r.id)
-      const center = m.getCenter()
-      onVisibleRef.current(allVisibleIds, { lng: center.lng, lat: center.lat })
-    }
-  }, [])
+    notifyVisible(m, rests)
+  }, [notifyVisible])
 
   /* -------------------------------------------------------------- */
   /*  Zoom handler: just record that zoom level changed.             */
@@ -517,22 +531,14 @@ const MapView = forwardRef(function MapView({
   useEffect(() => {
     if (!token || !mapContainer.current) return
     ensureStyles()
-    mapboxgl.accessToken = token
 
-    const startedAt = performance.now()
+    // La mappa è una sola per tutta la visita (vedi mapInstance.js): di
+    // solito esiste già, creata mentre si era sulla home, e qui la si
+    // prende in prestito invece di costruirla.
+    const mountedAt = performance.now()
+    let entry
     try {
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: MAP_STYLE,
-        center: TORINO_CENTER,
-        zoom: 13,
-        pitch: 15,
-        // Il replay di PostHog fotografa il canvas della mappa: senza questo
-        // il buffer WebGL è già vuoto quando lo legge, e per leggerlo lo
-        // svuota con `clear()` — la mappa diventa bianca anche per chi la
-        // sta usando. Vedi `session_recording` in lib/posthog.js.
-        preserveDrawingBuffer: true,
-      })
+      entry = getMap()
     } catch (err) {
       // Senza WebGL (disattivato, GPU in blacklist, contesti esauriti)
       // Mapbox lancia qui: meglio un messaggio e l'elenco che una pagina rotta.
@@ -540,80 +546,73 @@ const MapView = forwardRef(function MapView({
       setFailed(true)
       return
     }
+    const m = entry.map
+    mapContainer.current.appendChild(entry.container)
+    m.resize()
+    map.current = m
 
-    // Quanto ci mette la mappa a comparire, e quando non ci arriva: il replay
-    // da solo non basta a dirlo.
-    let loaded = false
-    let errorSent = false
-    map.current.on('error', (e) => {
-      if (loaded || errorSent) return
-      errorSent = true
-      track('map_error', {
-        message: String(e?.error?.message || 'unknown').slice(0, 200),
-        status: e?.error?.status ?? null,
-      })
+    // Quanto aspetta chi apre Esplora prima di vedere la mappa disegnata.
+    // `ready`: era già pronta (0 ms); `prewarmed`: nata prima di Esplora.
+    const prewarmed = entry.createdAt < mountedAt - 50
+    const onLoad = () => track('map_loaded', {
+      ms: Math.round(performance.now() - mountedAt),
+      ready: false,
+      prewarmed,
     })
-    map.current.on('webglcontextlost', () => track('map_context_lost', { loaded }))
+    if (entry.loaded) track('map_loaded', { ms: 0, ready: true, prewarmed: true })
+    else m.once('load', onLoad)
 
-    map.current.on('load', () => {
-      const m = map.current
-      if (!m) return
-      loaded = true
-      track('map_loaded', { ms: Math.round(performance.now() - startedAt) })
-
-      // Hide POI labels
-      m.getStyle().layers.forEach((layer) => {
-        if (layer.id.includes('poi')) m.setLayoutProperty(layer.id, 'visibility', 'none')
+    // During movement: update visible restaurant count in real-time
+    let moveRaf = null
+    const onMove = () => {
+      if (moveRaf) return
+      moveRaf = requestAnimationFrame(() => {
+        moveRaf = null
+        notifyVisible(m, restaurantsRef.current || [])
       })
+    }
 
-      // During zoom: record that zoom changed (don't sync mid-animation)
-      m.on('zoom', onZoom)
+    // After all movement settles: sync with animation if zoom changed
+    const onMoveEnd = () => {
+      clearTimeout(debounceTimer.current)
+      if (zoomChanged.current) {
+        zoomChanged.current = false
+        syncMarkers(true) // animated crossfade for cluster ↔ pin
+      } else {
+        debounceTimer.current = setTimeout(() => syncMarkers(false), DEBOUNCE_MS)
+      }
+    }
 
-      // During movement: update visible restaurant count in real-time
-      let moveRaf = null
-      m.on('move', () => {
-        if (moveRaf) return
-        moveRaf = requestAnimationFrame(() => {
-          moveRaf = null
-          if (!onVisibleRef.current) return
-          const rests = restaurantsRef.current || []
-          const bounds = m.getBounds()
-          const ids = rests
-            .filter((r) => isRestaurantVisible(r, bounds))
-            .map((r) => r.id)
-          const center = m.getCenter()
-          onVisibleRef.current(ids, { lng: center.lng, lat: center.lat })
-        })
-      })
+    // During zoom: record that zoom changed (don't sync mid-animation)
+    m.on('zoom', onZoom)
+    m.on('move', onMove)
+    m.on('moveend', onMoveEnd)
 
-      // After all movement settles: sync with animation if zoom changed
-      m.on('moveend', () => {
-        clearTimeout(debounceTimer.current)
-        if (zoomChanged.current) {
-          zoomChanged.current = false
-          syncMarkers(true) // animated crossfade for cluster ↔ pin
-        } else {
-          debounceTimer.current = setTimeout(() => syncMarkers(false), DEBOUNCE_MS)
-        }
-      })
-
-      // Initial render (instant, no animation needed)
-      buildIndex()
-      syncMarkers(false)
-    })
+    // I pin sono HTML: si mettono subito, senza aspettare le tessere, così
+    // compaiono insieme alla mappa (o prima). `syncMarkers` avvisa anche la
+    // pagina di quali locali si vedono.
+    buildIndex()
+    syncMarkers(false)
 
     return () => {
+      m.off('load', onLoad)
+      m.off('zoom', onZoom)
+      m.off('move', onMove)
+      m.off('moveend', onMoveEnd)
+      if (moveRaf) cancelAnimationFrame(moveRaf)
       clearTimeout(debounceTimer.current)
       clearTimeout(crossfadeTimer.current)
       for (const { marker } of markersMap.current.values()) marker.remove()
       markersMap.current.clear()
       userMarker.current?.remove()
       userMarker.current = null
-      map.current?.remove()
       map.current = null
       sc.current = null
+      // Non `remove()`: la mappa torna nel parcheggio, pronta per il
+      // prossimo ingresso in Esplora.
+      parkMap(entry)
     }
-  }, [token, onZoom, syncMarkers, buildIndex])
+  }, [token, onZoom, syncMarkers, buildIndex, notifyVisible])
 
   /* -------------------------------------------------------------- */
   /*  Rebuild when data changes                                      */

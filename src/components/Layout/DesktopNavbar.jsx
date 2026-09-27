@@ -2,6 +2,7 @@ import { useLocation, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import BiLogoMark from '../UI/BiLogoMark'
+import { prewarmExplore } from '../../lib/prewarmExplore'
 
 const NAV_ITEMS = [
   { to: '/', label: 'Home', match: (p) => p === '/' },
@@ -106,6 +107,8 @@ export default function DesktopNavbar() {
             return (
               <button
                 key={item.to}
+                // Passando col mouse su Esplora la mappa comincia a prepararsi.
+                onPointerEnter={item.to === '/esplora' ? prewarmExplore : undefined}
                 onClick={() => {
                   // Con `returnTo` e `reason` la pagina di accesso spiega
                   // perché ci si è finiti e poi riporta dove si stava andando.
