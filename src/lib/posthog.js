@@ -13,7 +13,7 @@
  *   una visita e l'altra. Il banner promette "non utilizziamo cookie di
  *   profilazione": così resta vero.
  * - **Passa da noi.** Gli eventi vanno a `/ingest`, che `vercel.json` gira
- *   ai server EU di PostHog: niente dominio di terzi da bloccare per gli
+ *   ai server US di PostHog: niente dominio di terzi da bloccare per gli
  *   adblock, e la CSP resta `'self'` anche per gli script che PostHog carica
  *   da sé (registrazione sessioni, sondaggi).
  *
@@ -51,7 +51,7 @@ export function initPostHog() {
   loading = import('posthog-js').then(({ default: posthog }) => {
     posthog.init(KEY, {
       api_host: '/ingest',
-      ui_host: 'https://eu.posthog.com',
+      ui_host: 'https://us.posthog.com',
       // Pageview a ogni cambio di route della SPA, pageleave, autocapture,
       // web vitals: i default consigliati di PostHog a questa data.
       defaults: '2026-08-30',
