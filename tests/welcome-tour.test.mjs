@@ -84,3 +84,23 @@ test('dopo la conferma si cambia pagina quando il tutorial copre tutto, non prim
     if (!hadWindow) delete globalThis.window
   }
 })
+
+test('di ritorno da Google o dal link della mail: tutorial subito per un account nuovo', async () => {
+  const { shouldWelcomeAfterAuth, isFirstSignIn } = await import('../src/lib/welcomeTour.js')
+  const justNow = ago(20 * 1000)
+  const google = { id: 'g1', created_at: justNow, last_sign_in_at: justNow }
+  // Il caso segnalato: account Google appena creato (anche dopo averne
+  // cancellato uno vecchio con la stessa email) → tutorial dalla spunta.
+  assert.equal(shouldWelcomeAfterAuth({ user: google, type: null, seen: false, now: NOW }), true)
+  assert.equal(isFirstSignIn(google), true)
+  // Già visto su questo browser → no.
+  assert.equal(shouldWelcomeAfterAuth({ user: google, type: null, seen: true, now: NOW }), false)
+  // Account vecchio che rientra con Google → no, e si dice "Accesso effettuato".
+  const old = { id: 'g2', created_at: ago(90 * 24 * 60 * 60 * 1000), last_sign_in_at: justNow }
+  assert.equal(shouldWelcomeAfterAuth({ user: old, type: null, seen: false, now: NOW }), false)
+  assert.equal(isFirstSignIn(old), false)
+  // Link di conferma della mail → sì, anche se l'account è di ieri.
+  const viaLink = { id: 'e1', created_at: ago(TOUR_WINDOW_MS - 60 * 1000) }
+  assert.equal(shouldWelcomeAfterAuth({ user: viaLink, type: 'signup', seen: false, now: NOW }), true)
+  assert.equal(shouldWelcomeAfterAuth({ user: null, type: 'signup', seen: false, now: NOW }), false)
+})

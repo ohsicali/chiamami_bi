@@ -4,8 +4,9 @@ import { supabase } from '../../lib/supabase'
 import { LogoFull } from '../../components/UI/Logo'
 import {
   hasSeenTour,
-  isFreshAccount,
+  isFirstSignIn,
   openWelcomeTour,
+  shouldWelcomeAfterAuth,
   whenTourCovers,
   SIGNUP_TOUR_DELAY_MS,
 } from '../../lib/welcomeTour'
@@ -27,6 +28,27 @@ function welcomeThenGo(navigate) {
     })
   }, SIGNUP_TOUR_DELAY_MS)
   whenTourCovers(() => navigate('/', { replace: true }))
+}
+
+/**
+ * Account entrato: cosa dire e dove andare. Una funzione sola per tutte le
+ * strade con cui si arriva qui — con `?code=` (PKCE), con la sessione
+ * nell'hash (flusso "implicit", che è quello del nostro client e quindi
+ * quello di Google e dei link della mail) o dal recupero del "Database error"
+ * di Google. Prima il controllo "account nuovo" c'era solo nella prima, e chi
+ * si registrava con Google leggeva "Accesso effettuato!", finiva sulla home e
+ * si vedeva partire il tutorial dopo, dal Gate.
+ */
+function finishSignIn({ user, type, navigate, setStatus, setMessage }) {
+  setStatus('success')
+  const welcome = shouldWelcomeAfterAuth({ user, type, seen: hasSeenTour(user?.id) })
+  setMessage(
+    type === 'signup' ? 'Email confermata! Benvenuta su ChiamamiBi!'
+      : isFirstSignIn(user) ? 'Account creato! Ti diamo il benvenuto su ChiamamiBi.'
+        : 'Accesso effettuato!',
+  )
+  if (welcome) welcomeThenGo(navigate)
+  else setTimeout(() => navigate('/', { replace: true }), 1500)
 }
 
 /**
@@ -59,9 +81,7 @@ export default function AuthCallback() {
           const { data: { session } } = await supabase.auth.getSession()
           if (session) {
             // Session exists! Profile will be created by useAuth.fetchProfile
-            setStatus('success')
-            setMessage('Account creato! Benvenuta su ChiamamiBi!')
-            setTimeout(() => navigate('/', { replace: true }), 1500)
+            finishSignIn({ user: session.user, type, navigate, setStatus, setMessage })
             return
           }
         }
@@ -92,14 +112,7 @@ export default function AuthCallback() {
           }
 
           // signup or magiclink — confirmed, redirect to home
-          setStatus('success')
-          const newUser = data?.user ?? data?.session?.user
-          const isNew = type === 'signup' || (isFreshAccount(newUser) && !hasSeenTour(newUser?.id))
-          setMessage(type === 'signup'
-            ? 'Email confermata! Benvenuta su ChiamamiBi!'
-            : isNew ? 'Account creato! Benvenuta su ChiamamiBi!' : 'Accesso effettuato!')
-          if (isNew) welcomeThenGo(navigate)
-          else setTimeout(() => navigate('/', { replace: true }), 2000)
+          finishSignIn({ user: data?.user ?? data?.session?.user, type, navigate, setStatus, setMessage })
         } catch (err) {
           setStatus('error')
           setMessage(err.message || 'Errore durante la verifica del codice.')
@@ -107,12 +120,12 @@ export default function AuthCallback() {
         return
       }
 
-      // No code — check if session already exists from hash fragment
+      // No code — la sessione arriva nell'hash (#access_token=…): è il
+      // flusso "implicit" del nostro client, quindi Google e i link della mail
+      // passano da qui. Il client l'ha già letta all'avvio.
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
-        setStatus('success')
-        setMessage('Accesso effettuato!')
-        setTimeout(() => navigate('/', { replace: true }), 1500)
+        finishSignIn({ user: session.user, type, navigate, setStatus, setMessage })
       } else {
         setStatus('error')
         setMessage('Link non valido o scaduto. Riprova.')

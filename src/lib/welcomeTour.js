@@ -55,6 +55,29 @@ export function isFreshAccount(user, now = Date.now()) {
   return age > -5 * 60 * 1000 && age < TOUR_WINDOW_MS
 }
 
+/**
+ * Il primo accesso di sempre: Supabase scrive `created_at` e
+ * `last_sign_in_at` nello stesso momento quando l'account nasce da un
+ * accesso (Google). Serve a scegliere le parole — "Account creato" invece di
+ * "Accesso effettuato" — non a decidere il tutorial.
+ */
+export function isFirstSignIn(user) {
+  const created = Date.parse(user?.created_at ?? '')
+  const lastIn = Date.parse(user?.last_sign_in_at ?? '')
+  if (!Number.isFinite(created) || !Number.isFinite(lastIn)) return false
+  return Math.abs(lastIn - created) < 2 * 60 * 1000
+}
+
+/**
+ * Di ritorno da Supabase (/auth/callback: Google, link di conferma della
+ * mail): il tutorial parte subito, dalla spunta, se l'account è nuovo e qui
+ * non l'ha ancora visto. Stessa regola del Gate, ma senza aspettare la home.
+ */
+export function shouldWelcomeAfterAuth({ user, type, seen, now = Date.now() }) {
+  if (!user?.id || seen) return false
+  return type === 'signup' || isFreshAccount(user, now)
+}
+
 export function shouldShowTour({ user, pathname, seen, now = Date.now() }) {
   if (!user?.id) return false
   if (seen) return false
