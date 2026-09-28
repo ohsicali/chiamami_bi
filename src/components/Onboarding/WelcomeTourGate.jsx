@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { track } from '../../lib/posthog'
@@ -22,6 +22,7 @@ const WelcomeTour = lazy(() => import('./WelcomeTour'))
 export default function WelcomeTourGate() {
   const { user, profile } = useAuth()
   const { pathname } = useLocation()
+  const navigate = useNavigate()
   // Per chi è aperto: `{ source: 'auto', userId }` dopo la registrazione,
   // `{ source: 'settings' }` quando lo si riapre a mano (a PostHog serve per
   // non mescolare le due cose). Legato all'utente, così chi esce
@@ -52,9 +53,12 @@ export default function WelcomeTourGate() {
     if (open) track('onboarding_shown', { source })
   }, [open, source])
 
+  // Arrivato in fondo si va alla home (l'animazione di chiusura sta in
+  // WelcomeTour); chi salta resta sulla pagina dov'era.
   const handleClose = ({ completed, step }) => {
     markTourSeen(userId)
     track(completed ? 'onboarding_completed' : 'onboarding_skipped', { step, source })
+    if (completed && pathname !== '/') navigate('/')
     setOpenAs(null)
   }
 

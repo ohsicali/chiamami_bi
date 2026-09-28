@@ -32,7 +32,7 @@ dove siamo. Aggiorna a ogni step importante.
 | Bi Club — chiarezza "Tutti gli sconti" / "I miei vantaggi" | #285 | ✅ Merged | Nessun SQL. Vedi sezione "22/09 — Bi Club: dove finiscono gli sconti" sotto. |
 | Promemoria sconti presi e non usati | — | 🚧 In review | Branch `claude/reminder-unused-discount-rj5sx6`. **Nessun SQL.** Cron Vercel giornaliero. Vedi sezione "24/09 — promemoria" sotto. |
 | Admin Analytics — numeri veri e più chiari | — | 🚧 In review | SQL `supabase/admin-analytics-2026-09-23.sql` **già eseguito** (connettore Supabase). Vedi sezione "23/09 — admin Analytics" sotto. |
-| Tutorial di benvenuto dopo la registrazione | — | 🚧 In review | Branch `claude/ecstatic-lovelace-mynb7v`. **Nessun SQL.** 5 schermate saltabili, una volta sola per account nuovo (<24h). Vedi CLAUDE.md "Tutorial di benvenuto". |
+| Tutorial di benvenuto dopo la registrazione | — | 🚧 In review | Branch `claude/ecstatic-lovelace-mynb7v`. **Nessun SQL.** 7 schermate saltabili (4 sugli sconti), una volta sola per account nuovo (<24h); finito si va alla home. Vedi CLAUDE.md "Tutorial di benvenuto". |
 
 ## 24/09 — promemoria: sconti presi e non ancora usati
 

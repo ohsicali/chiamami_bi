@@ -31,6 +31,7 @@
   box-sizing: border-box;
   background: var(--color-page);
   outline: none;
+  transition: background-color var(--dur-sheet) var(--ease-out);
 }
 
 @media (min-width: 768px) {
@@ -258,51 +259,6 @@
   border-radius: 8px;
 }
 
-/* 1 · Benvenuto */
-.wt-art-welcome {
-  display: grid;
-  place-items: center;
-  background:
-    radial-gradient(circle at 50% 46%, var(--color-corallo-wash) 0 34%, transparent 35%),
-    var(--color-cream);
-}
-.wt-welcome-halo {
-  position: absolute;
-  width: 190px;
-  height: 190px;
-  left: calc(50% - 95px);
-  top: calc(46% - 95px);
-  border-radius: 50%;
-  border: 1.5px dashed var(--color-corallo-soft);
-}
-.wt-welcome-mark {
-  position: relative;
-  width: 132px;
-  height: 132px;
-  margin-top: -18px;
-  color: var(--color-corallo);
-}
-.wt-welcome-tag {
-  position: absolute;
-  padding: 7px 13px;
-  border-radius: var(--radius-pill);
-  background: #fff;
-  box-shadow: var(--shadow-md);
-  font-size: 12px;
-  font-weight: 700;
-}
-.wt-welcome-hand {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 14px;
-  margin: 0;
-  text-align: center;
-  font-family: var(--font-hand);
-  font-size: 24px;
-  color: var(--color-oro-deep);
-}
-
 /* 2 · Mappa */
 .wt-art-map { background: #EFE7D8; }
 .wt-map-roads {
@@ -504,8 +460,8 @@
   font-weight: 700;
 }
 
-/* 4 · Al locale: selettore QR / Codice */
-.wt-art-redeem {
+/* Sconti 4 · Alla cassa: il QR, poi lo scontrino */
+.wt-art-checkout {
   display: grid;
   place-items: center;
   padding: 14px;
@@ -552,17 +508,21 @@
   background: #fff;
   box-shadow: var(--shadow-sm);
 }
-.wt-seg button {
+.wt-seg > span:not(.wt-seg-thumb) {
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 7px 0;
   border: 0;
   background: none;
   font: 700 12px/1 var(--font-sans);
   color: var(--color-ink-55);
-  cursor: pointer;
+  text-align: center;
+  white-space: nowrap;
   transition: color var(--dur-menu) var(--ease-out);
 }
-.wt-seg button.is-on { color: var(--color-ink); }
+.wt-seg > span.is-on { color: var(--color-ink); }
 .wt-pass-body {
   height: 150px;
   margin-top: 12px;
@@ -702,9 +662,490 @@
   color: var(--color-corallo);
 }
 
+
+/* ── Il titolo che sale parola per parola ──────────────────────────── */
+.wt-word {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  /* un filo di spazio sotto: le discendenti (g, p) non vanno tagliate */
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+.wt-word-in { display: inline-block; }
+
+/* ── Prima schermata: tutto corallo ────────────────────────────────── */
+.wt-panel.is-hero { background: var(--color-corallo); }
+.wt-panel.is-hero .wt-progress-seg { background: rgba(255, 255, 255, 0.3); }
+.wt-panel.is-hero .wt-progress-fill { background: #fff; }
+.wt-panel.is-hero .wt-skip { background: rgba(255, 255, 255, 0.18); color: #fff; }
+.wt-panel.is-hero .wt-skip:hover { background: rgba(255, 255, 255, 0.28); }
+.wt-panel.is-hero .wt-art { background: transparent; overflow: visible; }
+.wt-panel.is-hero .wt-eyebrow { color: rgba(255, 255, 255, 0.85); }
+.wt-panel.is-hero .wt-title { color: #fff; font-size: 34px; line-height: 1.02; }
+.wt-panel.is-hero .wt-body { color: rgba(255, 255, 255, 0.88); }
+.wt-panel.is-hero .wt-back { visibility: hidden; }
+.wt-panel.is-hero .wt-next {
+  background: #fff;
+  color: var(--color-corallo-ink);
+  box-shadow: 0 12px 28px rgba(120, 20, 14, 0.28);
+}
+.wt-panel.is-hero .wt-next:focus-visible,
+.wt-panel.is-hero .wt-skip:focus-visible { outline-color: #fff; }
+
+.wt-hero {
+  display: grid;
+  place-items: center;
+}
+/* I raggi che girano piano dietro al logo. */
+.wt-hero-rays {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 180%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  background: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, 0.11) 0deg 9deg, transparent 9deg 22.5deg);
+  -webkit-mask-image: radial-gradient(circle, #000 12%, transparent 62%);
+  mask-image: radial-gradient(circle, #000 12%, transparent 62%);
+  animation: wt-spin 40s linear infinite;
+  pointer-events: none;
+}
+@keyframes wt-spin { to { rotate: 360deg; } }
+
+.wt-hero-shock {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 150px;
+  height: 150px;
+  margin: -75px 0 0 -75px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.8);
+}
+.wt-hero-ring {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: min(270px, 78%);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  animation: wt-spin 36s linear infinite;
+}
+.wt-hero-orb {
+  position: absolute;
+  width: 46px;
+  height: 46px;
+  margin: -23px 0 0 -23px;
+  /* gira al contrario dell'anello: le icone restano dritte */
+  animation: wt-spin 36s linear infinite reverse;
+}
+.wt-hero-orb-in {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 8px 18px rgba(120, 20, 14, 0.25);
+  font-size: 22px;
+  line-height: 1;
+}
+.wt-hero-logo {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 150px;
+  height: 150px;
+  margin: -75px 0 0 -75px;
+  color: #fff;
+  filter: drop-shadow(0 10px 24px rgba(120, 20, 14, 0.35));
+}
+.wt-hero-sticker {
+  position: absolute;
+  left: calc(50% + 26px);
+  top: calc(46% + 6px);
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--gradient-sconto);
+  color: var(--color-sconto-ink);
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  box-shadow: 0 8px 20px rgba(26, 71, 49, 0.3);
+  border: 3px solid #fff;
+}
+.wt-hero-hand {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 2px;
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-hand);
+  font-size: 26px;
+  color: #fff;
+}
+
+/* ── Sconti 2 · Sblocca → «I miei vantaggi» ────────────────────────── */
+.wt-art-unlock {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+}
+.wt-art-unlock > .wt-seg { position: relative; inset: auto; }
+.wt-seg-club { background: #fff; box-shadow: var(--shadow-sm); }
+.wt-seg-club .wt-seg-thumb { background: var(--color-ink); box-shadow: none; }
+.wt-seg-club > span:not(.wt-seg-thumb) { padding: 9px 0; font-size: 12px; }
+.wt-seg-club > span.is-on { color: #fff; }
+.wt-seg-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 99px;
+  background: var(--color-corallo);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  vertical-align: 1px;
+}
+.wt-unlock-stage {
+  position: relative;
+  flex: 1;
+  display: grid;
+  align-content: center;
+}
+.wt-unlock-card {
+  position: relative;
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  background: #fff;
+  box-shadow: var(--shadow-lg);
+}
+.wt-unlock-card .wt-deal-row span { color: var(--color-ink-55); }
+.wt-unlock-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--color-cta);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  overflow: hidden;
+  transition: background-color var(--dur-menu) var(--ease-out);
+}
+.wt-unlock-btn.is-done { background: var(--color-ok); }
+.wt-ripple {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  animation: wt-ripple 0.6s var(--ease-out) forwards;
+}
+@keyframes wt-ripple { to { transform: scale(9); opacity: 0; } }
+/* Il dito: un cerchio che arriva sul bottone e preme. */
+.wt-finger {
+  position: absolute;
+  left: 62%;
+  bottom: 17px;
+  width: 38px;
+  height: 38px;
+  margin-left: -19px;
+  border-radius: 50%;
+  background: rgba(34, 24, 28, 0.28);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 12px rgba(34, 24, 28, 0.2);
+  pointer-events: none;
+}
+.wt-wallet-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--radius-lg);
+  background: #fff;
+  box-shadow: var(--shadow-lg);
+}
+.wt-wallet-row > div {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.wt-wallet-row strong { font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wt-wallet-row span { font-size: 11px; color: var(--color-ok); font-weight: 600; }
+.wt-wallet-row .wt-badge { color: var(--color-sconto-ink); }
+.wt-wallet-qr {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--color-ink);
+  color: #fff !important;
+  font-size: 12px !important;
+  font-weight: 700;
+}
+.wt-toast {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: var(--radius-pill);
+  background: var(--color-ink);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: var(--shadow-lg);
+}
+.wt-toast-ok {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-success);
+  color: var(--color-sconto-ink);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+/* ── Sconti 3 · Su cosa e quando vale ──────────────────────────────── */
+.wt-art-rules {
+  display: grid;
+  place-items: center;
+  padding: 14px;
+}
+.wt-rules-card {
+  width: 100%;
+  max-width: 330px;
+  padding: 12px;
+  border-radius: var(--radius-lg);
+  background: #fff;
+  box-shadow: var(--shadow-lg);
+}
+.wt-rules-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 4px 8px;
+}
+.wt-rules-head strong { font-size: 14px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wt-rule {
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1.5px solid transparent;
+  transition: border-color 280ms var(--ease-out), background-color 280ms var(--ease-out), transform 280ms var(--ease-out);
+}
+.wt-rule + .wt-rule { margin-top: 2px; }
+.wt-rule.is-lit {
+  border-color: var(--color-corallo);
+  background: var(--color-corallo-wash);
+  transform: scale(1.02);
+}
+.wt-rule-eyebrow {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-ink-55);
+}
+.wt-rule-prods { display: flex; gap: 6px; }
+.wt-rule-prods span {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 4px;
+  border-radius: 10px;
+  background: var(--color-cream);
+  font-size: 11px;
+  font-weight: 700;
+}
+.wt-rule-prods i { font-style: normal; font-size: 20px; line-height: 1; }
+.wt-rule-days { display: flex; gap: 4px; }
+.wt-rule-days i {
+  flex: 1;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  background: var(--color-ink-05);
+  color: var(--color-ink-55);
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 800;
+}
+.wt-rule-days i.is-on { background: var(--gradient-sconto); color: var(--color-sconto-ink); }
+.wt-rule-slots { display: flex; gap: 6px; margin-top: 6px; }
+.wt-rule-slots span {
+  padding: 5px 9px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.wt-rule-slots .is-on { background: var(--color-ink); color: #fff; }
+.wt-rule-slots .is-off { background: var(--color-ink-05); color: var(--color-ink-55); text-decoration: line-through; }
+.wt-rule-conds {
+  margin: 0;
+  padding: 0 0 0 16px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--color-ink-70);
+}
+
+/* ── Sconti 4 · il passaggio alla cassa ────────────────────────────── */
+.wt-pass-qr { position: relative; }
+.wt-scanline {
+  position: absolute;
+  left: -6px;
+  right: -6px;
+  height: 3px;
+  top: 0;
+  border-radius: 3px;
+  background: var(--color-success);
+  box-shadow: 0 0 12px 3px rgba(74, 222, 128, 0.6);
+  animation: wt-scan 1.1s ease-in-out infinite alternate;
+}
+@keyframes wt-scan { to { top: calc(100% - 3px); } }
+.wt-stamp {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: var(--color-ok);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 8px 20px rgba(44, 122, 74, 0.35);
+}
+.wt-receipt {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  width: min(210px, 64%);
+  padding: 12px 12px 16px;
+  background: #fff;
+  box-shadow: var(--shadow-lg);
+  font: 600 11px/1.3 'SF Mono', ui-monospace, Menlo, monospace;
+  color: var(--color-ink);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  /* il bordo a zig-zag dello scontrino */
+  -webkit-mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / 12px 100%;
+  mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / 12px 100%;
+}
+.wt-receipt-title {
+  text-align: center;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-size: 10px;
+  color: var(--color-ink-55);
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--color-ink-15);
+}
+.wt-receipt-row { display: flex; justify-content: space-between; gap: 8px; }
+.wt-receipt-row span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wt-receipt-discount {
+  margin: 0 -6px;
+  padding: 5px 6px;
+  border-radius: 6px;
+  background: var(--gradient-sconto);
+  color: var(--color-sconto-ink);
+  font-weight: 800;
+}
+.wt-receipt-total {
+  padding-top: 6px;
+  border-top: 1px dashed var(--color-ink-15);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* ── La chiusura ───────────────────────────────────────────────────── */
+.wt-finale {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--color-corallo);
+  color: #fff;
+  overflow: hidden;
+  text-align: center;
+  padding: 24px;
+}
+.wt-finale .wt-hero-rays { top: 42%; }
+.wt-finale-burst {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: 0;
+  height: 0;
+}
+.wt-finale-burst i {
+  position: absolute;
+  width: 10px;
+  height: 14px;
+  margin: -7px 0 0 -5px;
+  border-radius: 2px;
+}
+.wt-finale-burst i.is-round { width: 10px; height: 10px; border-radius: 50%; }
+.wt-finale-logo {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  margin-top: -40px;
+  filter: drop-shadow(0 10px 24px rgba(120, 20, 14, 0.35));
+}
+.wt-finale-title {
+  position: relative;
+  margin: 8px 0 0;
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+.wt-finale-sub {
+  position: relative;
+  margin: 0;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .wt-pin-pulse,
-  .wt-live { animation: none; }
+  .wt-live,
+  .wt-hero-rays,
+  .wt-hero-ring,
+  .wt-hero-orb { animation: none; }
 }
 
 /* Telefoni bassi (iPhone SE e simili): tutto più compatto, così le
@@ -726,6 +1167,23 @@
   .wt-save-lists { padding: 10px; }
   .wt-pass-body { height: 120px; margin-top: 8px; }
   .wt-qr { width: 112px; height: 112px; }
+  .wt-panel.is-hero .wt-title { font-size: 28px; }
+  .wt-hero-logo { width: 110px; height: 110px; margin: -55px 0 0 -55px; }
+  .wt-hero-orb { width: 36px; height: 36px; margin: -18px 0 0 -18px; }
+  .wt-hero-orb-in { font-size: 17px; }
+  .wt-hero-sticker { width: 52px; height: 52px; font-size: 14px; top: calc(46% + 2px); left: calc(50% + 18px); }
+  .wt-hero-hand { display: none; }
+  .wt-hero-ring { width: min(230px, 76%); }
+  .wt-art-unlock { gap: 8px; padding: 10px; }
+  .wt-unlock-btn { height: 38px; margin-top: 10px; }
+  .wt-art-rules { padding: 8px; }
+  .wt-rule { padding: 5px 8px; }
+  .wt-rule-eyebrow { margin-bottom: 4px; }
+  .wt-rule-prods i { font-size: 16px; }
+  .wt-rule-prods span { padding: 4px; }
+  /* le condizioni non ci stanno: restano su cosa e quando */
+  .wt-rule:last-child { display: none; }
+  .wt-receipt { width: min(190px, 66%); gap: 4px; padding: 10px 10px 14px; }
   .wt-copy { padding-top: 16px; }
   .wt-title { font-size: 22px; }
   .wt-body { font-size: 14px; }
