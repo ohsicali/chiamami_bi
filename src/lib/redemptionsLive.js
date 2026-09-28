@@ -53,11 +53,18 @@ export function applyRedemptionChange(rows, payload) {
  *   byDiscount → { [discount_id]: { taken, used } }
  *   today      → { taken, used } dalla mezzanotte locale di `now`
  *   events     → feed, dal più recente, al massimo FEED_SIZE
+ *   usedEvents → solo le convalide, dal più recente, al massimo FEED_SIZE
+ *
+ * Le convalide hanno una lista loro perché nel feed misto annegano: il
+ * 28/09 si prendevano ~240 sconti al giorno e se ne usavano 6, e i quattro
+ * QR scansionati da Shoro in serata erano già fuori dagli ultimi 40 eventi
+ * mezz'ora dopo — per l'admin non esistevano.
  */
 export function deriveRedemptionStats(rows, now) {
   const byDiscount = {}
   const today = { taken: 0, used: 0 }
   const events = []
+  const usedEvents = []
   const dayStart = startOfDay(now)
   for (const r of rows.values()) {
     const c = byDiscount[r.discount_id] || (byDiscount[r.discount_id] = { taken: 0, used: 0 })
@@ -67,9 +74,18 @@ export function deriveRedemptionStats(rows, now) {
     if (r.status === 'redeemed') {
       c.used += 1
       if (ts(r.redeemed_at) >= dayStart) today.used += 1
-      events.push({ key: `used:${r.id}`, kind: 'used', at: r.redeemed_at || r.generated_at, row: r })
+      const ev = { key: `used:${r.id}`, kind: 'used', at: r.redeemed_at || r.generated_at, row: r }
+      events.push(ev)
+      usedEvents.push(ev)
     }
   }
-  events.sort((a, b) => ts(b.at) - ts(a.at))
-  return { byDiscount, today, events: events.slice(0, FEED_SIZE) }
+  const newestFirst = (a, b) => ts(b.at) - ts(a.at)
+  events.sort(newestFirst)
+  usedEvents.sort(newestFirst)
+  return {
+    byDiscount,
+    today,
+    events: events.slice(0, FEED_SIZE),
+    usedEvents: usedEvents.slice(0, FEED_SIZE),
+  }
 }

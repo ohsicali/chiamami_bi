@@ -10,6 +10,7 @@ import { formatDiscountBadge } from '../../lib/utils/discountFormat'
  *
  * Props:
  *   events         → [{ key, kind: 'taken'|'used', at, row }] dal più recente
+ *   usedEvents     → solo le convalide, stesso formato
  *   today          → { taken, used }
  *   status         → 'live' | 'connecting' | 'offline'
  *   loaded         → la prima fotografia è arrivata
@@ -19,6 +20,13 @@ import { formatDiscountBadge } from '../../lib/utils/discountFormat'
  */
 
 const COLLAPSED = 6
+
+// Si apre sulle convalide: gli sconti presi sono decine di volte di più e,
+// mescolati, spingevano fuori dal feed i QR scansionati (28/09, Shoro).
+const VIEWS = [
+  { id: 'used', label: 'Utilizzati' },
+  { id: 'all', label: 'Tutti' },
+]
 // Alias maiuscolo: la config ESLint non conta `<motion.li>` come uso di `motion`.
 const MotionLi = motion.li
 
@@ -39,10 +47,12 @@ const STATUS = {
   offline: { label: 'Non in diretta', color: '#C0392B' },
 }
 
-export default function LiveRedemptionsPanel({ events, today, status, loaded, freshKeys, now, discountsById }) {
+export default function LiveRedemptionsPanel({ events, usedEvents = [], today, status, loaded, freshKeys, now, discountsById }) {
   const [expanded, setExpanded] = useState(false)
+  const [view, setView] = useState('used')
   const st = STATUS[status] || STATUS.connecting
-  const shown = expanded ? events : events.slice(0, COLLAPSED)
+  const list = view === 'used' ? usedEvents : events
+  const shown = expanded ? list : list.slice(0, COLLAPSED)
 
   return (
     <section
@@ -85,17 +95,47 @@ export default function LiveRedemptionsPanel({ events, today, status, loaded, fr
         </div>
       </div>
 
+      <div role="tablist" aria-label="Cosa mostrare" style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+        {VIEWS.map((v) => {
+          const active = view === v.id
+          return (
+            <button
+              key={v.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => { setView(v.id); setExpanded(false) }}
+              style={{
+                border: active ? 0 : '1px solid var(--color-line, #EAE3D7)',
+                background: active ? 'var(--color-ink, #22181C)' : '#fff',
+                color: active ? '#fff' : 'var(--color-ink, #22181C)',
+                borderRadius: 999,
+                padding: '5px 12px',
+                fontSize: 12,
+                fontWeight: 800,
+                cursor: 'pointer',
+                fontFamily: 'var(--font-sans)',
+              }}
+            >
+              {v.label}
+            </button>
+          )
+        })}
+      </div>
+
       {!loaded && (
         <div style={{ padding: '14px 4px', fontSize: 13, color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>Carico…</div>
       )}
 
-      {loaded && events.length === 0 && (
+      {loaded && list.length === 0 && (
         <div style={{ padding: '14px 4px', fontSize: 13, color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
-          Ancora nessuno sconto preso. Appena qualcuno ne sblocca uno, compare qui.
+          {view === 'used'
+            ? 'Ancora nessuno sconto utilizzato. Appena un locale ne convalida uno, compare qui.'
+            : 'Ancora nessuno sconto preso. Appena qualcuno ne sblocca uno, compare qui.'}
         </div>
       )}
 
-      {loaded && events.length > 0 && (
+      {loaded && list.length > 0 && (
         <ul
           style={{
             listStyle: 'none',
@@ -122,7 +162,7 @@ export default function LiveRedemptionsPanel({ events, today, status, loaded, fr
         </ul>
       )}
 
-      {loaded && events.length > COLLAPSED && (
+      {loaded && list.length > COLLAPSED && (
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
@@ -138,7 +178,7 @@ export default function LiveRedemptionsPanel({ events, today, status, loaded, fr
             fontFamily: 'var(--font-sans)',
           }}
         >
-          {expanded ? 'Mostra meno' : `Mostra gli ultimi ${events.length}`}
+          {expanded ? 'Mostra meno' : `Mostra gli ultimi ${list.length}`}
         </button>
       )}
     </section>
