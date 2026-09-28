@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { LogoFull } from '../../components/UI/Logo'
 import {
+  greetingName,
   hasSeenTour,
   isFirstSignIn,
   openWelcomeTour,
@@ -11,6 +12,7 @@ import {
   SIGNUP_TOUR_DELAY_MS,
 } from '../../lib/welcomeTour'
 import { preloadWelcomeTour } from '../../components/Onboarding/loadWelcomeTour'
+import AccountConfirmed from '../../components/Onboarding/AccountConfirmed'
 
 /**
  * Account nuovo appena entrato (link di conferma o primo accesso con
@@ -39,16 +41,24 @@ function welcomeThenGo(navigate) {
  * si registrava con Google leggeva "Accesso effettuato!", finiva sulla home e
  * si vedeva partire il tutorial dopo, dal Gate.
  */
-function finishSignIn({ user, type, navigate, setStatus, setMessage }) {
+function finishSignIn({ user, type, navigate, setStatus, setMessage, setWelcome }) {
+  // Account nuovo (Google non ha il passaggio del codice, e il link della
+  // mail nemmeno): la stessa schermata "Ci sei" della registrazione con
+  // email, e da lì il tutorial — non "Accesso effettuato!" e la home.
+  if (shouldWelcomeAfterAuth({ user, type, seen: hasSeenTour(user?.id) })) {
+    setWelcome({
+      name: greetingName(user),
+      line: type === 'signup' ? 'Email confermata. Ti faccio vedere come funziona…'
+        : isFirstSignIn(user) ? 'Account creato. Ti faccio vedere come funziona…'
+          : 'Ti faccio vedere come funziona…',
+    })
+    setStatus('welcome')
+    welcomeThenGo(navigate)
+    return
+  }
   setStatus('success')
-  const welcome = shouldWelcomeAfterAuth({ user, type, seen: hasSeenTour(user?.id) })
-  setMessage(
-    type === 'signup' ? 'Email confermata! Benvenuta su ChiamamiBi!'
-      : isFirstSignIn(user) ? 'Account creato! Ti diamo il benvenuto su ChiamamiBi.'
-        : 'Accesso effettuato!',
-  )
-  if (welcome) welcomeThenGo(navigate)
-  else setTimeout(() => navigate('/', { replace: true }), 1500)
+  setMessage(type === 'signup' ? 'Email confermata! Benvenuta su ChiamamiBi!' : 'Accesso effettuato!')
+  setTimeout(() => navigate('/', { replace: true }), 1500)
 }
 
 /**
@@ -63,10 +73,12 @@ function finishSignIn({ user, type, navigate, setStatus, setMessage }) {
 export default function AuthCallback() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const [status, setStatus] = useState('loading') // loading | success | error
+  const [status, setStatus] = useState('loading') // loading | success | welcome | error
   const [message, setMessage] = useState('')
+  const [welcome, setWelcome] = useState(null) // { name, line } con status 'welcome'
 
   useEffect(() => {
+    const done = { navigate, setStatus, setMessage, setWelcome }
     const handleCallback = async () => {
       const code = searchParams.get('code')
       const type = searchParams.get('type') // signup, recovery, email_change, magiclink
@@ -81,7 +93,7 @@ export default function AuthCallback() {
           const { data: { session } } = await supabase.auth.getSession()
           if (session) {
             // Session exists! Profile will be created by useAuth.fetchProfile
-            finishSignIn({ user: session.user, type, navigate, setStatus, setMessage })
+            finishSignIn({ user: session.user, type, ...done })
             return
           }
         }
@@ -112,7 +124,7 @@ export default function AuthCallback() {
           }
 
           // signup or magiclink — confirmed, redirect to home
-          finishSignIn({ user: data?.user ?? data?.session?.user, type, navigate, setStatus, setMessage })
+          finishSignIn({ user: data?.user ?? data?.session?.user, type, ...done })
         } catch (err) {
           setStatus('error')
           setMessage(err.message || 'Errore durante la verifica del codice.')
@@ -125,7 +137,7 @@ export default function AuthCallback() {
       // passano da qui. Il client l'ha già letta all'avvio.
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
-        finishSignIn({ user: session.user, type, navigate, setStatus, setMessage })
+        finishSignIn({ user: session.user, type, ...done })
       } else {
         setStatus('error')
         setMessage('Link non valido o scaduto. Riprova.')
@@ -147,9 +159,13 @@ export default function AuthCallback() {
           </>
         )}
 
+        {status === 'welcome' && welcome && (
+          <AccountConfirmed name={welcome.name} line={welcome.line} />
+        )}
+
         {status === 'success' && (
           <>
-            <div data-signup-check="" className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center">
+            <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 6L9 17l-5-5" />
               </svg>
