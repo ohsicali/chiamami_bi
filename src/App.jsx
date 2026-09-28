@@ -9,7 +9,8 @@ import { usePageTracking } from './lib/hooks/usePageTracking'
 import AdsProvider from './components/Ads/AdsProvider'
 import { useMediaQuery } from './lib/hooks/useMediaQuery'
 import { useAuth } from './lib/hooks/useAuth'
-import { captureError, posthogConsentDenied, posthogConsentGranted, posthogIdentify } from './lib/posthog'
+import { captureError, posthogConsentDenied, posthogConsentGranted, posthogIdentify, track } from './lib/posthog'
+import { claimChunkReload, isChunkLoadError } from './lib/chunkReload'
 import { prewarmExplore, scheduleExplorePrewarm } from './lib/prewarmExplore'
 
 // CookieConsent is rendered after first paint via requestIdleCallback so it
@@ -17,45 +18,34 @@ import { prewarmExplore, scheduleExplorePrewarm } from './lib/prewarmExplore'
 // entry chunk if imported eagerly.
 const CookieConsent = lazy(() => import('react-cookie-consent'))
 
-// Un nuovo deploy rinomina i file delle pagine caricate con `lazy()`
-// (hash diverso nel nome). Chi ha il sito già aperto e naviga verso una
-// pagina non ancora scaricata prova a prendere il vecchio file: Vercel non
-// lo trova più e restituisce la pagina HTML del routing SPA al suo posto,
-// da cui il "text/html is not a valid JavaScript MIME type". Non è un bug
-// dell'app, è il sito vecchio in mano all'utente: un ricaricamento prende
-// l'HTML nuovo con i riferimenti giusti e risolve. `RELOAD_KEY` evita di
-// ricaricare in loop se il problema fosse un altro.
-const CHUNK_ERROR_PATTERN = /dynamically imported module|is not a valid JavaScript MIME type|Importing a module script failed|Failed to fetch dynamically imported module|Unable to preload CSS/i
-const RELOAD_KEY = 'chiamamibi-chunk-reload'
-
-function isChunkLoadError(error) {
-  return CHUNK_ERROR_PATTERN.test(error?.message || '')
-}
-
+// Chunk spariti dopo un deploy: si ricarica invece di mostrare l'errore
+// (vedi src/lib/chunkReload.js).
 class ErrorBoundary extends Component {
   state = { hasError: false, error: null }
   static getDerivedStateFromError(error) {
     return { hasError: true, error }
   }
   componentDidCatch(error, info) {
-    captureError(error, { component_stack: info?.componentStack })
-    if (!isChunkLoadError(error)) return
-    let alreadyTried = false
-    try {
-      alreadyTried = sessionStorage.getItem(RELOAD_KEY) === '1'
-      if (!alreadyTried) sessionStorage.setItem(RELOAD_KEY, '1')
-    } catch {
-      // storage non disponibile (privacy mode ecc.): mostra il fallback normale
+    // Un chunk di un deploy vecchio: si ricarica e non è un errore da
+    // segnalare (a PostHog va solo l'evento). Se ricapita subito dopo,
+    // allora è un problema vero e parte come errore.
+    if (isChunkLoadError(error) && claimChunkReload()) {
+      track('chunk_reload', { message: error.message })
+      window.location.reload()
       return
     }
-    if (!alreadyTried) window.location.reload()
+    captureError(error, { component_stack: info?.componentStack })
   }
   render() {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-6 text-center">
           <p className="text-lg font-semibold text-primary mb-2">Qualcosa è andato storto</p>
-          <p className="text-sm text-secondary mb-4">{this.state.error?.message}</p>
+          <p className="text-sm text-secondary mb-4">
+            {isChunkLoadError(this.state.error)
+              ? 'Non siamo riusciti a caricare la pagina. Controlla la connessione e riprova.'
+              : this.state.error?.message}
+          </p>
           <button
             onClick={() => window.location.reload()}
             className="px-5 py-2.5 rounded-xl bg-accent text-white text-sm font-medium"
@@ -111,21 +101,10 @@ const ResetPasswordPage = lazy(() => import('./pages/public/ResetPasswordPage'))
 const SettingsPage = lazy(() => import('./pages/public/SettingsPage'))
 
 // Preload RestaurantPage chunk so it's ready instantly when a pin is tapped
-const preloadRestaurantPage = () => import('./pages/public/RestaurantPage')
+const preloadRestaurantPage = () => import('./pages/public/RestaurantPage').catch(() => {})
 
 export default function App() {
   const location = useLocation()
-
-  // Siamo arrivati fin qui senza che l'ErrorBoundary scattasse: la pagina è
-  // sana, quindi un eventuale chunk error futuro merita un altro tentativo
-  // di ricaricamento (vedi RELOAD_KEY sopra).
-  useEffect(() => {
-    try {
-      sessionStorage.removeItem(RELOAD_KEY)
-    } catch {
-      // storage non disponibile, nessun problema: il flag semplicemente non si azzera
-    }
-  }, [])
 
   // 1024 e non 768: sotto i 1024 le due home si assomigliano (una colonna,
   // riga che scorre), e la piega a due colonne — quella che non piaceva —

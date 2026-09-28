@@ -25,6 +25,8 @@
  * se impostata, la sostituisce e fa partire PostHog anche fuori produzione.
  */
 
+import { isNoiseException } from './errorNoise.js'
+
 const PROJECT_KEY = 'phc_zS9aMGPuNLKzuxytwmibmfa6wzqJPSvL6ftYoARBKYQw'
 const ENV_KEY = import.meta.env.VITE_POSTHOG_KEY
 const CONSENT_COOKIE = 'chiamamibi_cookie_consent'
@@ -87,8 +89,11 @@ export function initPostHog() {
         captureCanvas: { recordCanvas: true, canvasFps: 2, canvasQuality: '0.4' },
         canvasCapture: { resolutionScale: 0.5 },
       },
+      // Via l'admin e gli errori dei browser dentro le app (errorNoise.js).
       before_send: (event) =>
-        event && isAdminUrl(event.properties?.$current_url) ? null : event,
+        event && (isAdminUrl(event.properties?.$current_url) || isNoiseException(event))
+          ? null
+          : event,
     })
     client = posthog
     applyIdentity()
