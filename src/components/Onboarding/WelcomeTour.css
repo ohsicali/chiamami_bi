@@ -53,6 +53,8 @@
 
 /* ── Barra in alto: avanzamento a segmenti + Salta ─────────────────── */
 .wt-top {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -161,6 +163,8 @@
 }
 /* ── Bottoni in basso ──────────────────────────────────────────────── */
 .wt-actions {
+  position: relative;
+  z-index: 2;
   display: flex;
   gap: 10px;
   padding-top: 16px;
@@ -696,6 +700,8 @@
 .wt-hero {
   display: grid;
   place-items: center;
+  /* tutto decorativo: non deve mai rubare un tocco ai bottoni */
+  pointer-events: none;
 }
 /* I raggi che girano piano dietro al logo. */
 .wt-hero-rays {
@@ -1187,4 +1193,56 @@
   .wt-copy { padding-top: 16px; }
   .wt-title { font-size: 22px; }
   .wt-body { font-size: 14px; }
+}
+
+/* Telefono in orizzontale: a tutto schermo come in verticale (non la card
+   del computer, che qui sarebbe alta 340px), disegno a sinistra e testo a
+   destra. Sta in fondo perché deve vincere sia sul layout da computer
+   (min-width: 768px) sia su quello dei telefoni bassi. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .wt-root {
+    align-items: stretch;
+    background: var(--color-page);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .wt-panel {
+    max-width: none;
+    height: 100%;
+    border-radius: 0;
+    box-shadow: none;
+    padding:
+      calc(var(--safe-top) + 10px)
+      calc(var(--safe-right) + 24px)
+      calc(var(--safe-bottom) + 12px)
+      calc(var(--safe-left) + 24px);
+  }
+  .wt-stage { margin-top: 10px; }
+  .wt-slide { flex-direction: row; gap: 24px; }
+  .wt-art { flex: 1 1 50%; min-height: 0; max-height: none; }
+  .wt-copy { flex: 1 1 50%; align-self: center; padding: 0; }
+  .wt-title, .wt-panel.is-hero .wt-title { font-size: 24px; }
+  .wt-body { font-size: 14px; margin-top: 8px; }
+  .wt-actions { padding-top: 10px; }
+  .wt-back, .wt-next { height: 46px; }
+  .wt-actions { width: 50%; margin-left: auto; }
+  .wt-hero-ring { width: min(190px, 70%); }
+  .wt-hero-logo { width: 96px; height: 96px; margin: -48px 0 0 -48px; }
+  .wt-hero-orb { width: 32px; height: 32px; margin: -16px 0 0 -16px; }
+  .wt-hero-orb-in { font-size: 15px; }
+  .wt-hero-sticker { width: 46px; height: 46px; font-size: 12px; top: calc(50% + 2px); left: calc(50% + 14px); }
+  .wt-hero-rays, .wt-hero-ring, .wt-hero-logo, .wt-hero-shock { top: 50%; }
+  .wt-finale-logo { width: 100px; height: 100px; margin-top: 0; }
+  .wt-finale-title { font-size: 24px; }
+  /* colonna stretta: le due etichette del selettore devono starci intere */
+  .wt-seg-club > span:not(.wt-seg-thumb) { font-size: 11px; letter-spacing: -0.01em; }
+  .wt-seg-count { margin-left: 4px; min-width: 16px; height: 16px; }
+}
+
+/* Il più basso di tutti (iPhone SE in orizzontale): dello scontrino
+   restano la riga dello sconto e il totale, che sono il punto. */
+@media (max-height: 360px) {
+  .wt-receipt { bottom: 10px; gap: 5px; }
+  .wt-receipt > :nth-child(-n+3) { display: none; }
+  .wt-receipt-total { padding-top: 4px; }
 }
