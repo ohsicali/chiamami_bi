@@ -2,6 +2,32 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { LogoFull } from '../../components/UI/Logo'
+import {
+  hasSeenTour,
+  isFreshAccount,
+  openWelcomeTour,
+  whenTourCovers,
+  SIGNUP_TOUR_DELAY_MS,
+} from '../../lib/welcomeTour'
+import { preloadWelcomeTour } from '../../components/Onboarding/loadWelcomeTour'
+
+/**
+ * Account nuovo appena entrato (link di conferma o primo accesso con
+ * Google): come dopo il codice in LoginPage, il tutorial parte da qui
+ * allargandosi dalla spunta, e sotto si passa alla home quando il tutorial
+ * copre già tutto. Vedi `startWelcome` in LoginPage.
+ */
+function welcomeThenGo(navigate) {
+  preloadWelcomeTour()
+  setTimeout(() => {
+    const box = document.querySelector('[data-signup-check]')?.getBoundingClientRect()
+    openWelcomeTour({
+      source: 'signup',
+      origin: box ? { x: box.left + box.width / 2, y: box.top + box.height / 2, r: box.width / 2 } : null,
+    })
+  }, SIGNUP_TOUR_DELAY_MS)
+  whenTourCovers(() => navigate('/', { replace: true }))
+}
 
 /**
  * Handles redirects from Supabase auth emails:
@@ -47,7 +73,7 @@ export default function AuthCallback() {
       // Exchange code for session (PKCE flow)
       if (code) {
         try {
-          const { error } = await supabase.auth.exchangeCodeForSession(code)
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code)
           if (error) throw error
 
           // Route based on auth event type
@@ -67,10 +93,13 @@ export default function AuthCallback() {
 
           // signup or magiclink — confirmed, redirect to home
           setStatus('success')
+          const newUser = data?.user ?? data?.session?.user
+          const isNew = type === 'signup' || (isFreshAccount(newUser) && !hasSeenTour(newUser?.id))
           setMessage(type === 'signup'
             ? 'Email confermata! Benvenuta su ChiamamiBi!'
-            : 'Accesso effettuato!')
-          setTimeout(() => navigate('/', { replace: true }), 2000)
+            : isNew ? 'Account creato! Benvenuta su ChiamamiBi!' : 'Accesso effettuato!')
+          if (isNew) welcomeThenGo(navigate)
+          else setTimeout(() => navigate('/', { replace: true }), 2000)
         } catch (err) {
           setStatus('error')
           setMessage(err.message || 'Errore durante la verifica del codice.')
@@ -107,7 +136,7 @@ export default function AuthCallback() {
 
         {status === 'success' && (
           <>
-            <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center">
+            <div data-signup-check="" className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 6L9 17l-5-5" />
               </svg>

@@ -630,7 +630,7 @@ export default function SettingsPage() {
 
         {/* ── TUTORIAL ── Lo stesso che parte dopo la registrazione
             (components/Onboarding/WelcomeTour.jsx), per chi l'ha saltato. */}
-        <button onClick={openWelcomeTour} style={{
+        <button onClick={() => openWelcomeTour()} style={{
           ...cardStyle, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
           cursor: 'pointer', textAlign: 'left',
         }}>

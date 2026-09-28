@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { track } from '../../lib/posthog'
+import { loadWelcomeTour } from './loadWelcomeTour'
 import {
   OPEN_TOUR_EVENT,
   greetingName,
@@ -13,7 +14,7 @@ import {
 
 // Il tutorial vero (illustrazioni, animazioni) sta in un chunk a parte: lo
 // scarica solo chi lo vede, cioè chi si è appena registrato.
-const WelcomeTour = lazy(() => import('./WelcomeTour'))
+const WelcomeTour = lazy(loadWelcomeTour)
 
 /**
  * Decide se aprire il tutorial di benvenuto e lo monta sopra la pagina.
@@ -23,14 +24,17 @@ export default function WelcomeTourGate() {
   const { user, profile } = useAuth()
   const { pathname } = useLocation()
   const navigate = useNavigate()
-  // Per chi è aperto: `{ source: 'auto', userId }` dopo la registrazione,
-  // `{ source: 'settings' }` quando lo si riapre a mano (a PostHog serve per
-  // non mescolare le due cose). Legato all'utente, così chi esce
-  // dall'account col tutorial aperto non se lo ritrova addosso, né lo
-  // eredita chi entra dopo sullo stesso browser.
+  // Per chi è aperto:
+  //   `{ source: 'auto', userId }`  — l'ha deciso il Gate guardando l'account;
+  //   `{ source: 'signup', origin }` — la pagina di conferma, appena il
+  //     codice è passato (l'utente nel contesto può arrivare un attimo dopo);
+  //   `{ source: 'settings' }`      — riaperto a mano da Impostazioni.
+  // A PostHog serve per non mescolare le tre cose. Quello automatico è
+  // legato all'utente, così chi esce dall'account col tutorial aperto non se
+  // lo ritrova addosso, né lo eredita chi entra dopo sullo stesso browser.
   const [openAs, setOpenAs] = useState(null)
   const userId = user?.id ?? null
-  const open = !!openAs && (openAs.source === 'settings' || openAs.userId === userId)
+  const open = !!openAs && (openAs.source !== 'auto' || openAs.userId === userId)
   const source = openAs?.source ?? 'auto'
 
   useEffect(() => {
@@ -44,7 +48,10 @@ export default function WelcomeTourGate() {
   }, [user, userId, pathname, open])
 
   useEffect(() => {
-    const onOpen = () => setOpenAs({ source: 'settings' })
+    const onOpen = (e) => setOpenAs((cur) => cur ?? {
+      source: e?.detail?.source || 'settings',
+      origin: e?.detail?.origin || null,
+    })
     window.addEventListener(OPEN_TOUR_EVENT, onOpen)
     return () => window.removeEventListener(OPEN_TOUR_EVENT, onOpen)
   }, [])
@@ -69,6 +76,7 @@ export default function WelcomeTourGate() {
           <WelcomeTour
             key="welcome-tour"
             name={greetingName(user, profile)}
+            origin={openAs?.origin}
             onClose={handleClose}
           />
         )}

@@ -61,3 +61,26 @@ test('il saluto usa il primo nome, mai un indirizzo email', () => {
   assert.equal(greetingName({ user_metadata: { full_name: 'marta@example.com' } }, null), '')
   assert.equal(greetingName(null, null), '')
 })
+
+test('dopo la conferma si cambia pagina quando il tutorial copre tutto, non prima', async () => {
+  const { whenTourCovers, TOUR_COVERED_EVENT } = await import('../src/lib/welcomeTour.js')
+  const hadWindow = 'window' in globalThis
+  globalThis.window = new EventTarget()
+  try {
+    let went = 0
+    whenTourCovers(() => { went++ }, 1000)
+    assert.equal(went, 0, 'non subito')
+    window.dispatchEvent(new Event(TOUR_COVERED_EVENT))
+    assert.equal(went, 1, 'appena il tutorial ha finito di entrare')
+    window.dispatchEvent(new Event(TOUR_COVERED_EVENT))
+    assert.equal(went, 1, 'una volta sola')
+
+    // Il tutorial non arriva: dopo il tempo massimo si va avanti lo stesso.
+    let fallback = 0
+    whenTourCovers(() => { fallback++ }, 30)
+    await new Promise((r) => setTimeout(r, 60))
+    assert.equal(fallback, 1)
+  } finally {
+    if (!hadWindow) delete globalThis.window
+  }
+})

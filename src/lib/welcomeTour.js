@@ -87,9 +87,48 @@ export function markTourSeen(userId) {
   }
 }
 
-/** Riapre il tutorial da qualunque punto dell'app (Impostazioni). */
-export function openWelcomeTour() {
-  window.dispatchEvent(new Event(OPEN_TOUR_EVENT))
+/**
+ * Apre il tutorial da qualunque punto dell'app.
+ *
+ * - `source: 'settings'` → "Rivedi il tutorial" in Impostazioni;
+ * - `source: 'signup'` → subito dopo la conferma dell'account (codice
+ *   accettato, link della mail, primo accesso con Google), senza aspettare
+ *   di atterrare sulla home. Con `origin` ({ x, y, r } in px) il tutorial
+ *   entra come un cerchio che si allarga da quel punto: il cerchio corallo
+ *   della spunta "Ci sei" diventa la prima schermata, che è corallo anche lei.
+ */
+export function openWelcomeTour({ source = 'settings', origin = null } = {}) {
+  window.dispatchEvent(new CustomEvent(OPEN_TOUR_EVENT, { detail: { source, origin } }))
+}
+
+/**
+ * Dopo l'"account confermato": la spunta si disegna e si legge "Ci sei",
+ * poi (dopo questo ritardo) il cerchio cresce e diventa il tutorial.
+ */
+export const SIGNUP_TOUR_DELAY_MS = 1000
+
+/** Il tutorial avvisa con questo evento quando ha finito di entrare. */
+export const TOUR_COVERED_EVENT = 'chiamamibi:welcome-tour-covered'
+
+/**
+ * Esegue `fn` quando il tutorial copre tutto lo schermo — è lì che la
+ * pagina sotto può cambiare senza che si veda niente saltare. Non a tempo
+ * fisso: su una rete lenta il tutorial può arrivare più tardi, e cambiare
+ * pagina prima faceva lampeggiare la home fra "Ci sei" e il tutorial.
+ * Se il tutorial non arriva proprio, dopo `fallbackMs` si va avanti lo
+ * stesso: chi si è appena registrato non deve restare fermo su "Ci sei".
+ */
+export function whenTourCovers(fn, fallbackMs = 3500) {
+  let done = false
+  const go = () => {
+    if (done) return
+    done = true
+    window.removeEventListener(TOUR_COVERED_EVENT, go)
+    clearTimeout(timer)
+    fn()
+  }
+  window.addEventListener(TOUR_COVERED_EVENT, go)
+  const timer = setTimeout(go, fallbackMs)
 }
 
 /** Il nome con cui salutare: il primo del nome completo, se c'è. */

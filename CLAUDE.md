@@ -148,6 +148,13 @@ passi** (drop e convenzioni → «Sblocca sconto» e lo ritrovi in «I miei vant
 → su cosa, in che giorni e a pranzo/cena vale → alla cassa mostri il QR o detti il
 codice e lo sconto è sullo scontrino), Salvati. In fondo un'animazione di chiusura
 e si va alla **home**; "Salta" in alto (o Esc) chiude e lascia dove si era.
+**Parte appena l'account è confermato** (codice accettato in LoginPage, link
+della mail o primo accesso Google in AuthCallback): la spunta "Ci sei" resta un
+secondo, poi il suo cerchio corallo si allarga fino a diventare la prima
+schermata (`openWelcomeTour({ source: 'signup', origin })`), e la pagina sotto
+cambia solo quando il tutorial copre tutto (`whenTourCovers`, con ripiego a
+3,5 s) — mai a tempo fisso, o su rete lenta la home lampeggia in mezzo. Il
+chunk si scarica mentre si scrive il codice (`preloadWelcomeTour`).
 Regole in `src/lib/welcomeTour.js` (sotto test in `tests/welcome-tour.test.mjs`):
 account nato da meno di 24 h (`created_at`, così vale sia per email+codice sia per
 Google, e un vecchio utente che entra con Google non lo vede) e non ancora visto

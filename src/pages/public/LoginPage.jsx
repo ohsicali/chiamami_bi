@@ -10,6 +10,8 @@ import Footer from '../../components/Layout/Footer'
 import BiLogoMark from '../../components/UI/BiLogoMark'
 import Turnstile from '../../components/Turnstile'
 import MetaTags from '../../components/SEO/MetaTags'
+import { openWelcomeTour, SIGNUP_TOUR_DELAY_MS, whenTourCovers } from '../../lib/welcomeTour'
+import { preloadWelcomeTour } from '../../components/Onboarding/loadWelcomeTour'
 
 const itemVariants = {
   hidden: { opacity: 0, y: 12 },
@@ -124,11 +126,40 @@ export default function LoginPage() {
   const [captchaToken, setCaptchaToken] = useState('')
   const captchaRequired = !!import.meta.env.VITE_TURNSTILE_SITE_KEY
 
-  // Redirect if already logged in
+  // Redirect if already logged in — ma non mentre si conferma il codice:
+  // lì l'utente compare nel contesto appena Supabase accetta il codice, e
+  // andare via subito tagliava a metà la schermata "Ci sei" e l'entrata del
+  // tutorial. Il passaggio alla pagina dopo lo fa `startWelcome` qui sotto.
+  const confirmingRef = useRef(false)
   useEffect(() => {
-    if (user) redirectAfterAuth()
+    if (user && !confirmingRef.current) redirectAfterAuth()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
+
+  // Il tutorial si scarica mentre si scrive il codice: quando il codice
+  // passa deve partire subito, non dopo un giro di rete.
+  useEffect(() => {
+    if (mode === 'confirm_signup') preloadWelcomeTour()
+  }, [mode])
+
+  /**
+   * Account appena confermato: la spunta "Ci sei" si disegna, poi il suo
+   * cerchio corallo si allarga fino a diventare la prima schermata del
+   * tutorial (anche lei corallo), e sotto — quando il tutorial copre già
+   * tutto — si passa alla pagina di destinazione. Chi salta il tutorial se
+   * la ritrova lì; chi lo finisce va alla home.
+   */
+  const startWelcome = () => {
+    setTimeout(() => {
+      const check = document.querySelector('[data-signup-check]')
+      const box = check?.getBoundingClientRect()
+      openWelcomeTour({
+        source: 'signup',
+        origin: box ? { x: box.left + box.width / 2, y: box.top + box.height / 2, r: box.width / 2 } : null,
+      })
+    }, SIGNUP_TOUR_DELAY_MS)
+    whenTourCovers(() => redirectAfterAuth())
+  }
 
   /**
    * Cambiando passo si torna in cima.
@@ -272,13 +303,18 @@ export default function LoginPage() {
           setSubmitting(false)
           return
         }
-        await verifySignupOtp(email, signupOtp)
+        confirmingRef.current = true
+        try {
+          await verifySignupOtp(email, signupOtp)
+        } catch (err) {
+          confirmingRef.current = false
+          throw err
+        }
         // Il benvenuto parte adesso e non alla registrazione: chi non
         // conferma non è un iscritto, e non ha senso dargli il benvenuto.
         sendWelcomeEmail()
         setConfirmed(true)
-        // Il tempo dell'animazione, poi si va avanti.
-        setTimeout(() => redirectAfterAuth(), 1600)
+        startWelcome()
       } else if (mode === 'login') {
         await signIn(email, password)
         redirectAfterAuth()
@@ -302,8 +338,11 @@ export default function LoginPage() {
           setSignupOtp('')
           setMode('confirm_signup')
         } else {
-          // Conferma disattivata su Supabase: si è già dentro.
+          // Conferma disattivata su Supabase: si è già dentro, e il
+          // tutorial parte subito (in dissolvenza: qui non c'è la spunta da
+          // cui farlo crescere).
           sendWelcomeEmail()
+          openWelcomeTour({ source: 'signup' })
           redirectAfterAuth()
         }
       }
@@ -1237,6 +1276,8 @@ function RegistrationDone({ name }) {
       }}
     >
       <motion.div
+        // Da qui parte il cerchio del tutorial (vedi `startWelcome`).
+        data-signup-check=""
         initial={reduce ? false : { scale: 0.5, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 260, damping: 18 }}
@@ -1273,7 +1314,7 @@ function RegistrationDone({ name }) {
           {primo ? `Ci sei, ${primo}.` : 'Ci sei.'}
         </h2>
         <p style={{ fontSize: 14.5, color: 'var(--color-ink-70)', margin: 0 }}>
-          Account confermato. Ti porto dentro…
+          Account confermato. Ti faccio vedere come funziona…
         </p>
       </motion.div>
     </motion.div>

@@ -1,12 +1,13 @@
 /* Tutorial di benvenuto — vedi WelcomeTour.jsx.
    Telefono: a tutto schermo, su carta. Computer: una card al centro sopra
-   la pagina velata. Sopra la tab bar (50) e il banner cookie (51), sotto i
-   popup degli sconti (100), che dal tutorial comunque non si aprono. */
+   la pagina velata. Sopra a tutto — anche alla schermata "Ci sei" della
+   registrazione (3000), da cui entra allargandosi: è una finestra modale e
+   finché è aperta non c'è altro da toccare. */
 
 .wt-root {
   position: fixed;
   inset: 0;
-  z-index: 95;
+  z-index: 3100;
   display: flex;
   align-items: stretch;
   justify-content: center;

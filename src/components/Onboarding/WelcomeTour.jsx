@@ -4,6 +4,7 @@ import BiLogoMark from '../UI/BiLogoMark'
 import { formatDiscountBadge } from '../../lib/utils/discountFormat'
 import { formatShortCode } from '../../lib/shortCode'
 import { CHAT_MAINTENANCE } from '../../lib/chatMaintenance'
+import { TOUR_COVERED_EVENT } from '../../lib/welcomeTour'
 import { DUR, EASE_OUT, SPRING_SNAP, SPRING_SOFT } from '../../lib/motion'
 import './WelcomeTour.css'
 
@@ -109,7 +110,7 @@ function buildSlides(name) {
 const FINALE_MS = 2000
 const FINALE_MS_REDUCED = 900
 
-export default function WelcomeTour({ name, onClose }) {
+export default function WelcomeTour({ name, origin, onClose }) {
   const reduce = useReducedMotion()
   const slides = useMemo(() => buildSlides(name), [name])
   const [[index, dir], setPage] = useState([0, 0])
@@ -186,6 +187,23 @@ export default function WelcomeTour({ name, onClose }) {
 
   const { Art } = slide
 
+  // Entrata. Di solito una dissolvenza con il pannello che sale; dopo la
+  // conferma dell'account (`origin`) invece un cerchio che si allarga dal
+  // cerchio corallo della spunta fino a coprire lo schermo — la spunta
+  // diventa la prima schermata, e il passaggio non ha stacchi.
+  const [reveal] = useState(() => (origin && !reduce ? revealCircle(origin) : null))
+  const rootMotion = reveal
+    ? {
+        initial: { clipPath: reveal.from },
+        animate: { clipPath: reveal.to, transitionEnd: { clipPath: 'none' } },
+        transition: { duration: 0.75, ease: [0.65, 0, 0.35, 1] },
+      }
+    : {
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        transition: { duration: DUR.sheet, ease: EASE_OUT },
+      }
+
   return (
     <motion.div
       className="wt-root"
@@ -193,16 +211,19 @@ export default function WelcomeTour({ name, onClose }) {
       aria-modal="true"
       aria-labelledby="wt-title"
       aria-describedby="wt-body"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: DUR.sheet, ease: EASE_OUT }}
+      {...rootMotion}
+      // Finita l'entrata il tutorial copre tutto: chi aspettava per
+      // cambiare pagina sotto (la conferma dell'account) può farlo ora.
+      onAnimationComplete={() => {
+        if (!finishing) window.dispatchEvent(new Event(TOUR_COVERED_EVENT))
+      }}
+      exit={{ opacity: 0, transition: { duration: DUR.sheet, ease: EASE_OUT } }}
     >
       <motion.div
         ref={panelRef}
         tabIndex={-1}
         className={`wt-panel ${slide.hero ? 'is-hero' : ''}`}
-        initial={reduce ? { opacity: 0 } : { opacity: 0, y: 28, scale: 0.98 }}
+        initial={reduce ? { opacity: 0 } : reveal ? false : { opacity: 0, y: 28, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 1.02 }}
         transition={{ duration: DUR.sheet, ease: EASE_OUT }}
@@ -291,6 +312,20 @@ export default function WelcomeTour({ name, onClose }) {
       </motion.div>
     </motion.div>
   )
+}
+
+/**
+ * Il cerchio dell'entrata: parte grande quanto il cerchio della spunta e
+ * finisce abbastanza grande da coprire l'angolo più lontano dello schermo.
+ */
+function revealCircle({ x, y, r = 48 }) {
+  const w = window.innerWidth
+  const h = window.innerHeight
+  const far = Math.ceil(Math.hypot(Math.max(x, w - x), Math.max(y, h - y))) + 2
+  return {
+    from: `circle(${r}px at ${x}px ${y}px)`,
+    to: `circle(${far}px at ${x}px ${y}px)`,
+  }
 }
 
 /** Il titolo che sale una parola alla volta. */
