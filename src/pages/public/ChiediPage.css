@@ -965,3 +965,109 @@
   .cp-tstatus { animation: none; }
 }
 
+
+/* ========================= MANUTENZIONE =========================
+   Schermata unica quando CHAT_MAINTENANCE è acceso (lib/chatMaintenance.js).
+   Riusa l'avatar e la tipografia dell'hero; niente barra di scrittura. */
+.cp-h-text small .cp-dot-off {
+  background: var(--cp-oro);
+  box-shadow: 0 0 0 3px rgba(176, 137, 84, 0.2);
+}
+.cp-h-spacer {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+}
+.cp-maint-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: calc(40px + env(safe-area-inset-bottom));
+}
+@media (min-width: 768px) {
+  .cp-maint-body { padding-bottom: 80px; }
+}
+.cp-maint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 28px 22px 26px;
+  width: 100%;
+  max-width: 520px;
+  background: var(--cp-paper);
+  border: 1px solid var(--cp-line);
+  border-radius: 28px;
+  box-shadow: 0 1px 2px rgba(34, 24, 28, 0.04), 0 12px 32px -12px rgba(34, 24, 28, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+.cp-maint::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--cp-oro), transparent);
+}
+.cp-maint .cp-av-iconic { margin-top: 12px; }
+.cp-maint-chip {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--cp-oro);
+  background: var(--cp-oro-soft);
+  border-radius: 999px;
+  padding: 5px 12px;
+  margin-bottom: 14px;
+}
+.cp-maint h1 {
+  font-family: var(--font-mark, 'Alfa Slab One', serif);
+  font-size: 26px;
+  line-height: 1.12;
+  letter-spacing: 0.3px;
+  color: var(--cp-ink);
+  margin-bottom: 8px;
+}
+@media (min-width: 768px) {
+  .cp-maint h1 { font-size: 34px; }
+}
+.cp-maint .cp-sub {
+  font-family: var(--font-hand, 'Caveat', cursive);
+  font-size: 23px;
+  line-height: 1.15;
+  color: var(--cp-corallo);
+  margin-bottom: 10px;
+}
+.cp-maint p {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--cp-ink-2);
+  max-width: 380px;
+  margin: 0 auto 22px;
+}
+.cp-maint-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+.cp-maint-btn {
+  padding: 12px 20px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 800;
+  text-decoration: none;
+  color: var(--cp-ink);
+  background: var(--cp-paper);
+  border: 1px solid var(--cp-line-2);
+}
+.cp-maint-btn-primary {
+  background: var(--cp-ink);
+  color: #fff;
+  border-color: var(--cp-ink);
+  box-shadow: 0 6px 14px rgba(34, 24, 28, 0.2);
+}
