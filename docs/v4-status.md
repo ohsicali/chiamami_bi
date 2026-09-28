@@ -2563,3 +2563,16 @@ usati 6 (Shoro: 185 presi, 8 usati), e le convalide finivano fuori.
 
 Resta aperto: `discount_redemptions` non registra la **sede**
 (`restaurant_locations`), quindi Torino e Poirino non si distinguono.
+
+### 28/09 — verifica di tutti i riscatti, e il contatore delle prese
+Controllo su tutti i locali (11 convalide in tutto, in 3 locali): lo
+storico /verify le restituisce tutte (Shoro 8/8, DAPPER 2/2, PapàLele
+1/1), e nessuna riga ha dati incoerenti (data mancante, usata prima di
+essere presa, codici doppi o mancanti, sconto inesistente).
+Trovato invece: `discounts.total_redeemed` (= prese) era più alto del vero
+su 8 sconti, 10 in tutto — le 10 righe cancellate da "Elimina account",
+che non lo abbassava. SQL `supabase/redemptions-counter-on-delete-2026-09-28.sql`
+(**già eseguito**): trigger `tr_redeemed_count_on_delete` e contatori
+riallineati. Corrette anche tre etichette che chiamavano "Utilizzi" /
+"Redenzioni" quel numero, che conta le prese (VerifyPage, ScontoTab,
+card del drop in AdminDashboard).

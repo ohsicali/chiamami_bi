@@ -712,7 +712,7 @@ function DropSpotlight({ drop }) {
           />
         </div>
         <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-ink-70, rgba(34,24,28,0.7))' }}>
-          {redeemed} su {target} redenzioni
+          {redeemed} su {target} presi
           {drop.max_redemptions ? ` · ${Math.max(0, target - redeemed)} posti rimasti` : ''}
         </div>
       </div>

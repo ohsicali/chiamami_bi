@@ -2379,7 +2379,9 @@ function ScontoHero({ discount }) {
             <span>
               {isDrop
                 ? (hasLimit ? 'Posti disponibili' : 'Sconti riscattati')
-                : 'Utilizzi'}
+                // total_redeemed conta chi l'ha preso, non chi l'ha usato:
+                // era "Utilizzi · 175 presi" a Shoro, con 8 convalide.
+                : 'Sconti presi'}
             </span>
             <span>
               {hasLimit ? (
