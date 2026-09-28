@@ -1,0 +1,732 @@
+/* Tutorial di benvenuto — vedi WelcomeTour.jsx.
+   Telefono: a tutto schermo, su carta. Computer: una card al centro sopra
+   la pagina velata. Sopra la tab bar (50) e il banner cookie (51), sotto i
+   popup degli sconti (100), che dal tutorial comunque non si aprono. */
+
+.wt-root {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  background: var(--color-page);
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  touch-action: pan-y;
+}
+
+.wt-panel {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding:
+    calc(var(--safe-top) + 14px)
+    calc(var(--safe-right) + 20px)
+    calc(var(--safe-bottom) + 18px)
+    calc(var(--safe-left) + 20px);
+  box-sizing: border-box;
+  background: var(--color-page);
+  outline: none;
+}
+
+@media (min-width: 768px) {
+  .wt-root {
+    align-items: center;
+    background: rgba(34, 24, 28, 0.42);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .wt-panel {
+    max-width: 440px;
+    height: min(720px, calc(100dvh - 48px));
+    border-radius: var(--radius-xl);
+    box-shadow: 0 30px 80px rgba(34, 24, 28, 0.28);
+    padding: 18px 24px 22px;
+    overflow: hidden;
+  }
+}
+
+/* ── Barra in alto: avanzamento a segmenti + Salta ─────────────────── */
+.wt-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 40px;
+}
+.wt-progress {
+  flex: 1;
+  display: flex;
+  gap: 5px;
+}
+.wt-progress-seg {
+  flex: 1;
+  height: 4px;
+  padding: 0;
+  border: 0;
+  border-radius: 99px;
+  background: var(--color-ink-15);
+  overflow: hidden;
+  cursor: pointer;
+}
+.wt-progress-fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--color-ink);
+  border-radius: inherit;
+  transform-origin: left center;
+}
+.wt-count {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.wt-skip {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-ink-05);
+  color: var(--color-ink-70);
+  font: 600 13px/1 var(--font-sans);
+  cursor: pointer;
+  transition: background var(--dur-press) var(--ease-out), transform var(--dur-press) var(--ease-out);
+}
+.wt-skip:hover { background: var(--color-ink-15); }
+.wt-skip:active { transform: scale(0.96); }
+
+/* ── La schermata ──────────────────────────────────────────────────── */
+.wt-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin-top: 14px;
+}
+.wt-slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.wt-slide:active { cursor: grabbing; }
+
+.wt-art {
+  position: relative;
+  flex: 1;
+  min-height: 200px;
+  max-height: 440px;
+  border-radius: var(--radius-xl);
+  background: var(--color-cream);
+  overflow: hidden;
+}
+.wt-art > div { position: absolute; inset: 0; }
+
+.wt-copy {
+  padding: 22px 4px 4px;
+}
+.wt-eyebrow {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-corallo-ink);
+}
+.wt-title {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.12;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: var(--color-ink);
+  text-wrap: balance;
+}
+.wt-body {
+  margin: 10px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--color-ink-70);
+  text-wrap: pretty;
+}
+/* ── Bottoni in basso ──────────────────────────────────────────────── */
+.wt-actions {
+  display: flex;
+  gap: 10px;
+  padding-top: 16px;
+}
+.wt-back,
+.wt-next {
+  height: 54px;
+  border: 0;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: transform var(--dur-press) var(--ease-out), opacity var(--dur-press) var(--ease-out), background var(--dur-press) var(--ease-out);
+}
+.wt-back {
+  width: 54px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  background: var(--color-ink-05);
+  color: var(--color-ink);
+}
+.wt-back:disabled { opacity: 0.35; cursor: default; }
+.wt-next {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--color-cta);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  box-shadow: 0 8px 20px rgba(197, 58, 51, 0.25);
+}
+.wt-back:not(:disabled):active,
+.wt-next:active { transform: scale(0.97); }
+.wt-next:focus-visible,
+.wt-back:focus-visible,
+.wt-skip:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 3px;
+}
+
+/* ── Pezzi comuni delle illustrazioni ──────────────────────────────── */
+.wt-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-ok);
+  vertical-align: middle;
+}
+.wt-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: var(--radius-pill);
+  background: #fff;
+  border: 1px solid var(--color-line);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-ink);
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+}
+.wt-chip.is-on {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+  color: #fff;
+}
+.wt-chip.is-new {
+  background: transparent;
+  border-style: dashed;
+  color: var(--color-ink-55);
+  box-shadow: none;
+}
+.wt-badge {
+  flex-shrink: 0;
+  display: inline-grid;
+  place-items: center;
+  min-width: 58px;
+  height: 40px;
+  padding: 0 10px;
+  border-radius: 12px;
+  background: var(--gradient-sconto);
+  color: var(--color-sconto-ink);
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+.wt-badge.is-small {
+  min-width: 0;
+  height: 26px;
+  font-size: 13px;
+  border-radius: 8px;
+}
+
+/* 1 · Benvenuto */
+.wt-art-welcome {
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 50% 46%, var(--color-corallo-wash) 0 34%, transparent 35%),
+    var(--color-cream);
+}
+.wt-welcome-halo {
+  position: absolute;
+  width: 190px;
+  height: 190px;
+  left: calc(50% - 95px);
+  top: calc(46% - 95px);
+  border-radius: 50%;
+  border: 1.5px dashed var(--color-corallo-soft);
+}
+.wt-welcome-mark {
+  position: relative;
+  width: 132px;
+  height: 132px;
+  margin-top: -18px;
+  color: var(--color-corallo);
+}
+.wt-welcome-tag {
+  position: absolute;
+  padding: 7px 13px;
+  border-radius: var(--radius-pill);
+  background: #fff;
+  box-shadow: var(--shadow-md);
+  font-size: 12px;
+  font-weight: 700;
+}
+.wt-welcome-hand {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 14px;
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-hand);
+  font-size: 24px;
+  color: var(--color-oro-deep);
+}
+
+/* 2 · Mappa */
+.wt-art-map { background: #EFE7D8; }
+.wt-map-roads {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.wt-map-roads path {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 7;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+.wt-map-roads .wt-map-river {
+  stroke: #CFDFE3;
+  stroke-width: 16;
+  opacity: 1;
+}
+.wt-map-chips {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  gap: 6px;
+}
+.wt-pin {
+  position: absolute;
+  transform-origin: 50% 100%;
+  margin: -32px 0 0 -13px;
+  filter: drop-shadow(0 3px 4px rgba(34, 24, 28, 0.25));
+}
+.wt-pin.is-active svg { width: 34px; height: 42px; }
+.wt-pin.is-active { margin: -42px 0 0 -17px; z-index: 1; }
+.wt-pin-pulse {
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  width: 30px;
+  height: 12px;
+  margin-left: -15px;
+  border-radius: 50%;
+  background: var(--color-corallo);
+  opacity: 0.35;
+  animation: wt-pulse 1.6s var(--ease-out) infinite;
+}
+@keyframes wt-pulse {
+  from { transform: scale(0.5); opacity: 0.5; }
+  to { transform: scale(2.2); opacity: 0; }
+}
+.wt-map-card {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: var(--radius-lg);
+  background: #fff;
+  box-shadow: var(--shadow-lg);
+}
+.wt-map-card-photo {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 35% 35%, #F7C873 0 18%, transparent 19%),
+    radial-gradient(circle at 65% 62%, #E8453C 0 14%, transparent 15%),
+    linear-gradient(135deg, #D9A066, #9C5B32);
+}
+.wt-map-card-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.wt-map-card-text strong { font-size: 14px; font-weight: 800; }
+.wt-map-card-text span { font-size: 12px; color: var(--color-ink-55); }
+.wt-map-card-go {
+  font-size: 24px;
+  line-height: 1;
+  color: var(--color-ink-55);
+  padding-right: 4px;
+}
+
+/* 3 · Drop e convenzioni — stesse regole di colore del Bi Club */
+.wt-art-deals {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+}
+.wt-deal-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.wt-deal-row > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.wt-deal-row strong { font-size: 14px; font-weight: 800; }
+.wt-deal-row span { font-size: 12px; }
+
+.wt-drop {
+  padding: 12px 14px 12px;
+  border-radius: var(--radius-lg);
+  background: var(--color-corallo);
+  color: #fff;
+  box-shadow: 0 12px 26px rgba(232, 69, 60, 0.3);
+}
+.wt-drop .wt-deal-row span { color: rgba(255, 255, 255, 0.85); }
+.wt-drop-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.wt-drop-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+.wt-live {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+  animation: wt-blink 1.2s ease-in-out infinite;
+}
+@keyframes wt-blink { 50% { opacity: 0.3; } }
+.wt-drop-timer {
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.18);
+  font: 700 12px/1 'SF Mono', ui-monospace, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+}
+.wt-drop-bar {
+  height: 6px;
+  margin-top: 12px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.28);
+  overflow: hidden;
+}
+.wt-drop-bar i {
+  display: block;
+  height: 100%;
+  background: #fff;
+  border-radius: inherit;
+  transform-origin: left center;
+}
+.wt-drop-left {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.wt-conv {
+  position: relative;
+  padding: 12px 14px 12px 18px;
+  border-radius: var(--radius-lg);
+  background: #FBF7EF;
+  border: 1px solid #EADFCB;
+  overflow: hidden;
+}
+.wt-conv::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--color-oro);
+}
+.wt-conv .wt-deal-row span { color: var(--color-ink-55); }
+.wt-conv-chip {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 5px 10px;
+  border-radius: var(--radius-pill);
+  background: #F0E4D2;
+  color: var(--color-oro-deep);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* 4 · Al locale: selettore QR / Codice */
+.wt-art-redeem {
+  display: grid;
+  place-items: center;
+  padding: 14px;
+  background:
+    radial-gradient(circle at 50% 110%, var(--color-cream-deep) 0 45%, transparent 46%),
+    var(--color-cream);
+}
+.wt-pass {
+  width: min(270px, 100%);
+  padding: 14px;
+  border-radius: var(--radius-xl);
+  background: #fff;
+  box-shadow: var(--shadow-lg);
+}
+.wt-pass-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.wt-pass-head strong {
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wt-seg {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--color-ink-05);
+}
+.wt-seg-thumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+}
+.wt-seg button {
+  position: relative;
+  padding: 7px 0;
+  border: 0;
+  background: none;
+  font: 700 12px/1 var(--font-sans);
+  color: var(--color-ink-55);
+  cursor: pointer;
+  transition: color var(--dur-menu) var(--ease-out);
+}
+.wt-seg button.is-on { color: var(--color-ink); }
+.wt-pass-body {
+  height: 150px;
+  margin-top: 12px;
+  display: grid;
+  place-items: center;
+}
+.wt-qr { width: 140px; height: 140px; display: block; }
+.wt-pass-code {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.wt-code-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-ink-55);
+}
+.wt-code-cells { display: flex; gap: 4px; }
+.wt-code-cells i {
+  width: 30px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--color-cream);
+  border: 1.5px solid var(--color-line);
+  font: 800 19px/1 'SF Mono', ui-monospace, Menlo, monospace;
+  font-style: normal;
+  color: var(--color-ink);
+}
+.wt-code-cells i:nth-child(3) { margin-right: 8px; }
+.wt-code-cells i.is-letter { color: var(--color-corallo); }
+
+/* 5 · Salvati */
+.wt-art-save {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+}
+.wt-save-card {
+  border-radius: var(--radius-lg);
+  background: #fff;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+.wt-save-photo {
+  position: relative;
+  height: 108px;
+  background:
+    radial-gradient(circle at 28% 60%, #F3D9A8 0 16%, transparent 17%),
+    radial-gradient(circle at 70% 40%, #C9793F 0 20%, transparent 21%),
+    linear-gradient(135deg, #8E6B3E, #C98F5A 60%, #E8C08A);
+}
+.wt-heart {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--color-ink);
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+}
+.wt-save-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px 12px;
+}
+.wt-save-text strong { font-size: 14px; font-weight: 800; }
+.wt-save-text span { font-size: 12px; color: var(--color-ink-55); }
+.wt-save-lists {
+  padding: 12px;
+  border-radius: var(--radius-lg);
+  background: #fff;
+  box-shadow: var(--shadow-md);
+}
+.wt-save-lists-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-55);
+}
+.wt-save-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Chiedi a Bi (solo con la chat accesa) */
+.wt-art-ask {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  padding: 18px;
+}
+.wt-bubble {
+  max-width: 82%;
+  padding: 11px 14px;
+  border-radius: 18px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.wt-bubble.is-me {
+  align-self: flex-end;
+  border-bottom-right-radius: 6px;
+  background: var(--color-ink);
+  color: #fff;
+}
+.wt-bubble.is-bi {
+  align-self: flex-start;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  border-bottom-left-radius: 6px;
+  background: #fff;
+  box-shadow: var(--shadow-md);
+}
+.wt-bubble-mark {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  color: var(--color-corallo);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wt-pin-pulse,
+  .wt-live { animation: none; }
+}
+
+/* Telefoni bassi (iPhone SE e simili): tutto più compatto, così le
+   illustrazioni ci stanno intere. In fondo al file perché deve vincere
+   sulle regole di base. */
+@media (max-height: 640px) {
+  .wt-art { min-height: 170px; }
+  .wt-art-deals { gap: 8px; padding: 10px; }
+  .wt-art-deals .wt-badge { min-width: 50px; height: 34px; font-size: 15px; }
+  .wt-drop { padding: 10px 12px; }
+  .wt-drop-head { margin-bottom: 8px; }
+  .wt-drop-bar { margin-top: 8px; }
+  .wt-drop-left { display: none; }
+  .wt-conv { padding: 10px 12px 10px 16px; }
+  .wt-conv-chip { margin-top: 6px; }
+  .wt-art-save { gap: 8px; padding: 10px; }
+  .wt-save-photo { height: 70px; }
+  .wt-save-text { padding: 8px 12px 10px; }
+  .wt-save-lists { padding: 10px; }
+  .wt-pass-body { height: 120px; margin-top: 8px; }
+  .wt-qr { width: 112px; height: 112px; }
+  .wt-copy { padding-top: 16px; }
+  .wt-title { font-size: 22px; }
+  .wt-body { font-size: 14px; }
+}

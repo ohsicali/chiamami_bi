@@ -12,6 +12,7 @@ import { useAuth } from './lib/hooks/useAuth'
 import { captureError, posthogConsentDenied, posthogConsentGranted, posthogIdentify, track } from './lib/posthog'
 import { claimChunkReload, isChunkLoadError } from './lib/chunkReload'
 import { prewarmExplore, scheduleExplorePrewarm } from './lib/prewarmExplore'
+import WelcomeTourGate from './components/Onboarding/WelcomeTourGate'
 
 // CookieConsent is rendered after first paint via requestIdleCallback so it
 // doesn't compete with the LCP. The library + its CSS adds ~20 kB to the
@@ -293,6 +294,10 @@ export default function App() {
     {/* Mobile Tab Bar */}
     {showTabBar && <MobileTabBar />}
     </Suspense>
+
+    {/* Tutorial di benvenuto: una volta sola, dopo la registrazione
+        (regole in src/lib/welcomeTour.js). */}
+    <WelcomeTourGate />
     </AdsProvider>
     </ErrorBoundary>
 

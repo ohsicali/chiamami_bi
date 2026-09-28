@@ -141,6 +141,23 @@ vantaggi") né per gli altri. Il caso che l'ha fatto nascere: Shoro −30%
 - Test in `tests/discounts.test.mjs`. **Per tornare indietro** (drop
   esauriti di nuovo visibili col "sold out"): revert della PR #309.
 
+## Tutorial di benvenuto (28/09)
+Cinque schermate (Benvenuto, Esplora, Sconti, Al locale, Salvati) che partono
+**una volta sola** a chi ha appena creato l'account; "Salta" in alto, Esc, swipe
+o frecce. Regole in `src/lib/welcomeTour.js` (sotto test in
+`tests/welcome-tour.test.mjs`): account nato da meno di 24 h (`created_at`, così
+vale sia per email+codice sia per Google, e un vecchio utente che entra con
+Google non lo vede) e non ancora visto su quel browser (`localStorage`). Mai
+sopra login, admin, `/verify`, `/partner` e Chiedi a Bi. Montato da
+`WelcomeTourGate` in `App.jsx`; il tutorial sta in un chunk a parte
+(`src/components/Onboarding/`). Si rivede da Impostazioni → "Rivedi il
+tutorial". Eventi PostHog: `onboarding_shown`, `onboarding_completed`,
+`onboarding_skipped` (con `step`). Le illustrazioni seguono le regole del
+sito: corallo + countdown solo sul drop, convenzione crema e oro, badge verde
+da `formatDiscountBadge`. La schermata "Chiedi a Bi" compare da sola quando
+`CHAT_MAINTENANCE` torna `false`. **Se cambia una funzione dell'app raccontata
+qui, aggiorna anche il testo in `WelcomeTour.jsx`.**
+
 ## Sblocco sconti — QR e codice a 6 caratteri
 Ogni riscatto (`discount_redemptions`) ha due codici: il `qr_code`
 (`BiSc-…`, dentro il QR) e lo `short_code` di sei caratteri — una lettera e
