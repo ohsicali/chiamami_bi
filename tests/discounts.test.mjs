@@ -19,7 +19,7 @@ import {
   isActiveDiscount, isActiveDrop, isConvention, isSoldOut, isExpired,
   isVisibleDrop, filterActive, filterActiveDrops, filterActiveConventions,
   filterVisibleDrops, sortByExpiry, remainingCount, formatCountdown,
-  findUnreachableDiscounts,
+  findUnreachableDiscounts, pickFeaturedDeal,
 } from '../src/lib/discounts.js'
 
 const NOW = new Date('2026-09-08T12:00:00Z')
@@ -146,12 +146,39 @@ test('claimed_count fermo a 0 non nasconde i riscatti reali', () => {
   assert.equal(isActiveDiscount(d({ max_quantity: 10, claimed_count: 0, total_redeemed: 10 }), NOW), false)
 })
 
-/* ── Drop esaurito: resta visibile in Bi Club, non sparisce ── */
+/* ── Drop esaurito: non è attivo, ma `isVisibleDrop` lo riconosce ── */
 
 test('un drop esaurito non è più "attivo" ma resta "visibile"', () => {
   const esaurito = d({ is_drop: true, drop_ends_at: '2026-12-01T00:00:00Z', max_quantity: 10, claimed_count: 10 })
-  assert.equal(isActiveDrop(esaurito, NOW), false, 'esaurito non conta più come attivo (conteggi, home)')
-  assert.equal(isVisibleDrop(esaurito, NOW), true, 'ma resta in Bi Club con lo stato sold out')
+  assert.equal(isActiveDrop(esaurito, NOW), false, 'esaurito non conta più come attivo (conteggi, home, Bi Club)')
+  assert.equal(isVisibleDrop(esaurito, NOW), true, 'serve a pickFeaturedDeal per trovare il locale del drop finito')
+})
+
+/* ── La vetrina in home: drop attivo, o lo sconto fisso del locale del drop esaurito ── */
+
+test('pickFeaturedDeal: il drop attivo va in vetrina', () => {
+  const drop = d({ id: 'drop', is_drop: true, restaurant_id: 'a', valid_until: '2026-12-01T00:00:00Z', max_quantity: 10 })
+  const conv = d({ id: 'conv', restaurant_id: 'b', valid_until: '2026-10-01T00:00:00Z' })
+  assert.equal(pickFeaturedDeal([conv, drop], NOW).id, 'drop')
+})
+
+test('pickFeaturedDeal: drop esaurito → lo sconto fisso dello stesso locale', () => {
+  const list = [
+    d({ id: 'shoro-drop', is_drop: true, restaurant_id: 'shoro', valid_until: null, max_quantity: 10, total_redeemed: 12 }),
+    d({ id: 'papalele', restaurant_id: 'papalele', valid_until: '2026-10-30T00:00:00Z' }),
+    d({ id: 'wokoza-20', restaurant_id: 'wokoza', valid_until: '2026-11-30T00:00:00Z' }),
+    d({ id: 'shoro-20', restaurant_id: 'shoro', valid_until: '2026-11-30T00:00:00Z' }),
+  ]
+  assert.equal(pickFeaturedDeal(list, NOW).id, 'shoro-20')
+})
+
+test('pickFeaturedDeal: nessun drop → la convenzione più vicina a scadere', () => {
+  const list = [
+    d({ id: 'tardi', restaurant_id: 'a', valid_until: '2026-11-30T00:00:00Z' }),
+    d({ id: 'presto', restaurant_id: 'b', valid_until: '2026-10-30T00:00:00Z' }),
+  ]
+  assert.equal(pickFeaturedDeal(list, NOW).id, 'presto')
+  assert.equal(pickFeaturedDeal([], NOW), null)
 })
 
 test('un drop scaduto o disattivato invece sparisce anche da "visibile"', () => {

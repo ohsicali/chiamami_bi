@@ -95,15 +95,14 @@ export function isActiveDrop(d, now = new Date()) {
 }
 
 /**
- * Drop da MOSTRARE in Bi Club, esaurito o no.
+ * Drop non scaduti né disattivati, esaurito o no.
  *
  * Non è un sinonimo di `isActiveDrop`: quello resta la definizione di
- * "attivo" (esaurito escluso, usata per i conteggi e per la selezione in
- * home). Questo invece serve solo al catalogo pubblico, dove un drop
- * esaurito non deve sparire — resta in lista con lo stato "sold out",
- * altrimenti chi arriva tardi non sa nemmeno che c'era ed era stato preso.
- * Un drop scaduto o disattivato invece sparisce comunque: la scarsità
- * finita del tutto non ha più niente da raccontare.
+ * "attivo" (esaurito escluso). Fino al 28/09 serviva a tenere i drop
+ * esauriti in vetrina (home e Bi Club) con lo stato "sold out"; da allora
+ * un drop esaurito non si mostra più — al suo posto in home va lo sconto
+ * fisso dello stesso locale (`pickFeaturedDeal`), che è l'unico uso
+ * rimasto di questa funzione.
  */
 export function isVisibleDrop(d, now = new Date()) {
   if (!d || !isDrop(d)) return false
@@ -147,6 +146,26 @@ export function sortByExpiry(list) {
     if (!eb) return -1
     return ea.getTime() - eb.getTime()
   })
+}
+
+/**
+ * Lo sconto in evidenza in home (la card grande).
+ *
+ * 1. Il drop attivo più vicino a scadere: è quello che ha davvero fretta.
+ * 2. Se l'unico drop è esaurito, al suo posto lo sconto fisso dello stesso
+ *    locale: il locale resta in vetrina con qualcosa che si può ancora
+ *    prendere, invece di una card "sold out" col bottone spento.
+ * 3. Altrimenti la convenzione attiva più vicina a scadere.
+ */
+export function pickFeaturedDeal(list, now = new Date()) {
+  const liveDrop = sortByExpiry(filterActiveDrops(list, now))[0]
+  if (liveDrop) return liveDrop
+  const conv = sortByExpiry(filterActiveConventions(list, now))
+  const soldOutDrop = sortByExpiry(filterVisibleDrops(list, now))[0]
+  const sameRestaurant = soldOutDrop
+    ? conv.find((d) => d.restaurant_id && d.restaurant_id === soldOutDrop.restaurant_id)
+    : null
+  return sameRestaurant || conv[0] || null
 }
 
 /** Millisecondi mancanti alla fine, o null. */

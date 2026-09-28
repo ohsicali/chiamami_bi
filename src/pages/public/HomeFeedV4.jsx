@@ -26,7 +26,7 @@ import Reveal from '../../components/UI/Reveal'
 import { STAGGER, staggerDelay } from '../../lib/motion'
 import { formatDiscountBadge } from '../../lib/utils/discountFormat'
 import DropCard from '../../components/Discount/DropCard'
-import { isExpired, isSoldOut, sortByExpiry, filterVisibleDrops } from '../../lib/discounts'
+import { isExpired, isSoldOut, sortByExpiry, pickFeaturedDeal } from '../../lib/discounts'
 import { formatPrice } from '../../lib/utils/price'
 
 
@@ -527,26 +527,23 @@ export default function HomeFeedV4() {
   // scadere, quello che ha davvero fretta) e gli altri sconti attivi nella
   // riga sotto. È l'unica pagina che seleziona — vedi HomeDrop.
   //
-  // Uno sconto esaurito sparisce dalla home (comportamento voluto), TRANNE
-  // quando è l'utente stesso ad averlo preso: altrimenti l'ultimo pezzo di
-  // un drop a quantità limitata sparisce dalla home nell'istante stesso in
-  // cui lo si sblocca, portandosi via la card (e la barra) con sé, invece
-  // di restare con lo stato "già preso"/"già usato" come sul Bi Club.
+  // Uno sconto esaurito sparisce dalla home, anche per chi l'ha preso: il
+  // suo QR resta in "I miei vantaggi" sul Bi Club (28/09 — prima restava
+  // in vetrina per chi l'aveva preso, e il drop esaurito non spariva mai).
   const activeDeals = useMemo(() => {
     const now = new Date()
     return sortByExpiry((discounts || []).filter((d) => {
       if (d.is_active === false) return false
       if (isExpired(d, now)) return false
-      if (isSoldOut(d) && !redemptionByDealId.has(d.id)) return false
+      if (isSoldOut(d)) return false
       return true
     }))
-  }, [discounts, redemptionByDealId])
-  // Un drop esaurito invece resta in vetrina: sparire subito butterebbe via
-  // la scarsità appena raccontata (fa FOMO per il prossimo drop), quindi qui
-  // — a differenza di `activeDeals` sopra — si guarda anche tra i drop
-  // esauriti (`filterVisibleDrops`, la stessa regola del Bi Club).
+  }, [discounts])
+  // In evidenza il drop attivo; se il drop è esaurito, al suo posto lo
+  // sconto fisso dello stesso locale (vedi `pickFeaturedDeal`). Un drop
+  // esaurito non resta più in vetrina (28/09).
   const featuredDrop = useMemo(
-    () => sortByExpiry(filterVisibleDrops(discounts))[0] || activeDeals[0] || null,
+    () => pickFeaturedDeal(discounts) || activeDeals[0] || null,
     [discounts, activeDeals]
   )
   // Tutti gli altri, non i primi otto: su desktop è una lista verticale che
@@ -619,9 +616,8 @@ export default function HomeFeedV4() {
     const status = redemption?.status
     if (status === 'redeemed') return { ctaLabel: 'Già usato', ctaDisabled: true }
     if (status === 'generated') return { ctaLabel: 'Apri il QR', ctaDisabled: false }
-    // Il drop esaurito resta in vetrina (vedi featuredDrop) ma non si sblocca
-    // più: senza questo il bottone continuava a dire "Sblocca sconto" su un
-    // drop che non ha più pezzi.
+    // Rete di sicurezza: un drop esaurito non va più in vetrina (vedi
+    // featuredDrop), ma se ci arrivasse non deve dire "Sblocca sconto".
     if (isSoldOut(deal)) return { ctaLabel: 'Esaurito', ctaDisabled: true }
     return { ctaLabel: undefined, ctaDisabled: false }
   }

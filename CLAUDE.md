@@ -121,6 +121,26 @@ altrove. Parte a chi ha "I miei sconti" (`my_discounts`) acceso. Dettagli in
 - **Offerte "paghi X prendi Y"** (es. 3 al posto di 2): scrivere sempre in formato `AxB` (es. `3x2`, `2x1`), mai per esteso ("Paghi 2 prendi 3 Veneziane"). Vale per `title` e `discount_value` del record in `discounts`.
 - **Sticker/badge sconto** (percentuale o importo fisso su foto/card): devono sempre avere il segno meno davanti al valore, es. `-20%`, `-1€`. Gestito centralmente da `formatDiscountBadge()` / `formatDiscountBadgeShort()` in `src/lib/utils/discountFormat.js` — quando si aggiunge un nuovo punto che mostra uno sticker sconto, usare sempre queste funzioni (mai `formatDiscountValue()` da solo, che non mette il segno).
 
+## Drop esaurito — sparisce, al suo posto lo sconto fisso del locale (28/09, PR #309)
+Fino al 28/09 un drop esaurito restava in vetrina (home e Bi Club) con la
+card "sold out" e il bottone spento. Deciso dal proprietario: **un drop
+esaurito non si mostra più**, né per chi l'ha preso (lo ritrova in "I miei
+vantaggi") né per gli altri. Il caso che l'ha fatto nascere: Shoro −30%
+(12 presi su 10) al posto del quale ora c'è Shoro −20%.
+- **Home** (tutte e due, `HomeFeedV4` e `HomeDesktopClassic`): lo sconto in
+  evidenza lo sceglie `pickFeaturedDeal()` in `src/lib/discounts.js` —
+  drop attivo → se il drop è esaurito, lo sconto fisso **dello stesso
+  locale** → altrimenti lo sconto fisso che scade prima. Attenzione: se il
+  drop esaurito viene *disattivato* dall'admin, la regola 2 non scatta più
+  e in vetrina va lo sconto che scade prima (non per forza lo stesso locale).
+- **Home da computer**: quando in vetrina c'è uno sconto fisso la card è
+  scura con "SCONTO BI CLUB", niente corallo/countdown/barra posti (regola
+  del colore, vedi Email).
+- **Bi Club** (`SconteRedesignPage`): la lista drop usa `filterActiveDrops`
+  (prima `filterVisibleDrops`, che teneva gli esauriti).
+- Test in `tests/discounts.test.mjs`. **Per tornare indietro** (drop
+  esauriti di nuovo visibili col "sold out"): revert della PR #309.
+
 ## Sblocco sconti — QR e codice a 6 caratteri
 Ogni riscatto (`discount_redemptions`) ha due codici: il `qr_code`
 (`BiSc-…`, dentro il QR) e lo `short_code` di sei caratteri — una lettera e
