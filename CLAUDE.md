@@ -155,6 +155,12 @@ schermata (`openWelcomeTour({ source: 'signup', origin })`), e la pagina sotto
 cambia solo quando il tutorial copre tutto (`whenTourCovers`, con ripiego a
 3,5 s) — mai a tempo fisso, o su rete lenta la home lampeggia in mezzo. Il
 chunk si scarica mentre si scrive il codice (`preloadWelcomeTour`).
+Attenzione: il nostro client Supabase usa il flusso **implicit** (default,
+nessun `flowType`), quindi Google e i link della mail tornano su
+`/auth/callback` con la sessione nell'hash, **senza `?code=`**. Ogni strada di
+AuthCallback passa da `finishSignIn()`: un controllo messo solo nel ramo
+`code` non scatta mai per Google (era il bug del 28/09: "Accesso effettuato!"
+e tutorial solo dopo, sulla home).
 Regole in `src/lib/welcomeTour.js` (sotto test in `tests/welcome-tour.test.mjs`):
 account nato da meno di 24 h (`created_at`, così vale sia per email+codice sia per
 Google, e un vecchio utente che entra con Google non lo vede) e non ancora visto
