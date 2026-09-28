@@ -2543,3 +2543,23 @@ crearne una nuova) aggiunto in:
 Non toccate `/profile`, `/saved`, `/settings`, `/reset-password` — sono
 già in Disallow su robots.txt ma non erano nello scope di questa
 richiesta.
+
+## 28/09 — sconti scansionati che non comparivano (admin e /verify)
+
+Shoro ha scansionato 4 sconti (3 Torino, 1 Poirino): nel DB c'erano
+(`status = 'redeemed'`), ma né l'admin né lo storico di /verify li
+mostravano. Stessa causa nei due posti: liste che mescolano "presi" e
+"utilizzati" con un tetto di righe — il 28/09 si sono presi 241 sconti e
+usati 6 (Shoro: 185 presi, 8 usati), e le convalide finivano fuori.
+- **Admin → Sconti, pannello "In diretta"**: `deriveRedemptionStats`
+  restituisce anche `usedEvents`; il pannello si apre su **Utilizzati**
+  (accanto "Tutti"). Test in `tests/redemptions-live.test.mjs`.
+- **/verify**: `verify_activity_list` (SQL
+  `supabase/verify-activity-list-convalide-2026-09-28.sql`, **già eseguito**
+  il 28/09 via connettore) ordinava per `generated_at` con tetto 50. Ora
+  restituisce fino a N convalide (per `redeemed_at`) più fino a N sconti in
+  attesa, ordinati per la data che conta. Le anteprime della dashboard
+  ("Nessuna verifica ancora.") mostrano solo le convalide (`onlyVerified`).
+
+Resta aperto: `discount_redemptions` non registra la **sede**
+(`restaurant_locations`), quindi Torino e Poirino non si distinguono.
