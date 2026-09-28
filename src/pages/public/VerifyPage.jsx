@@ -1945,7 +1945,7 @@ function DesktopDashboard({ restaurant, deviceToken, onSessionExpired, onOpenSca
             onSessionExpired={onSessionExpired}
           />
         ) : (
-          <V4ActivityLog items={(activity || []).slice(0, 6)} emptyLabel="Nessuna verifica ancora." />
+          <V4ActivityLog items={onlyVerified(activity).slice(0, 6)} emptyLabel="Nessuna verifica ancora." />
         )}
       </div>
     </>
@@ -2299,7 +2299,7 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
         />
       ) : (
         <V4ActivityLog
-          items={(activity || []).slice(0, 5)}
+          items={onlyVerified(activity).slice(0, 5)}
           emptyLabel="Nessuna verifica ancora."
         />
       )}
@@ -2379,7 +2379,9 @@ function ScontoHero({ discount }) {
             <span>
               {isDrop
                 ? (hasLimit ? 'Posti disponibili' : 'Sconti riscattati')
-                : 'Utilizzi'}
+                // total_redeemed conta chi l'ha preso, non chi l'ha usato:
+                // era "Utilizzi · 175 presi" a Shoro, con 8 convalide.
+                : 'Sconti presi'}
             </span>
             <span>
               {hasLimit ? (
@@ -2566,6 +2568,14 @@ function V4ActivityRow({ item }) {
       </div>
     </div>
   )
+}
+
+// Le anteprime della dashboard dicono "verifiche": solo gli sconti
+// convalidati. Gli sconti presi e non ancora usati sono molti di più e,
+// mescolati, coprivano le scansioni appena fatte (Shoro, 28/09). Restano
+// nello storico completo, come "In attesa".
+function onlyVerified(items) {
+  return (items || []).filter((it) => it.status === 'redeemed')
 }
 
 function V4ActivityLog({ items, emptyLabel = 'Nessuna attività' }) {

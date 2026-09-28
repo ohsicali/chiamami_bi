@@ -219,7 +219,7 @@ export default function ScontoTab({ form, restaurantId }) {
                 </span>
               </div>
               <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-ink-55, rgba(34,24,28,0.55))', marginTop: 2 }}>
-                Redenzioni
+                Presi
               </div>
             </div>
             <div style={{ flex: 2 }}>

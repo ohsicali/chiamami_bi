@@ -81,3 +81,29 @@ test('il feed tiene solo gli ultimi FEED_SIZE eventi', () => {
   assert.equal(events[0].key, 'taken:r0')
   assert.equal(byDiscount.d1.taken, FEED_SIZE + 10)
 })
+
+test('le convalide restano visibili anche sotto una valanga di sconti presi', () => {
+  // Il caso del 28/09: 4 QR scansionati da Shoro, poi 60 sconti presi in
+  // un'ora — nel feed misto le convalide erano sparite.
+  const rows = new Map()
+  for (let i = 0; i < 4; i++) {
+    rows.set(`u${i}`, { id: `u${i}`, discount_id: 'shoro', status: 'redeemed', generated_at: at(10, i), redeemed_at: at(12, i) })
+  }
+  for (let i = 0; i < 60; i++) {
+    rows.set(`t${i}`, { id: `t${i}`, discount_id: 'shoro', status: 'generated', generated_at: new Date(NOW - i * 30000).toISOString() })
+  }
+  const { events, usedEvents, today } = deriveRedemptionStats(rows, NOW)
+  assert.equal(events.some((e) => e.kind === 'used'), false)
+  assert.deepEqual(usedEvents.map((e) => e.key), ['used:u3', 'used:u2', 'used:u1', 'used:u0'])
+  assert.equal(today.used, 4)
+})
+
+test('anche le convalide si fermano a FEED_SIZE', () => {
+  const rows = new Map()
+  for (let i = 0; i < FEED_SIZE + 5; i++) {
+    rows.set(`r${i}`, { id: `r${i}`, discount_id: 'd1', status: 'redeemed', generated_at: at(8), redeemed_at: new Date(NOW - i * 60000).toISOString() })
+  }
+  const { usedEvents } = deriveRedemptionStats(rows, NOW)
+  assert.equal(usedEvents.length, FEED_SIZE)
+  assert.equal(usedEvents[0].key, 'used:r0')
+})

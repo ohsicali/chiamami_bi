@@ -1221,6 +1221,7 @@ export default function DiscountManager() {
         {/* ── In diretta: sconti presi e utilizzati ── */}
         <LiveRedemptionsPanel
           events={live.events}
+          usedEvents={live.usedEvents}
           today={live.today}
           status={live.status}
           loaded={live.loaded}
