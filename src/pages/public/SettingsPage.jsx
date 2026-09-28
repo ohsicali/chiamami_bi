@@ -6,6 +6,7 @@ import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { fetchAnnouncementsEnabled, setAnnouncementsEnabled } from '../../lib/emailPrefs'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import Footer from '../../components/Layout/Footer'
+import { openWelcomeTour } from '../../lib/welcomeTour'
 
 const inputStyle = {
   width: '100%', background: 'var(--color-page)', borderRadius: 'var(--radius-md)',
@@ -626,6 +627,21 @@ export default function SettingsPage() {
             </button>
           </div>
         </div>
+
+        {/* ── TUTORIAL ── Lo stesso che parte dopo la registrazione
+            (components/Onboarding/WelcomeTour.jsx), per chi l'ha saltato. */}
+        <button onClick={() => openWelcomeTour()} style={{
+          ...cardStyle, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+          cursor: 'pointer', textAlign: 'left',
+        }}>
+          <span>
+            <span style={{ display: 'block', fontSize: 14, fontWeight: 700, color: 'var(--color-ink)' }}>Rivedi il tutorial</span>
+            <span style={{ display: 'block', fontSize: 12, color: 'var(--color-ink-55)', marginTop: 2 }}>Come funzionano mappa, sconti e salvati</span>
+          </span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink-55)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+        </button>
 
         {/* ── DELETE ACCOUNT ── */}
         <button onClick={() => setShowDeleteModal(true)} style={{

@@ -141,6 +141,34 @@ vantaggi") né per gli altri. Il caso che l'ha fatto nascere: Shoro −30%
 - Test in `tests/discounts.test.mjs`. **Per tornare indietro** (drop
   esauriti di nuovo visibili col "sold out"): revert della PR #309.
 
+## Tutorial di benvenuto (28/09)
+Sette schermate che partono **una volta sola** a chi ha appena creato l'account:
+benvenuto (tutto corallo, logo e cibo in orbita), Esplora, **gli sconti in quattro
+passi** (drop e convenzioni → «Sblocca sconto» e lo ritrovi in «I miei vantaggi»
+→ su cosa, in che giorni e a pranzo/cena vale → alla cassa mostri il QR o detti il
+codice e lo sconto è sullo scontrino), Salvati. In fondo un'animazione di chiusura
+e si va alla **home**; "Salta" in alto (o Esc) chiude e lascia dove si era.
+**Parte appena l'account è confermato** (codice accettato in LoginPage, link
+della mail o primo accesso Google in AuthCallback): la spunta "Ci sei" resta un
+secondo, poi il suo cerchio corallo si allarga fino a diventare la prima
+schermata (`openWelcomeTour({ source: 'signup', origin })`), e la pagina sotto
+cambia solo quando il tutorial copre tutto (`whenTourCovers`, con ripiego a
+3,5 s) — mai a tempo fisso, o su rete lenta la home lampeggia in mezzo. Il
+chunk si scarica mentre si scrive il codice (`preloadWelcomeTour`).
+Regole in `src/lib/welcomeTour.js` (sotto test in `tests/welcome-tour.test.mjs`):
+account nato da meno di 24 h (`created_at`, così vale sia per email+codice sia per
+Google, e un vecchio utente che entra con Google non lo vede) e non ancora visto
+su quel browser (`localStorage`). Mai sopra login, admin, `/verify`, `/partner` e
+Chiedi a Bi. Montato da `WelcomeTourGate` in `App.jsx`; il tutorial sta in un
+chunk a parte (`src/components/Onboarding/`). Si rivede da Impostazioni →
+"Rivedi il tutorial". Eventi PostHog: `onboarding_shown`, `onboarding_completed`,
+`onboarding_skipped` (con `step`). Le illustrazioni seguono le regole del sito:
+corallo + countdown solo sul drop, convenzione crema e oro, badge verde da
+`formatDiscountBadge`. La schermata "Chiedi a Bi" compare da sola quando
+`CHAT_MAINTENANCE` torna `false`. **Se cambia una funzione dell'app raccontata
+qui (nomi dei bottoni, «I miei vantaggi», come si usa il QR), aggiorna anche il
+testo in `WelcomeTour.jsx`.**
+
 ## Sblocco sconti — QR e codice a 6 caratteri
 Ogni riscatto (`discount_redemptions`) ha due codici: il `qr_code`
 (`BiSc-…`, dentro il QR) e lo `short_code` di sei caratteri — una lettera e
