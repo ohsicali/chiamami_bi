@@ -488,7 +488,7 @@ const MapView = forwardRef(function MapView({
         }
         // Clean up transition classes from new markers
         for (const { el } of toEnter) {
-          el.classList.remove('cb-marker--fade', '  cb-marker--show')
+          el.classList.remove('cb-marker--fade', 'cb-marker--show')
           el.classList.add('cb-marker--visible')
         }
       }, CROSSFADE_MS + 20)
