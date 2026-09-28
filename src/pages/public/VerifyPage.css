@@ -1176,7 +1176,7 @@
   padding: 14px 22px 0;
   display: flex;
   align-items: center;
-  z-index: 5;
+  z-index: 6; /* sopra l'ombra del riquadro (.v4-scan-stage, z 5) */
   gap: 12px;
 }
 .v4-scan-icon-btn {
@@ -1207,12 +1207,29 @@
   letter-spacing: -0.01em;
   color: #fff;
 }
-.v4-scan-window {
+/* Colonna centrale dello scanner: titolo, riquadro, bottone del codice e
+   suggerimento. In colonna e non a coordinate fisse, così sui telefoni
+   bassi (o con la barra di Safari) il bottone non finisce sotto quello in
+   fondo. Il riquadro si restringe con l'altezza dello schermo. */
+.v4-scan-stage {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: min(72vw, 280px);
+  top: calc(max(20px, env(safe-area-inset-top)) + 62px);
+  bottom: calc(max(26px, env(safe-area-inset-bottom)) + 36px);
+  left: 0;
+  right: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 0 24px;
+  text-align: center;
+}
+.v4-scan-window {
+  position: relative;
+  flex: 0 0 auto;
+  width: min(72vw, 280px, 40vh);
   aspect-ratio: 1;
 }
 .v4-scan-window::before {
@@ -1221,6 +1238,52 @@
   inset: 0;
   box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.62);
   border-radius: 26px;
+}
+/* Sopra l'ombra del riquadro, che copre tutto lo schermo */
+.v4-scan-hint-top,
+.v4-scan-code-btn,
+.v4-scan-hint-sub {
+  position: relative;
+  z-index: 1;
+}
+.v4-scan-hint-top {
+  font-family: var(--font-sans);
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+}
+.v4-scan-code-btn {
+  width: min(100%, 320px);
+  padding: 17px 20px;
+  border-radius: 16px;
+  border: 0;
+  background: var(--color-cta);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-weight: 900;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(197, 58, 51, 0.45);
+  -webkit-tap-highlight-color: transparent;
+}
+.v4-scan-code-btn:active {
+  transform: scale(0.97);
+}
+.v4-scan-hint-sub {
+  max-width: 320px;
+  margin-top: -6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.4;
+}
+@media (max-height: 560px) {
+  .v4-scan-hint-sub { display: none; }
 }
 .v4-scan-corner {
   position: absolute;
@@ -1234,7 +1297,7 @@
 .v4-scan-corner.br { bottom: 0; right: 0; border-left: 0; border-top: 0; border-bottom-right-radius: 16px; }
 .v4-scan-line {
   position: absolute;
-  top: 50%;
+  top: 12%;
   left: 8px;
   right: 8px;
   height: 2px;
@@ -1243,30 +1306,8 @@
   animation: v4ScanLine 2.6s ease-in-out infinite;
 }
 @keyframes v4ScanLine {
-  0%, 100% { transform: translateY(-90px); opacity: 0.85; }
-  50%      { transform: translateY(90px);  opacity: 0.85; }
-}
-.v4-scan-hint {
-  position: absolute;
-  top: calc(50% + min(46vw, 170px));
-  left: 0;
-  right: 0;
-  text-align: center;
-  z-index: 5;
-  padding: 0 24px;
-}
-.v4-scan-hint .h1 {
-  font-family: var(--font-sans);
-  font-weight: 900;
-  font-size: 18px;
-  letter-spacing: -0.02em;
-}
-.v4-scan-hint .h2 {
-  font-size: 13px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.7);
-  margin-top: 6px;
-  line-height: 1.4;
+  0%, 100% { top: 12%; opacity: 0.85; }
+  50%      { top: 88%; opacity: 0.85; }
 }
 .v4-scan-bottom {
   position: absolute;
@@ -1274,27 +1315,17 @@
   left: 18px;
   right: 18px;
   display: flex;
-  gap: 10px;
-  z-index: 5;
-}
-.v4-scan-btn {
-  flex: 1;
-  background: rgba(255, 255, 255, 0.14);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  color: #fff;
-  border: 0;
-  border-radius: 14px;
-  padding: 14px;
-  font-family: var(--font-sans);
-  font-weight: 800;
-  font-size: 13px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 8px;
-  letter-spacing: -0.01em;
+  z-index: 6;
+}
+.v4-scan-help {
+  padding: 8px 12px;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .v4-scan-fallback {
   position: absolute;
