@@ -8,8 +8,6 @@
  * - "utilizzato" = la stessa riga passata a `status = 'redeemed'`
  */
 
-export const FEED_SIZE = 40
-
 const ts = (iso) => (iso ? new Date(iso).getTime() : 0)
 
 function startOfDay(t) {
@@ -52,13 +50,17 @@ export function applyRedemptionChange(rows, payload) {
  * Dalla mappa dei riscatti:
  *   byDiscount → { [discount_id]: { taken, used } }
  *   today      → { taken, used } dalla mezzanotte locale di `now`
- *   events     → feed, dal più recente, al massimo FEED_SIZE
- *   usedEvents → solo le convalide, dal più recente, al massimo FEED_SIZE
+ *   events     → feed completo, dal più recente
+ *   usedEvents → solo le convalide, dal più recente
+ *
+ * Il feed non ha tetto (fino al 28/09 si fermava a 40): la cronologia si
+ * deve poter scorrere tutta. Le righe sono già tutte in memoria per i
+ * contatori; è il pannello che le mostra a pezzi mentre si scende.
  *
  * Le convalide hanno una lista loro perché nel feed misto annegano: il
  * 28/09 si prendevano ~240 sconti al giorno e se ne usavano 6, e i quattro
  * QR scansionati da Shoro in serata erano già fuori dagli ultimi 40 eventi
- * mezz'ora dopo — per l'admin non esistevano.
+ * mezz'ora dopo — per l'admin non esistevano (il feed allora si fermava lì).
  */
 export function deriveRedemptionStats(rows, now) {
   const byDiscount = {}
@@ -85,7 +87,7 @@ export function deriveRedemptionStats(rows, now) {
   return {
     byDiscount,
     today,
-    events: events.slice(0, FEED_SIZE),
-    usedEvents: usedEvents.slice(0, FEED_SIZE),
+    events,
+    usedEvents,
   }
 }

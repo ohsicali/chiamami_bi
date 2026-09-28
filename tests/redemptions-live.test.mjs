@@ -10,7 +10,7 @@
  */
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { applyRedemptionChange, deriveRedemptionStats, FEED_SIZE } from '../src/lib/redemptionsLive.js'
+import { applyRedemptionChange, deriveRedemptionStats } from '../src/lib/redemptionsLive.js'
 
 const NOW = new Date(2026, 8, 22, 15, 0).getTime() // 22/09 15:00 locali
 const at = (h, m = 0, day = 22) => new Date(2026, 8, day, h, m).toISOString()
@@ -71,15 +71,16 @@ test('"oggi" parte dalla mezzanotte locale, i contatori per card no', () => {
   assert.deepEqual(s.byDiscount.d1, { taken: 2, used: 1 })
 })
 
-test('il feed tiene solo gli ultimi FEED_SIZE eventi', () => {
+test('il feed tiene tutta la cronologia, dal più recente', () => {
   const rows = new Map()
-  for (let i = 0; i < FEED_SIZE + 10; i++) {
+  for (let i = 0; i < 250; i++) {
     rows.set(`r${i}`, { id: `r${i}`, discount_id: 'd1', status: 'generated', generated_at: new Date(NOW - i * 60000).toISOString() })
   }
   const { events, byDiscount } = deriveRedemptionStats(rows, NOW)
-  assert.equal(events.length, FEED_SIZE)
+  assert.equal(events.length, 250)
   assert.equal(events[0].key, 'taken:r0')
-  assert.equal(byDiscount.d1.taken, FEED_SIZE + 10)
+  assert.equal(events[249].key, 'taken:r249')
+  assert.equal(byDiscount.d1.taken, 250)
 })
 
 test('le convalide restano visibili anche sotto una valanga di sconti presi', () => {
@@ -93,17 +94,20 @@ test('le convalide restano visibili anche sotto una valanga di sconti presi', ()
     rows.set(`t${i}`, { id: `t${i}`, discount_id: 'shoro', status: 'generated', generated_at: new Date(NOW - i * 30000).toISOString() })
   }
   const { events, usedEvents, today } = deriveRedemptionStats(rows, NOW)
-  assert.equal(events.some((e) => e.kind === 'used'), false)
+  // Nel feed misto le convalide finiscono in fondo, sotto i 60 presi…
+  assert.equal(events.slice(0, 40).some((e) => e.kind === 'used'), false)
+  // …nella loro lista restano in testa.
   assert.deepEqual(usedEvents.map((e) => e.key), ['used:u3', 'used:u2', 'used:u1', 'used:u0'])
   assert.equal(today.used, 4)
 })
 
-test('anche le convalide si fermano a FEED_SIZE', () => {
+test('anche le convalide si vedono tutte', () => {
   const rows = new Map()
-  for (let i = 0; i < FEED_SIZE + 5; i++) {
+  for (let i = 0; i < 120; i++) {
     rows.set(`r${i}`, { id: `r${i}`, discount_id: 'd1', status: 'redeemed', generated_at: at(8), redeemed_at: new Date(NOW - i * 60000).toISOString() })
   }
   const { usedEvents } = deriveRedemptionStats(rows, NOW)
-  assert.equal(usedEvents.length, FEED_SIZE)
+  assert.equal(usedEvents.length, 120)
   assert.equal(usedEvents[0].key, 'used:r0')
+  assert.equal(usedEvents[119].key, 'used:r119')
 })
