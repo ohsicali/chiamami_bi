@@ -187,6 +187,9 @@ Supabase e solo con consenso; `/admin` non si conta. Eventi su misura:
 `track('nome_evento', { ... })`. Error tracking: `capture_exceptions` prende gli
 errori non gestiti; quelli che React ferma nell'ErrorBoundary passano da
 `captureError()` — un nuovo boundary deve chiamarla anche lui.
+Gli errori dei browser dentro le app ("Java object is gone",
+`webkit.messageHandlers`, "Script error.") non partono: li filtra
+`src/lib/errorNoise.js` in `before_send`. Non sono nostri e coprivano quelli veri.
 **Mappa nei replay (27/09):** la mappa è un canvas WebGL e PostHog di suo non
 registra i canvas — nei replay Esplora sembrava vuota per tutti. Ora
 `session_recording.captureCanvas` è acceso (2 fps, metà risoluzione) e la mappa
