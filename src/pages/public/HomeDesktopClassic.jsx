@@ -48,6 +48,7 @@ import BiLogoMark from '../../components/UI/BiLogoMark'
 import Reveal from '../../components/UI/Reveal'
 import { STAGGER, staggerDelay } from '../../lib/motion'
 import { formatDiscountBadge } from '../../lib/utils/discountFormat'
+import { pickFeaturedDeal } from '../../lib/discounts'
 import { formatPrice } from '../../lib/utils/price'
 
 function formatCountdown(endsAt) {
@@ -290,7 +291,14 @@ function HeroPromo({ featured, onUnlock, ctaLabel, ctaDisabled }) {
   }, [featured?.endsAt])
   if (!featured) return null
 
-  const chipLabel = countdown ? `DROP LIVE · ${countdown}` : 'DROP LIVE'
+  // Il corallo e il "DROP LIVE" che pulsa sono solo dei drop: uno sconto
+  // fisso vestito da drop brucia l'urgenza anche sui drop veri. Se in
+  // vetrina c'è una convenzione (drop esaurito, vedi `pickFeaturedDeal`) la
+  // card è scura e il bottone corallo, il colore dell'azione.
+  const isDropDeal = featured.isDrop !== false
+  const chipLabel = !isDropDeal
+    ? 'SCONTO BI CLUB'
+    : (countdown ? `DROP LIVE · ${countdown}` : 'DROP LIVE')
   const claimedCount = featured.claimedCount || 0
   const maxQuantity = featured.maxQuantity || null
   const expiresLabel = featured.expiresLabel || null
@@ -320,7 +328,7 @@ function HeroPromo({ featured, onUnlock, ctaLabel, ctaDisabled }) {
       <div
         className="hfv4-hero-card"
         style={{
-          position: 'relative', background: 'var(--color-corallo)', borderRadius: 28,
+          position: 'relative', background: isDropDeal ? 'var(--color-corallo)' : 'var(--color-ink)', borderRadius: 28,
           padding: '22px', display: 'grid', gridTemplateColumns: '1fr 108px', gap: 14,
           color: '#fff', overflow: 'hidden', boxShadow: '0 8px 24px rgba(34,24,28,.08)',
         }}
@@ -328,7 +336,7 @@ function HeroPromo({ featured, onUnlock, ctaLabel, ctaDisabled }) {
         {/* Body: col sinistra desktop, sotto la foto su mobile */}
         <div className="hfv4-hero-body">
           <span
-            className="hfv4-hero-chip"
+            className={`hfv4-hero-chip${isDropDeal ? '' : ' hfv4-hero-chip--fixed'}`}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
               padding: '5px 10px', background: 'rgba(255,255,255,.18)',
@@ -337,7 +345,7 @@ function HeroPromo({ featured, onUnlock, ctaLabel, ctaDisabled }) {
               marginBottom: 10, width: 'fit-content',
             }}
           >
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'hero-pulse 1.4s infinite' }} />
+            {isDropDeal && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'hero-pulse 1.4s infinite' }} />}
             {chipLabel}
           </span>
           {/* Desktop: titolo pre-line 30→72px */}
@@ -385,7 +393,7 @@ function HeroPromo({ featured, onUnlock, ctaLabel, ctaDisabled }) {
             <button
               onClick={() => !ctaDisabled && onUnlock?.(featured)}
               disabled={ctaDisabled}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 16px', background: 'var(--color-ink)', color: '#fff', borderRadius: 999, fontSize: 13, fontWeight: 700, border: 'none', cursor: ctaDisabled ? 'default' : 'pointer', opacity: ctaDisabled ? 0.7 : 1 }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 16px', background: isDropDeal ? 'var(--color-ink)' : 'var(--color-corallo)', color: '#fff', borderRadius: 999, fontSize: 13, fontWeight: 700, border: 'none', cursor: ctaDisabled ? 'default' : 'pointer', opacity: ctaDisabled ? 0.7 : 1 }}
             >
               {ctaLabel || featured.cta}{ctaDisabled ? '' : ' →'}
             </button>
@@ -692,9 +700,12 @@ export default function HomeDesktopClassic() {
     [restaurants]
   )
 
+  // Stessa scelta della home del telefono (`pickFeaturedDeal`): il drop
+  // attivo, e se è esaurito lo sconto fisso dello stesso locale al suo posto.
   const featuredDrop = useMemo(() => {
-    const drop = (discounts || []).find((d) => d.is_drop)
+    const drop = pickFeaturedDeal(discounts)
     if (!drop) return null
+    const isDropDeal = !!drop.is_drop
     const r = (restaurants || []).find((x) => x.id === drop.restaurant_id)
     if (!r) return null
     const photos = Array.isArray(r.photos) && r.photos.length > 0 ? r.photos[0] : null
@@ -708,9 +719,10 @@ export default function HomeDesktopClassic() {
     const neighborhood = r.address ? r.address.split(',')[0].trim() : ''
     const tagline = r.tagline || ''
     const restLine = [catInfo?.name || catName, neighborhood, tagline].filter(Boolean).slice(0, 3).join(' · ')
-    const claimedCount = drop.claimed_count || drop.total_redeemed || 0
-    const maxQuantity = drop.max_quantity || null
-    const expiresAt = drop.drop_ends_at || drop.ends_at || drop.valid_until || null
+    // Uno sconto fisso non ha posti né countdown: niente barra, niente "scade".
+    const claimedCount = isDropDeal ? (drop.claimed_count || drop.total_redeemed || 0) : 0
+    const maxQuantity = isDropDeal ? (drop.max_quantity || null) : null
+    const expiresAt = isDropDeal ? (drop.drop_ends_at || drop.ends_at || drop.valid_until || null) : null
     let expiresLabel = null
     if (expiresAt) {
       const exp = new Date(expiresAt)
@@ -738,7 +750,8 @@ export default function HomeDesktopClassic() {
       href: `/restaurant/${r.slug}`,
       photo,
       photoSrcSet,
-      endsAt: drop.drop_ends_at || drop.ends_at || null,
+      isDrop: isDropDeal,
+      endsAt: isDropDeal ? (drop.drop_ends_at || drop.ends_at || null) : null,
       claimedCount,
       maxQuantity,
       expiresLabel,
@@ -944,6 +957,7 @@ export default function HomeDesktopClassic() {
           }
           .hfv4-hero-body { padding: 52px 56px !important; display: flex; flex-direction: column; justify-content: center; gap: 18px !important; }
           .hfv4-hero-chip { font-size: 12px !important; padding: 7px 13px !important; margin-bottom: 0 !important; animation: drop-live-ring 2s ease-out infinite !important; }
+          .hfv4-hero-chip--fixed { animation: none !important; }
           .hfv4-hero-title { font-size: 72px !important; line-height: .98 !important; letter-spacing: -.03em !important; margin-bottom: 0 !important; white-space: pre-line !important; }
           .hfv4-hero-sub { font-size: 15px !important; max-width: 340px !important; }
           .hfv4-hero-photo { min-height: 0 !important; }
