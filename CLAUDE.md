@@ -108,6 +108,12 @@ su `email_preferences` (`src/lib/emailPrefs.js`); `newsletter_subscribers` è
 la lista vecchia e non decide più niente. E se tocchi `render.js` o `blocks.js`, rilancia
 `node supabase/email-templates/build.mjs`.
 
+**Modificare uno sconto non manda email (28/09):** l'annuncio a tutti parte
+solo quando lo sconto si **crea** (casella "Manda l'email a tutti gli utenti"
+nel form). "Salva modifiche" aggiorna e basta; il server rifiuta l'annuncio
+automatico (`onCreate`) per uno sconto con più di 15 minuti. Il megafono sulla
+card chiede sempre conferma. Non rimettere un invio sul salvataggio.
+
 **Promemoria degli sconti non usati (24/09):** un cron Vercel al giorno
 (`/api/notify-subscribers?job=discount-reminders`) ricorda uno sconto preso da
 almeno 48 ore e mai usato — **un locale per email, al massimo una al giorno,

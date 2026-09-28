@@ -28,6 +28,10 @@ import { claimedCount, remainingCount, discountEndsAt } from '../src/lib/discoun
 import { runDiscountReminders } from './_email/reminders.js'
 
 const SITE_URL = 'https://chiamamibi.com'
+// Quanto può essere "giovane" uno sconto per l'annuncio automatico alla
+// creazione (`onCreate`). Largo abbastanza per un salvataggio lento con le
+// foto dei prodotti, stretto abbastanza da escludere qualunque modifica.
+const CREATE_WINDOW_MS = 15 * 60 * 1000
 
 export default async function handler(req, res) {
   if (applyCors(req, res)) return
@@ -76,7 +80,7 @@ export default async function handler(req, res) {
     return res.status(403).json({ error: 'Admin role required' })
   }
 
-  const { type, id, force } = req.body || {}
+  const { type, id, force, onCreate } = req.body || {}
   if (type === 'discount-reminders') {
     try {
       const summary = await runDiscountReminders(admin, { dryRun: !!req.body?.dryRun })
@@ -90,14 +94,30 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Invalid type' })
   }
 
-  // Dedup check
+  // L'annuncio automatico del pannello sconti (`onCreate`) vale solo per uno
+  // sconto appena nato. Se arriva per uno vecchio, qualcosa nel client ha
+  // scambiato una modifica per una creazione: meglio nessuna email che
+  // riannunciare a tutti uno sconto a cui è stata corretta una didascalia.
+  if (onCreate && (type === 'discount' || type === 'drop')) {
+    const { data: row } = await admin.from('discounts').select('created_at').eq('id', id).maybeSingle()
+    const age = row?.created_at ? Date.now() - new Date(row.created_at).getTime() : Infinity
+    if (!(age < CREATE_WINDOW_MS)) {
+      return res.status(409).json({ error: 'Not a new discount: automatic announcement skipped' })
+    }
+  }
+
+  // Dedup check. Sconto e drop contano insieme: uno sconto passato da
+  // "sconto" a "drop" (o il contrario) è sempre lo stesso sconto, e chi ha
+  // già ricevuto l'email non deve riceverla una seconda volta per quello.
   if (!force) {
-    const { data: existing } = await admin
+    const { data: existingRows } = await admin
       .from('email_notifications_log')
       .select('sent_at, sent_count')
-      .eq('type', type)
+      .in('type', type === 'restaurant' ? ['restaurant'] : ['discount', 'drop'])
       .eq('item_id', id)
-      .maybeSingle()
+      .order('sent_at', { ascending: false })
+      .limit(1)
+    const existing = existingRows?.[0]
     if (existing) {
       return res.status(409).json({
         error: 'Already sent',

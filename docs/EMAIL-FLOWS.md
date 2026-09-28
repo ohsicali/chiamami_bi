@@ -140,7 +140,14 @@ Questo doc descrive **cosa parte quando e perché**. Serve per:
   - Compone HTML usando template inline dentro `notify-subscribers.js`.
   - Batch via Resend `POST /emails/batch` (max 100 messaggi per chiamata, quindi pagina a 100 alla volta se gli iscritti sono di più).
   - Scrive log in `email_notifications_log` con `type + id + sent_at + sent_count` per dedup.
-  - Se chiami senza `force: true` e la combinazione type+id è già stata notificata, restituisce errore → serve a evitare doppi invii per errore.
+  - Se chiami senza `force: true` e lo sconto è già stato notificato, restituisce 409 → serve a evitare doppi invii per errore. Sconto e drop contano insieme (dal 28/09): cambiare il tipo di uno sconto non lo rende "nuovo".
+- **Modificare non manda email (28/09).** L'annuncio automatico parte solo
+  alla **creazione**, se lo sconto nasce attivo e la casella "Manda l'email a
+  tutti gli utenti" è spuntata. "Salva modifiche" non manda mai niente, e il
+  server lo garantisce anche lui: la chiamata automatica porta `onCreate: true`
+  e viene rifiutata (409) se lo sconto ha più di 15 minuti. Il megafono sulla
+  card chiede sempre conferma prima di spedire: stava accanto alla matita e un
+  tocco sbagliato mandava l'email a tutti.
 - **Mittente:** `Bi <ciao@chiamamibi.com>` · **Reply-to:** `info@chiamamibi.com`
 
 ### 7c. Promemoria — sconto preso e non ancora usato (24/09/2026)
