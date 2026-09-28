@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BiLogoMark from '../UI/BiLogoMark'
+import { CHAT_MAINTENANCE } from '../../lib/chatMaintenance'
 
 /**
  * AskBiChat · ingresso "Chiedi a Bi" sulla Home.
@@ -118,10 +119,18 @@ export default function AskBiChat({ currentMoment }) {
                 Chiedi a Bi
               </div>
               <div style={{ fontSize: 12, color: 'var(--color-ink-70)', marginTop: 3, lineHeight: 1.35 }}>
-                Dimmi cosa ti va, ti suggerisco io.
+                {CHAT_MAINTENANCE ? 'In manutenzione · torna a breve' : 'Dimmi cosa ti va, ti suggerisco io.'}
               </div>
             </div>
           </div>
+
+          {CHAT_MAINTENANCE ? (
+            <p style={{ fontSize: 13, color: 'var(--color-ink)', lineHeight: 1.5, margin: 0, position: 'relative', maxWidth: '72ch' }}>
+              <strong>Stiamo migliorando il servizio.</strong>{' '}
+              La chat con Bi tornerà disponibile a breve, con una grafica premium tutta nuova.
+            </p>
+          ) : (
+          <>
 
           {/* La card si allarga con la pagina, la riga di testo no: oltre
               ~75 caratteri l'occhio perde il capo riga. */}
@@ -187,6 +196,8 @@ export default function AskBiChat({ currentMoment }) {
               Chiedi a Bi →
             </button>
           </div>
+          </>
+          )}
         </div>
       </div>
     </div>
