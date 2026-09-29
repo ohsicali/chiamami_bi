@@ -145,8 +145,9 @@ pieno; all'ora giusta la mette online il giro
 - Accendere a mano uno sconto programmato (▶ sulla card) chiede conferma e
   annulla l'uscita **senza email**; pubblicare a mano un locale programmato
   ("Salva · pubblica" dopo aver tolto la spunta) manda le email come sempre.
-- SQL colonne `supabase/scheduled-publish-2026-09-29.sql` (**già eseguito** il
-  29/09). La data si mostra con `formatPublishAt()` (`src/lib/scheduledPublish.js`),
+- SQL colonne `supabase/scheduled-publish-2026-09-29.sql` e cron
+  `supabase/scheduled-publish-cron-2026-09-29.sql` (**tutti e due eseguiti** il
+  29/09; per spegnere il giro: `SELECT cron.unschedule('chiamamibi-scheduled-publish');`). La data si mostra con `formatPublishAt()` (`src/lib/scheduledPublish.js`),
   sempre all'ora di Roma.
 
 ## Convenzioni contenuti sconti (per riferimento futuro)

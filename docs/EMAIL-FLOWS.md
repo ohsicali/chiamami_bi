@@ -249,8 +249,8 @@ le cinque stelle si toccano **dalla posta**: ogni stella porta a
 - **A mano, da admin:** `POST /api/notify-subscribers`
   `{ type: 'scheduled-publish', dryRun: true }` dice cosa uscirebbe adesso.
 - **SQL:** colonne `supabase/scheduled-publish-2026-09-29.sql` (eseguito il
-  29/09); cron `supabase/scheduled-publish-cron-2026-09-29.sql` (da eseguire
-  dopo il deploy). Per spegnere: `SELECT cron.unschedule('chiamamibi-scheduled-publish');`
+  29/09); cron `supabase/scheduled-publish-cron-2026-09-29.sql` (eseguito il
+  29/09 dopo il deploy; prima chiamata 200). Per spegnere: `SELECT cron.unschedule('chiamamibi-scheduled-publish');`
 
 ### ~~8. Newsletter standalone (edge function Supabase)~~ · RIMOSSA il 21/09/2026
 
