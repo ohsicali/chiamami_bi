@@ -236,6 +236,26 @@ vanno rifatte.
 - Il giro delle email parte da **pg_cron** (`supabase/redemption-feedback-cron-2026-09-29.sql`),
   non da `vercel.json`: sul piano Hobby i cron Vercel sono uno al giorno.
 
+## Data di nascita (29/09)
+Dal 29/09 la registrazione con email chiede la **data di nascita** (obbligatoria,
+tre tendine giorno/mese/anno — `BirthDateInput`, non il calendario nativo). Viaggia
+nei metadati di `signUp` e il trigger `handle_new_user` la copia in
+`profiles.birth_date`. Chi l'account ce l'aveva già (e chi entra con Google, che il
+modulo non lo vede) la trova chiesta da un **popup** (`BirthDateGate` in
+`App.jsx`): **una volta per visita** (sessionStorage) finché non la mette;
+"Più tardi" lo chiude fino alla prossima apertura del sito. Mai sopra login, admin,
+/verify, /partner, /feedback, pagine legali, il tutorial di benvenuto (Google: prima
+il tutorial) o un'altra finestra aperta (`aria-modal`). Si corregge da Impostazioni;
+l'admin vede età, età media e quanti l'hanno messa in /admin/users.
+- **Almeno 16 anni** (come i Termini): stessa regola in `src/lib/birthDate.js` e nel
+  DB (`private.valid_birth_date` + trigger `check_profile_birth_date`, SQL
+  `supabase/profiles-birth-date-2026-09-29.sql`, **già eseguito**). Test in
+  `tests/birth-date.test.mjs` controlla che non divergano.
+- `profiles` ha **solo grant di colonna**: una colonna nuova senza `GRANT SELECT`
+  ad `authenticated` fa fallire il `select('*')` del profilo di tutti.
+- PostHog: `birthdate_asked`, `birthdate_saved` (`source`: signup/popup/settings),
+  `birthdate_later`.
+
 ## Sblocco sconti — QR e codice a 6 caratteri
 Ogni riscatto (`discount_redemptions`) ha due codici: il `qr_code`
 (`BiSc-…`, dentro il QR) e lo `short_code` di sei caratteri — una lettera e

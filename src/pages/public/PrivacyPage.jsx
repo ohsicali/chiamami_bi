@@ -35,7 +35,7 @@ export default function PrivacyPage() {
         <p style={{ color: 'var(--color-ink-55)', fontSize: 13.5, marginTop: 10, marginBottom: 28 }}>
           Come raccogliamo e trattiamo i tuoi dati personali, in conformità al GDPR.
           <br />
-          <strong style={{ color: 'var(--color-ink-70)' }}>Ultimo aggiornamento:</strong> Aprile 2026
+          <strong style={{ color: 'var(--color-ink-70)' }}>Ultimo aggiornamento:</strong> Settembre 2026
         </p>
 
         <div className="flex flex-col gap-3.5">
@@ -49,7 +49,7 @@ export default function PrivacyPage() {
           <LegalSection n={2} title="Dati raccolti">
             <p>Raccogliamo i seguenti dati personali:</p>
             <ul className="list-disc pl-5 space-y-1">
-              <li><strong style={{ color: 'var(--color-ink)' }}>Dati di registrazione:</strong> nome, indirizzo email</li>
+              <li><strong style={{ color: 'var(--color-ink)' }}>Dati di registrazione:</strong> nome, indirizzo email, data di nascita</li>
               <li><strong style={{ color: 'var(--color-ink)' }}>Dati di navigazione:</strong> indirizzo IP, tipo di browser, pagine visitate</li>
               <li><strong style={{ color: 'var(--color-ink)' }}>Dati di geolocalizzazione:</strong> posizione GPS (solo con consenso esplicito)</li>
               <li><strong style={{ color: 'var(--color-ink)' }}>Contenuti generati:</strong> ristoranti salvati</li>
@@ -63,7 +63,7 @@ export default function PrivacyPage() {
               <li>Gestione dell'account utente e delle preferenze</li>
               <li>Gestione del sistema sconti e QR code</li>
               <li>Invio della newsletter (con consenso)</li>
-              <li>Miglioramento del servizio e analisi aggregate</li>
+              <li>Miglioramento del servizio e analisi aggregate (la data di nascita serve a conoscere l&rsquo;età di chi usa il servizio e a verificare il requisito di età minima; non è mostrata ai locali né a terzi)</li>
             </ul>
           </LegalSection>
 

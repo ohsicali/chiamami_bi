@@ -8,6 +8,9 @@ import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import Footer from '../../components/Layout/Footer'
 import { openWelcomeTour } from '../../lib/welcomeTour'
 import { authErrorMessage } from '../../lib/utils/authErrors'
+import BirthDateInput from '../../components/UI/BirthDateInput'
+import { birthDateError, fromIsoDate, toIsoDate } from '../../lib/birthDate'
+import { track } from '../../lib/posthog'
 
 const inputStyle = {
   width: '100%', background: 'var(--color-page)', borderRadius: 'var(--radius-md)',
@@ -148,6 +151,11 @@ export default function SettingsPage() {
   const [emailStatus, setEmailStatus] = useState(null)
   const [emailLoading, setEmailLoading] = useState(false)
 
+  // ── Data di nascita ──
+  const [birthDate, setBirthDate] = useState({ day: '', month: '', year: '' })
+  const [savingBirth, setSavingBirth] = useState(false)
+  const [birthMsg, setBirthMsg] = useState(null)
+
   // ── Recovery email ──
   const [recoveryEmail, setRecoveryEmail] = useState('')
   const [savingRecovery, setSavingRecovery] = useState(false)
@@ -183,6 +191,7 @@ export default function SettingsPage() {
     if (!profile) return
     setFullName(profile.full_name || '')
     setRecoveryEmail(profile.recovery_email || '')
+    setBirthDate(fromIsoDate(profile.birth_date))
   }, [profile])
 
   useEffect(() => {
@@ -212,6 +221,19 @@ export default function SettingsPage() {
     const { error } = await supabase.from('profiles').update({ full_name: fullName.trim() }).eq('id', user.id)
     setSaving(false)
     if (!error) { setNameSaved(true); setTimeout(() => setNameSaved(false), 2000); refreshProfile?.() }
+  }
+
+  // ── Handlers: Data di nascita ──
+  const handleSaveBirthDate = async () => {
+    const problem = birthDateError(birthDate)
+    if (problem) { setBirthMsg({ type: 'error', text: problem }); return }
+    setSavingBirth(true)
+    const { error } = await supabase.from('profiles').update({ birth_date: toIsoDate(birthDate) }).eq('id', user.id)
+    setSavingBirth(false)
+    if (error) { setBirthMsg({ type: 'error', text: 'Non sono riuscito a salvarla. Riprova.' }); return }
+    setBirthMsg({ type: 'success', text: '✓ Salvata' })
+    track('birthdate_saved', { source: 'settings' })
+    refreshProfile?.()
   }
 
   // ── Handlers: Email (non-Google) ──
@@ -488,6 +510,21 @@ export default function SettingsPage() {
             <input value={fullName} onChange={e => setFullName(e.target.value)} style={inputStyle} placeholder="Il tuo nome" />
             <button onClick={handleSaveName} disabled={saving || !fullName.trim()} style={{ ...btnAccent, opacity: saving || !fullName.trim() ? 0.5 : 1 }}>
               {nameSaved ? '✓' : saving ? '...' : 'Salva'}
+            </button>
+          </div>
+        </div>
+
+        {/* ── DATA DI NASCITA ── (dal 29/09, vedi src/lib/birthDate.js) */}
+        <div style={cardStyle}>
+          <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-ink)', marginBottom: 4 }}>Data di nascita</h3>
+          <p style={{ fontSize: 12, color: 'var(--color-ink-55)', marginBottom: 12 }}>
+            Non la vede nessun altro, neanche i locali.
+          </p>
+          <BirthDateInput idPrefix="settings-birth" value={birthDate} onChange={(v) => { setBirthDate(v); setBirthMsg(null) }} invalid={birthMsg?.type === 'error'} />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 10 }}>
+            <span style={{ fontSize: 12, color: birthMsg?.type === 'error' ? 'var(--color-corallo)' : 'var(--color-success)' }}>{birthMsg?.text || ''}</span>
+            <button onClick={handleSaveBirthDate} disabled={savingBirth || toIsoDate(birthDate) === (profile?.birth_date || null)} style={{ ...btnAccent, opacity: savingBirth || toIsoDate(birthDate) === (profile?.birth_date || null) ? 0.5 : 1 }}>
+              {savingBirth ? '...' : 'Salva'}
             </button>
           </div>
         </div>

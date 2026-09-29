@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase } from '../../lib/supabase'
 import AdminLayout from '../../components/Layout/AdminLayout'
+import { ageOn } from '../../lib/birthDate'
 
 /* ------------------------------------------------------------------ */
 /*  StatCard                                                           */
@@ -59,7 +60,7 @@ export default function AdminUsers() {
     setLoading(true)
     const { data: profiles } = await supabase
       .from('profiles')
-      .select('id, full_name, email, avatar_url, is_admin, created_at')
+      .select('id, full_name, email, avatar_url, is_admin, created_at, birth_date')
       .order('created_at', { ascending: false })
 
     if (!profiles) {
@@ -82,6 +83,7 @@ export default function AdminUsers() {
       ...p,
       saved_count: savedCounts[p.id] || 0,
       redeem_count: redeemCounts[p.id] || 0,
+      age: p.birth_date ? ageOn(p.birth_date) : null,
     })))
     setLoading(false)
   }
@@ -90,8 +92,14 @@ export default function AdminUsers() {
     const now = Date.now()
     const weekAgo = now - 7 * 86400000
     const monthAgo = now - 30 * 86400000
+    // Età: la chiediamo dal 29/09 (registrazione + popup per chi c'era già),
+    // quindi per un po' la media è su una parte degli utenti — la seconda
+    // cifra dice su quanti.
+    const ages = users.map(u => u.age).filter(a => a != null)
     return {
       total: users.length,
+      withAge: ages.length,
+      avgAge: ages.length ? Math.round(ages.reduce((a, b) => a + b, 0) / ages.length) : null,
       admins: users.filter(u => u.is_admin).length,
       newWeek: users.filter(u => new Date(u.created_at).getTime() >= weekAgo).length,
       newMonth: users.filter(u => new Date(u.created_at).getTime() >= monthAgo).length,
@@ -132,12 +140,17 @@ export default function AdminUsers() {
         {/* ─── STATS 2x2 mobile, 4 cols desktop ─── */}
         <div
           style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}
-          className="md:!grid-cols-4"
+          className="md:!grid-cols-3"
         >
           <StatCard label="Totali" value={stats.total} />
           <StatCard label="Admin" value={stats.admins} color="#b91c1c" />
           <StatCard label="Nuovi 7gg" value={stats.newWeek} color="#047857" />
           <StatCard label="Nuovi 30gg" value={stats.newMonth} color="#047857" />
+          <StatCard label="Età media" value={stats.avgAge ?? '—'} />
+          <StatCard
+            label="Con data di nascita"
+            value={`${stats.withAge} · ${stats.total ? Math.round((stats.withAge / stats.total) * 100) : 0}%`}
+          />
         </div>
 
         {/* ─── SEARCH ─── */}
@@ -225,6 +238,7 @@ export default function AdminUsers() {
                 <thead>
                   <tr style={{ background: '#fafafa', borderBottom: '1px solid #eee' }}>
                     <th style={thStyle}>Utente</th>
+                    <th style={thStyle}>Età</th>
                     <th style={thStyle}>Registrato</th>
                     <th style={thStyle}>Salvati</th>
                     <th style={thStyle}>QR</th>
@@ -254,6 +268,7 @@ export default function AdminUsers() {
                           </div>
                         </div>
                       </td>
+                      <td style={tdStyle}>{u.age ?? '—'}</td>
                       <td style={{ ...tdStyle, color: '#666', fontSize: 12 }}>{timeAgo(u.created_at)}</td>
                       <td style={tdStyle}>{u.saved_count}</td>
                       <td style={tdStyle}>{u.redeem_count}</td>
@@ -316,6 +331,12 @@ export default function AdminUsers() {
                     <span style={{ fontWeight: 600, color: 'var(--color-ink)' }}>{u.saved_count}</span> salvati
                     {' · '}
                     <span style={{ fontWeight: 600, color: 'var(--color-ink)' }}>{u.redeem_count}</span> QR
+                    {u.age != null && (
+                      <>
+                        {' · '}
+                        <span style={{ fontWeight: 600, color: 'var(--color-ink)' }}>{u.age}</span> anni
+                      </>
+                    )}
                   </div>
 
                   {/* Row 3: Relative time */}

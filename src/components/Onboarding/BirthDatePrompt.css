@@ -1,0 +1,106 @@
+/* Il popup "Quando è il tuo compleanno?" (BirthDateGate). Stessa famiglia
+   della porta degli sconti (SconteAuthGate): card bianca su velo scuro,
+   cerchio corallo in testa. Niente backdrop-filter sul velo: su iPhone
+   ritarda il primo disegno dopo il tocco (CLAUDE.md, Web Vitals). */
+.bdp-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  background: rgba(34, 24, 28, 0.55);
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  animation: bdpFade var(--dur-pop, 180ms) var(--ease-out, ease-out);
+}
+@keyframes bdpFade { from { opacity: 0 } to { opacity: 1 } }
+
+.bdp-card {
+  background: var(--color-card, #fff);
+  border-radius: 24px;
+  padding: 28px 22px 18px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: bdpRise 260ms var(--ease-out, cubic-bezier(.2, .8, .2, 1));
+}
+@keyframes bdpRise { from { opacity: 0; transform: translateY(16px) } to { opacity: 1; transform: none } }
+
+/* Dal telefono sale dal basso, dove arriva il pollice. */
+@media (max-width: 640px) {
+  .bdp-veil { place-items: end center; padding: 0; }
+  .bdp-card {
+    max-width: none;
+    border-radius: 24px 24px 0 0;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+  }
+}
+
+.bdp-badge {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: #E8453C;
+  box-shadow: 0 10px 24px rgba(232, 69, 60, 0.28);
+  display: grid;
+  place-items: center;
+  font-size: 30px;
+  line-height: 1;
+  margin-bottom: 14px;
+}
+
+.bdp-card h2 {
+  font-family: var(--font-sans);
+  font-weight: 900;
+  font-size: 24px;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--color-ink);
+  margin: 0;
+}
+.bdp-card p {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--color-ink-70);
+  margin: 8px 0 18px;
+  max-width: 330px;
+}
+.bdp-error {
+  font-size: 12.5px;
+  color: var(--color-corallo);
+  margin: 8px 0 0;
+  min-height: 18px;
+}
+.bdp-save {
+  width: 100%;
+  margin-top: 10px;
+  padding: 15px 16px;
+  border: 0;
+  border-radius: 16px;
+  background-color: #E8453C;
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(232, 69, 60, 0.28);
+}
+.bdp-save[disabled] { opacity: 0.75; cursor: progress; }
+.bdp-later {
+  margin-top: 6px;
+  padding: 10px;
+  background: none;
+  border: 0;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-ink-70);
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bdp-card { animation: none; }
+}
