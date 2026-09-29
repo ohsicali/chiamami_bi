@@ -1467,26 +1467,29 @@ function ScannerOverlay({ restaurant, onClose, initialCode = null, onInitialCode
         <>
           {(camStatus === 'starting' || camStatus === 'running') && (
             <>
-              <div className="v4-scan-window">
-                <div className="v4-scan-corner tl" />
-                <div className="v4-scan-corner tr" />
-                <div className="v4-scan-corner bl" />
-                <div className="v4-scan-corner br" />
-                <div className="v4-scan-line" />
-              </div>
-              <div className="v4-scan-hint">
-                <div className="h1">Inquadra il QR del cliente</div>
-                <div className="h2">
-                  Se la fotocamera non lo legge, fatti dettare il codice di sei caratteri
+              {/* Il bottone del codice sta subito sotto il riquadro, rosso:
+                  in fondo allo schermo, grigio fra i bottoni di servizio,
+                  alcuni ristoratori non lo vedevano (28/09). */}
+              <div className="v4-scan-stage">
+                <div className="v4-scan-hint-top">Inquadra il QR del cliente</div>
+                <div className="v4-scan-window">
+                  <div className="v4-scan-corner tl" />
+                  <div className="v4-scan-corner tr" />
+                  <div className="v4-scan-corner bl" />
+                  <div className="v4-scan-corner br" />
+                  <div className="v4-scan-line" />
+                </div>
+                <button type="button" className="v4-scan-code-btn" onClick={openManual}>
+                  <span aria-hidden="true">⌨︎</span> Sblocca con il codice
+                </button>
+                <div className="v4-scan-hint-sub">
+                  Il QR non si legge? Fatti dettare il codice di sei caratteri
                   che il cliente ha sotto il QR
                 </div>
               </div>
               <div className="v4-scan-bottom">
-                <button type="button" className="v4-scan-btn" onClick={openManual}>
-                  ⌨︎  Inserisci codice
-                </button>
-                <a className="v4-scan-btn" href="mailto:info@chiamamibi.com" style={{ textDecoration: 'none' }}>
-                  ?  Aiuto
+                <a className="v4-scan-help" href="mailto:info@chiamamibi.com">
+                  Serve aiuto? Scrivici
                 </a>
               </div>
               {camStatus === 'starting' && (
