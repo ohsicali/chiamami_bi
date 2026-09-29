@@ -5,6 +5,7 @@ import { FField, FInput, FTextarea, FRow } from './_Fields'
 import { useAiCorrect, AiCorrectButton, AiSuggestionBox } from './_AiCorrect'
 import GoogleMapsImportBlock from '../GoogleMapsImportBlock'
 import GooglePlacesBlock from '../GooglePlacesBlock'
+import PublishSchedule from '../PublishSchedule'
 import { geocodeAddress } from '../../../lib/utils/geocoding'
 import { defaultLocationLabel } from '../../../lib/utils/restaurantLocations'
 
@@ -40,7 +41,7 @@ const RECOMMENDED_FOR_OPTIONS = [
   'Prezzo accessibile',
 ]
 
-export default function DettagliTab({ form, onChange, restaurantId, isNew }) {
+export default function DettagliTab({ form, onChange, restaurantId, isNew, canSchedule = false }) {
   const { categories } = useCategories()
   const ai = useAiCorrect()
   const [geocoding, setGeocoding] = useState(false)
@@ -860,6 +861,16 @@ export default function DettagliTab({ form, onChange, restaurantId, isNew }) {
             </label>
           </FField>
         </FRow>
+        {/* Uscita programmata: la cercano qui, accanto a "Scheda pubblica".
+            Solo per un locale ancora in bozza (`canSchedule`) e finché la
+            spunta sopra è tolta: pubblicato adesso non ha niente da aspettare. */}
+        {canSchedule && !form.is_published && (
+          <FRow one>
+            <FField label="Quando esce">
+              <PublishSchedule form={form} onChange={onChange} compact />
+            </FField>
+          </FRow>
+        )}
       </FGroup>
     </div>
   )

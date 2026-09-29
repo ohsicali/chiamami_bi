@@ -125,7 +125,10 @@ altrove. Parte a chi ha "I miei sconti" (`my_discounts`) acceso. Dettagli in
 
 ## Uscita programmata di locali e sconti (29/09)
 Nel pannello si può dire "esce lunedì alle 18": **Modifica ristorante** (finché
-è in bozza) → "Programma l'uscita"; **form sconti** → "Programma l'uscita" (non
+è in bozza) → riquadro **"Quando esce?"** (`PublishSchedule.jsx`), sia in cima
+alla pagina sia in Dettagli → Pubblicazione, accanto a "Scheda pubblica" — la
+prima versione, due caselline sotto l'intestazione, il proprietario non la
+trovava; **form sconti** → "Programma l'uscita" (non
 per le prove, né per uno sconto già online). Fino a quell'ora la riga resta
 nascosta (`is_published = false` / `is_active = false`) con `publish_at`
 pieno; all'ora giusta la mette online il giro
