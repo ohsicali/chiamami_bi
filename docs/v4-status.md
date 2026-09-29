@@ -34,6 +34,35 @@ dove siamo. Aggiorna a ogni step importante.
 | Admin Analytics — numeri veri e più chiari | — | 🚧 In review | SQL `supabase/admin-analytics-2026-09-23.sql` **già eseguito** (connettore Supabase). Vedi sezione "23/09 — admin Analytics" sotto. |
 | Tutorial di benvenuto dopo la registrazione | #310 | ✅ Merged (cf52e71) | **Nessun SQL.** 7 schermate saltabili (4 sugli sconti), parte dalla spunta "Ci sei" appena l'account è confermato; finito si va alla home. Fix 28/09: con Google (flusso implicit, niente `?code=`) diceva "Accesso effettuato!" e partiva solo sulla home. Vedi CLAUDE.md "Tutorial di benvenuto". |
 
+## 25/09 — `api/public.js` diventa edge: il sito sta nei limiti di Hobby
+
+**Perché.** Dopo il lancio il team Vercel era passato a Pro, ma il
+pagamento con la carta di debito falliva: fattura "Overdue", sito in pausa
+("This deployment is temporarily paused") quasi ogni sera. Si è valutato di
+tornare a Hobby; il downgrade non è passato (fattura aperta) e il 25/09 si
+è deciso di **restare su Pro** sistemando il pagamento (carta di credito, o
+debito abilitata ai pagamenti esteri/ricorrenti). La modifica resta come
+rete di sicurezza: se il piano torna Hobby, i deploy continuano a passare.
+
+**Il problema tecnico.** Hobby ammette 12 funzioni Serverless per deploy.
+`api/public.js` (nato il 22/09) era la tredicesima: su Hobby il deploy
+dell'intero sito sarebbe fallito.
+
+**Fatto.** `api/public.js` gira ora con `runtime: 'edge'`, come
+`sitemap.js` e `og-restaurant.js` — le edge non contano nel limite.
+Stesso indirizzo, stessi parametri, stesse intestazioni `Cache-Control`
+(cache CDN `s-maxage` + `stale-while-revalidate` + `stale-if-error`),
+quindi nessuna modifica lato client. Funzioni Node ora: **12 su 12** —
+**su Hobby una nuova funzione in `api/` romperebbe il deploy**: va unita a una esistente
+(dispatch su `action`, come `admin-actions.js`) o scritta edge.
+
+**Se un giorno si passa a Hobby.** Stima dai dati di `page_views`: circa
+1,5–2,5 milioni di richieste al mese con il traffico del 24/09
+(612 sessioni, 2.506 pagine viste), contro il limite Hobby di circa 1
+milione: su Hobby il sito andrebbe in pausa prima di fine mese.
+Misurato sul sito: una prima visita sono ~107 richieste da mobile
+(87 file JS/CSS) e ~72 da desktop. Ridurre il numero di chunk JS dimezzerebbe le richieste.
+
 ## 24/09 — promemoria: sconti presi e non ancora usati
 
 Richiesta: a chi ha preso uno sconto e non l'ha usato arriva un'email dopo
