@@ -247,6 +247,13 @@ Supabase e solo con consenso; `/admin` non si conta. Eventi su misura:
 `track('nome_evento', { ... })`. Error tracking: `capture_exceptions` prende gli
 errori non gestiti; quelli che React ferma nell'ErrorBoundary passano da
 `captureError()` — un nuovo boundary deve chiamarla anche lui.
+**Mappe del codice (29/09):** perché PostHog mostri file e riga veri invece
+del JS compresso, dopo `vite build` `scripts/posthog-sourcemaps.mjs` carica le
+mappe su PostHog e le **cancella da `dist`** (il sorgente non va online). Parte
+solo se su Vercel ci sono `POSTHOG_CLI_API_KEY` (chiave personale `phx_…`) e
+`POSTHOG_CLI_PROJECT_ID`; senza, niente mappe. Se il caricamento fallisce il
+deploy va avanti lo stesso. La CLI non sta nelle dipendenze apposta (il suo
+`postinstall` scarica da GitHub e farebbe fallire `npm install`).
 Gli errori dei browser dentro le app ("Java object is gone",
 `webkit.messageHandlers`, "Script error.") non partono: li filtra
 `src/lib/errorNoise.js` in `before_send`. Non sono nostri e coprivano quelli veri.

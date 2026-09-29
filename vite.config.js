@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { hasPostHogKeys } from './scripts/posthog-sourcemaps.mjs'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
@@ -8,8 +9,10 @@ export default defineConfig({
     // Inline tiny assets (≤4 kB) as base64 to skip extra round-trips.
     assetsInlineLimit: 4096,
     cssCodeSplit: true,
-    // Drop sourcemaps in prod — they bloat the deploy artifact.
-    sourcemap: false,
+    // Mappe solo dove ci sono le chiavi PostHog (Vercel): `hidden` non scrive
+    // il riferimento nel JS, e `scripts/posthog-sourcemaps.mjs` le carica su
+    // PostHog e le cancella da `dist` prima che il sito vada online.
+    sourcemap: hasPostHogKeys() ? 'hidden' : false,
     // Bigger chunks are fine if they cache well; suppress the noisy warning.
     chunkSizeWarningLimit: 800,
     // Vite/rolldown speculatively `modulepreload`s every chunk reachable from
