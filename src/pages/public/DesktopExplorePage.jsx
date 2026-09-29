@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 // Mapbox-gl is ~600KB gzipped — load only when this page actually mounts so
 // users that never open the map don't pay the bytes upfront.
 const MapView = lazy(() => import('../../components/Map/MapView'))
-import { useRestaurants, getCategoryInfo, CUISINE_CATEGORIES } from '../../lib/hooks/useRestaurants'
+import { useRestaurants, getCategoryInfo, CUISINE_CATEGORIES, matchesHomeCategory } from '../../lib/hooks/useRestaurants'
 import { useGeolocation } from '../../lib/hooks/useGeolocation'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
@@ -279,6 +279,9 @@ export default function DesktopExplorePage() {
   const filteredRestaurants = useMemo(() => {
     let result = activeCat
       ? restaurants.filter(r => {
+          // Le bolle della home (Colazione, Gelati, Hamburger…) raccolgono
+          // più categorie: passano dalla stessa mappa di Esplora da telefono.
+          if (matchesHomeCategory(r, activeCat)) return true
           const cats = r.category || (r.cuisine_type ? [r.cuisine_type] : [])
           return cats.some(c => c.toLowerCase().includes(activeCat.toLowerCase()))
         })

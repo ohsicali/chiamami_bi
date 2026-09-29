@@ -396,12 +396,16 @@ const MOCK_RESTAURANTS = [
  * su category/cuisine_type) — necessario per le categorie admin dinamiche.
  */
 const HOME_CATEGORY_MAP = {
+  // "Panineria" no: ci stanno anche pescherie e kebab. I burger hanno la
+  // loro categoria "Hamburger" (tabella categories, 29/09).
+  Hamburger:  { categories: ['Hamburger', 'Burger'] },
   Aperitivo:  { categories: ['Aperitivo'],                          recommendedFor: ['Aperitivo'] },
   Piemontese: { categories: ['Piemontese'] },
   Pizza:      { categories: ['Pizza'] },
   Giapponese: { categories: ['Giapponese', 'Sushi', 'Ramen'] },
   Pesce:      { categories: ['Pesce'] },
-  Colazione:  { categories: ['Brunch', 'Bar', 'Matcha', 'Dolce', 'Gelateria'], recommendedFor: ['Brunch'] },
+  Colazione:  { categories: ['Brunch', 'Bar', 'Matcha', 'Dolce'],  recommendedFor: ['Brunch'] },
+  Gelati:     { categories: ['Gelateria'] },
   Carne:      { categories: ['Barbecue', 'Carne'],                  recommendedFor: ['Carne'] },
   // "Italiana" è un cappello regionale: pizza/panineria hanno il loro bubble.
   Italiana:   { categories: ['Italiana', 'Piemontese', 'Pasta', 'Piadina', 'Tramezzini'] },

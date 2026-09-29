@@ -57,6 +57,7 @@ export const DEFAULT_CATEGORIES = [
   { name: 'Giapponese', emoji: '🍣', color: '#F59E0B', group_key: 'cucina' },
   { name: 'Fine Dining', emoji: '✨', color: '#6366F1', group_key: 'cucina' },
   { name: 'Gelateria', emoji: '🍦', color: '#EC4899', group_key: 'cucina' },
+  { name: 'Hamburger', emoji: '🍔', color: '#D97706', group_key: 'cucina' },
   { name: 'Tapas', emoji: '🫒', color: '#84CC16', group_key: 'cucina' },
   { name: 'Spagnolo', emoji: '🥘', color: '#DC2626', group_key: 'cucina' },
   { name: 'Asiatico', emoji: '🥡', color: '#0EA5E9', group_key: 'cucina' },
