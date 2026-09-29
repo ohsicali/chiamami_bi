@@ -260,8 +260,11 @@ function TopBar() {
  * implementazione con badge, barra e conteggi calcolati a modo suo, che si
  * era già allontanata da quella del Bi Club.
  */
-function HomeDrop({ featured, onUnlock, onDiscover, ctaLabel, ctaDisabled }) {
-  if (!featured) return null
+function HomeDrop({ featured, loading, onUnlock, onDiscover, ctaLabel, ctaDisabled }) {
+  // Finché gli sconti non sono arrivati si tiene il posto della card (vedi
+  // `.hfv4-skel` più sotto): comparendo dal nulla spingeva giù di 378px
+  // tutto quello che c'era sotto, ed era metà del CLS della home.
+  if (!featured) return loading ? <div className="hfv4-drop-wrap hfv4-drop-wrap--skel" aria-hidden="true"><div className="hfv4-skel" /></div> : null
   return (
     <div className="hfv4-drop-wrap hfv4-rise" style={{ '--rise-y': '12px', '--rise-opacity': 0.55 }}>
       <DropCard
@@ -286,7 +289,8 @@ function HomeDrop({ featured, onUnlock, onDiscover, ctaLabel, ctaDisabled }) {
  * (Blocco 3). Stesso nodo nel DOM in entrambi i casi — si sposta con la
  * griglia, non duplicandolo.
  */
-function DropOthers({ others, onOpen }) {
+function DropOthers({ others, loading, onOpen }) {
+  if (loading && (!others || others.length === 0)) return <div className="hfv4-drop-others hfv4-skel hfv4-skel--others" aria-hidden="true" />
   if (!others || others.length === 0) return null
   return (
     <div className="hfv4-drop-others">
@@ -490,7 +494,7 @@ export default function HomeFeedV4() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { restaurants, loading } = useRestaurants(null)
-  const { discounts } = useActiveDiscounts()
+  const { discounts, loading: discountsLoading } = useActiveDiscounts()
   const { active: myActiveDeals, used: myUsedDeals } = useMyDiscounts(user?.id)
   const { isSaved, toggleSave, addSave } = useSavedRestaurants(user?.id)
 
@@ -915,6 +919,27 @@ export default function HomeFeedV4() {
         .hfv4-drop-wrap { padding: 8px 12px 0; }
 
         .hfv4-drop-others { margin-top: 16px; }
+
+        /* ── Segnaposto mentre arrivano i dati ─────────────────────────
+           Locali e sconti arrivano dopo il primo disegno. Prima al loro
+           posto c'era una riga "Caricamento…" (o niente) e all'arrivo
+           tutto quello che stava sotto scendeva di centinaia di pixel:
+           CLS 0,76 sulla home. I segnaposto hanno l'altezza che avranno le
+           sezioni vere, misurata su telefono (360–430px) e tablet (800px). */
+        .hfv4-skel {
+          border-radius: 20px;
+          background: var(--color-ink-05, rgba(34, 24, 28, 0.05));
+        }
+        .hfv4-skel--open { height: 154px; margin: 0 20px; }
+        .hfv4-drop-wrap--skel { height: 378px; box-sizing: border-box; }
+        .hfv4-drop-wrap--skel .hfv4-skel { height: 100%; }
+        .hfv4-skel--others { height: 215px; }
+        /* Le card di "Ultimi aggiunti" sono larghe una frazione dello
+           schermo, quindi anche la riga: 281px a 360, 316px a 430. */
+        .hfv4-skel--row { height: calc(50vw + 88px); margin: 0 20px 12px; }
+        @media (min-width: 768px) {
+          .hfv4-drop-wrap--skel { height: 308px; }
+        }
         .hfv4-drop-others-head {
           display: flex;
           align-items: baseline;
@@ -1464,14 +1489,14 @@ export default function HomeFeedV4() {
               contenere anche le chip: nel mockup stanno dentro il blocco. */}
           <div className="hfv4-band-moment">
             <div className="hfv4-moment">
-              <TimeContextHero activeMomentKey={activeMoment} openCount={openNowCount} />
+              <TimeContextHero activeMomentKey={activeMoment} openCount={openNowCount} pending={loading} />
               <MomentTabs activeKey={activeMoment} onChange={setActiveMoment} />
             </div>
           </div>
 
           <div className="hfv4-band-open">
           {loading ? (
-            <div style={{ padding: '0 20px', color: 'var(--color-ink-70)' }}>Caricamento…</div>
+            <div className="hfv4-skel hfv4-skel--open" aria-hidden="true" />
           ) : (
             <MomentResultsGrid
               restaurants={restaurants}
@@ -1488,6 +1513,7 @@ export default function HomeFeedV4() {
         <div className="hfv4-band-drop">
           <HomeDrop
             featured={featuredDrop}
+            loading={discountsLoading}
             onUnlock={unlockDeal}
             onDiscover={goToRestaurant}
             {...dealCta(featuredDrop)}
@@ -1503,7 +1529,7 @@ export default function HomeFeedV4() {
           ultimi aggiunti a sinistra e la lista sconti a destra. */}
       <div className="hfv4-lower">
         <div className="hfv4-lower-deals">
-          <DropOthers others={otherDeals} onOpen={goToRestaurant} />
+          <DropOthers others={otherDeals} loading={discountsLoading} onOpen={goToRestaurant} />
         </div>
 
         <div className="hfv4-lower-cats">
@@ -1535,7 +1561,7 @@ export default function HomeFeedV4() {
           }
         />
         {loading ? (
-          <div style={{ padding: '0 20px', color: 'var(--color-ink-70)' }}>Caricamento...</div>
+          <div className="hfv4-skel hfv4-skel--row" aria-hidden="true" />
         ) : (
           <div className="hfv4-cards-row" style={{ display:'flex', gap:12, overflowX:'auto', padding:'0 20px 12px 20px', scrollSnapType:'x mandatory', scrollPaddingLeft:20, WebkitOverflowScrolling:'touch', scrollbarWidth:'none' }}>
             {recent.map((r, i) => (

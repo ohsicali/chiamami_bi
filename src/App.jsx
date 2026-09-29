@@ -131,8 +131,9 @@ export default function App() {
 
   // Esplora pronta prima di arrivarci: la mappa si crea in anticipo e resta
   // viva per tutta la visita (vedi src/lib/prewarmExplore.js). Su /esplora
-  // aperta direttamente parte subito; dalle pagine pubbliche a browser libero;
-  // non dalle pagine di admin e ristoratori, che la mappa non la usano.
+  // aperta direttamente parte subito; dalle pagine pubbliche a browser libero
+  // (dal telefono dopo 3 s senza tocchi); non dalle pagine di admin e
+  // ristoratori, che la mappa non la usano.
   useEffect(() => {
     const p = location.pathname
     if (p === '/esplora') prewarmExplore()

@@ -5,7 +5,8 @@
  * distruggeva: contesto WebGL, stile (93 KB), sprite, font e tessere da
  * rifare ogni volta, e sul telefono si vedeva il riquadro vuoto per qualche
  * secondo. Ora la mappa nasce una volta sola — in anticipo, mentre si è
- * ancora sulla home (`prewarmMap`) — e quando si esce da Esplora non muore:
+ * ancora sulla home (`prewarmMap`, vedi lib/prewarmExplore.js) — e quando si
+ * esce da Esplora non muore:
  * il suo contenitore torna in un "parcheggio" fuori schermo (`parkMap`) e
  * rientra al prossimo ingresso già disegnata, con posizione e zoom di prima.
  *
@@ -29,9 +30,13 @@ function getParking() {
   if (parking?.isConnected) return parking
   parking = document.createElement('div')
   parking.setAttribute('aria-hidden', 'true')
-  // `data-html2canvas-ignore`: il vetro della tab bar (liquidGL) fotografa il
-  // body con html2canvas, e una mappa parcheggiata non deve finirci dentro.
-  parking.setAttribute('data-html2canvas-ignore', '')
+  // `ph-no-capture`: il replay di PostHog fotografa i canvas due volte al
+  // secondo, anche quelli nascosti. Una mappa parcheggiata (1170×2532 pixel
+  // su iPhone) era una lettura dalla GPU ogni mezzo secondo per tutta la
+  // visita, su pagine dove la mappa non si vede. Il blocco vale per il
+  // contenitore e quello che c'è dentro: quando la mappa entra in Esplora
+  // esce dal parcheggio e il replay torna a registrarla.
+  parking.className = 'ph-no-capture'
   // Fuori schermo ma con le misure di uno schermo: la mappa prepara le
   // tessere giuste per quando entrerà davvero in pagina.
   parking.style.cssText =

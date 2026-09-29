@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
@@ -42,100 +41,19 @@ const ProfileIcon = () => (
 
 export { TAB_BAR_HEIGHT }
 
-// iOS Safari has a known html2canvas bug with position:fixed elements — the
-// snapshot fails silently, leaving the WebGL canvas blank. The CSS
-// backdrop-filter fallback already looks native on iOS (WebKit renders it
-// identically to UIKit blur), so we skip liquidGL entirely there.
-function isIOSDevice() {
-  if (typeof navigator === 'undefined') return false
-  return (
-    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-  )
-}
-
-// The bottom nav is `md:hidden` so it never paints on desktop. Bail before
-// loading the ~270 kB vendor bundle (html2canvas + liquidGL) on viewports
-// where the nav isn't visible.
-function isMobileViewport() {
-  if (typeof window === 'undefined') return false
-  return window.matchMedia('(max-width: 767px)').matches
-}
-
-// Skip the snapshot effect on devices that can't handle a per-scroll WebGL
-// pass — saves jank + battery on low-end Android.
-function isLowEndDevice() {
-  if (typeof navigator === 'undefined') return true
-  const cores = navigator.hardwareConcurrency || 4
-  const mem = navigator.deviceMemory || 4
-  if (cores < 4 || mem < 4) return true
-  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return true
-  if (navigator.connection?.saveData) return true
-  return false
-}
-
-// Script loading is global + idempotent. Once loaded and initialized, liquidGL
-// keeps a shared canvas across mounts/unmounts; cleanup per-instance is not
-// strictly required, but we re-snapshot on route/scroll changes.
-function ensureLiquidGLLoaded() {
-  if (typeof window === 'undefined') return Promise.resolve(false)
-  if (window.__liquidGLReady) return Promise.resolve(true)
-  if (window.__liquidGLLoading) return window.__liquidGLLoading
-
-  const loadScript = (src) =>
-    new Promise((resolve, reject) => {
-      // Avoid double-injection
-      const existing = document.querySelector(`script[src="${src}"]`)
-      if (existing) {
-        if (existing.dataset.loaded === 'true') return resolve()
-        existing.addEventListener('load', () => resolve())
-        existing.addEventListener('error', reject)
-        return
-      }
-      const s = document.createElement('script')
-      s.src = src
-      s.async = true
-      s.onload = () => {
-        s.dataset.loaded = 'true'
-        resolve()
-      }
-      s.onerror = reject
-      document.head.appendChild(s)
-    })
-
-  window.__liquidGLLoading = (async () => {
-    try {
-      await loadScript('/vendor/html2canvas-pro.min.js')
-      await loadScript('/vendor/liquidGL.js')
-      window.__liquidGLReady = typeof window.liquidGL === 'function'
-      return window.__liquidGLReady
-    } catch (err) {
-      console.warn('[bottom-nav] liquidGL vendor script load failed:', err)
-      window.__liquidGLReady = false
-      return false
-    }
-  })()
-
-  return window.__liquidGLLoading
-}
-
-function detectWebGL() {
-  try {
-    const canvas = document.createElement('canvas')
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
-    return !!gl
-  } catch {
-    return false
-  }
-}
+// Il vetro è solo CSS (`.bottom-nav` in globals.css), uguale su iPhone e
+// Android. Fino al 29/09 su Android sopra c'era liquidGL: un canvas WebGL a
+// tutto schermo ridisegnato a ogni fotogramma e, sotto, html2canvas che
+// fotografava l'intera pagina al caricamento, a ogni cambio di pagina e a
+// ogni cambio d'altezza del body (1,5 s + 2,5 s di processore misurati sulla
+// home con un telefono medio). Un tocco che capitava in mezzo aspettava:
+// l'INP su Android era 0,4 s. Non rimetterlo.
 
 export default function MobileTabBar() {
   const location = useLocation()
   const navigate = useNavigate()
   const { user } = useAuth()
   const { discounts } = useActiveDiscounts()
-  const navRef = useRef(null)
-  const liquidGLInstanceRef = useRef(null)
 
   const path = location.pathname
 
@@ -159,116 +77,9 @@ export default function MobileTabBar() {
     { key: 'profile', label: 'Profilo', Icon: ProfileIcon, active: isProfile, onClick: () => (user ? navigate('/profile') : navigate('/login', { state: { returnTo: '/profile', reason: 'profile', mode: 'register' } })) },
   ]
 
-  // Initialize liquidGL once on mount. Falls back gracefully to the CSS
-  // backdrop-filter pill if WebGL is unavailable or the script fails to load.
-  useEffect(() => {
-    let cancelled = false
-    // Bail conditions: nav isn't rendered (desktop), iOS bug, no WebGL, or
-    // low-end device where the snapshot pass would jank scrolling.
-    if (
-      !isMobileViewport() ||
-      isIOSDevice() ||
-      !detectWebGL() ||
-      isLowEndDevice()
-    ) return undefined
-
-    // Defer loading until the browser is idle so the LCP isn't blocked by a
-    // ~270 kB vendor download on first paint.
-    const idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 1500))
-    const handle = idle(() => {
-      if (cancelled) return
-      ensureLiquidGLLoaded().then((ready) => {
-        if (cancelled || !ready || typeof window.liquidGL !== 'function') return
-        if (window.__liquidGLInstance) {
-          liquidGLInstanceRef.current = window.__liquidGLInstance
-          return
-        }
-        try {
-          const instance = window.liquidGL({
-            target: '.bottom-nav',
-            snapshot: 'body',
-            // Lowered from 2.0 to halve the per-frame rasterization cost;
-            // visual difference on a 64 px nav is imperceptible.
-            resolution: 1.25,
-            refraction: 0.025,
-            bevelDepth: 0.11,
-            bevelWidth: 0.18,
-            frost: 2,
-            shadow: true,
-            specular: true,
-            reveal: 'fade',
-            magnify: 1,
-          })
-          window.__liquidGLInstance = instance
-          liquidGLInstanceRef.current = instance
-        } catch (err) {
-          console.warn('[bottom-nav] liquidGL init error:', err)
-        }
-      })
-    }, { timeout: 3000 })
-
-    return () => {
-      cancelled = true
-      const cancel = window.cancelIdleCallback || clearTimeout
-      cancel(handle)
-    }
-  }, [])
-
-  // Re-snapshot on route change and throttled scroll so the refraction follows
-  // the content underneath the nav.
-  useEffect(() => {
-    if (typeof window === 'undefined' || isIOSDevice()) return undefined
-    if (!isMobileViewport() || isLowEndDevice()) return undefined
-    if (typeof window.liquidGL?.syncWith !== 'function') return undefined
-
-    let frame = 0
-    const resync = () => {
-      if (frame) return
-      frame = window.requestAnimationFrame(() => {
-        frame = 0
-        try {
-          window.liquidGL.syncWith()
-        } catch {
-          /* swallow — liquidGL may not be fully ready yet */
-        }
-      })
-    }
-
-    resync()
-    const onScroll = () => {
-      if (frame) return
-      frame = window.requestAnimationFrame(() => {
-        frame = 0
-        try {
-          window.liquidGL.syncWith()
-        } catch {
-          /* noop */
-        }
-      })
-    }
-
-    let scrollTimer = null
-    const throttledScroll = () => {
-      if (scrollTimer) return
-      scrollTimer = window.setTimeout(() => {
-        scrollTimer = null
-        onScroll()
-      }, 100)
-    }
-
-    window.addEventListener('scroll', throttledScroll, { passive: true })
-    return () => {
-      window.removeEventListener('scroll', throttledScroll)
-      if (scrollTimer) window.clearTimeout(scrollTimer)
-      if (frame) window.cancelAnimationFrame(frame)
-    }
-  }, [location.pathname])
-
   return (
     <nav
-      ref={navRef}
-      className="bottom-nav liquidGL md:hidden"
-      data-liquid-ignore
+      className="bottom-nav md:hidden"
       aria-label="Navigazione principale"
     >
       {tabs.map((tab) => (
