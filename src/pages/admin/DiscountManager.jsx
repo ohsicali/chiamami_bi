@@ -12,6 +12,7 @@ import { ProductsEditor, ValidityPicker } from '../../components/admin/DiscountR
 import { isExpired as isDiscountExpired, discountEndsAt, maxQuantity } from '../../lib/discounts'
 import { useAdminRedemptions } from '../../lib/hooks/useAdminRedemptions'
 import LiveRedemptionsPanel from '../../components/admin/LiveRedemptionsPanel'
+import { toLocalInput, fromLocalInput, defaultPublishInput, publishAtError, formatPublishAt } from '../../lib/scheduledPublish'
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -56,6 +57,14 @@ const EMPTY_FORM = {
   no_end_date: false, // true → ends_at resta vuoto apposta, non "non ancora scelto"
   max_uses: '',
   is_active: true,
+  // Uscita programmata (supabase/scheduled-publish-2026-09-29.sql): lo
+  // sconto resta spento fino a `publish_at` e il giro ogni 5 minuti lo
+  // accende; se `send_email` è spuntata parte l'annuncio in quel momento.
+  schedule_on: false,
+  publish_at: '',
+  // Era già online all'apertura del form: niente programmazione, non ha
+  // senso nascondere uno sconto che la gente sta già usando.
+  was_live: false,
   // Solo alla creazione: l'annuncio a tutti gli utenti. Una modifica non
   // manda mai email (vedi handleSave), e nel form la casella non c'è.
   send_email: true,
@@ -211,7 +220,23 @@ function DropCard({ d, testers, selected, notifyLog, notifying, active, partnerT
         >
           {d.restaurant?.name || '—'}
           <span style={{ color: 'var(--color-corallo, #E8453C)', fontWeight: 900 }}>{d.discount_value}</span>
-          {!active && (
+          {!active && d.publish_at && (
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 800,
+                padding: '2px 8px',
+                borderRadius: 999,
+                background: 'var(--color-ink, #22181C)',
+                color: '#fff',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+              }}
+            >
+              ⏰ Esce {formatPublishAt(d.publish_at)}
+            </span>
+          )}
+          {!active && !d.publish_at && (
             <span
               style={{
                 fontSize: 10,
@@ -778,7 +803,11 @@ export default function DiscountManager() {
       no_end_date: !endSource,
       max_uses: (isDrop ? (d.max_quantity || d.max_redemptions) : d.max_redemptions) || '',
       is_active: d.is_active,
-      send_email: false,
+      schedule_on: !!d.publish_at,
+      was_live: !!d.is_active,
+      publish_at: toLocalInput(d.publish_at),
+      // Ancora da uscire: l'email non è partita, e si può ancora decidere.
+      send_email: d.publish_at ? d.notify_on_publish !== false : false,
       is_test: !!d.is_test,
       testers: (testersByDiscount[d.id] || []).join(', '),
       was_test: !!d.is_test,
@@ -881,6 +910,20 @@ export default function DiscountManager() {
       setSaveError('Sconto di prova: scrivi almeno un\'email di chi lo deve vedere (quella con cui ha l\'account).')
       return
     }
+    // Uno sconto di prova non esce per nessuno: la programmazione non vale.
+    const scheduling = form.schedule_on && !form.is_test && !form.was_live
+    const publishIso = scheduling ? fromLocalInput(form.publish_at) : null
+    if (scheduling) {
+      const err = publishAtError(form.publish_at)
+      if (err) {
+        setSaveError(err)
+        return
+      }
+      if (form.ends_at && new Date(form.ends_at) <= new Date(publishIso)) {
+        setSaveError('La data di fine deve venire dopo l\'uscita programmata.')
+        return
+      }
+    }
 
     setSaving(true)
     setSaveError(null)
@@ -920,7 +963,11 @@ export default function DiscountManager() {
 
     const isDrop = form.kind === 'drop'
     const isFeatured = form.kind === 'featured'
-    const startIso = form.starts_at ? new Date(form.starts_at).toISOString() : new Date().toISOString()
+    let startIso = form.starts_at ? new Date(form.starts_at).toISOString() : new Date().toISOString()
+    // Programmato: vale da quando esce, non da prima (il "Valido dal" di
+    // oggi su uno sconto che esce lunedì direbbe una cosa falsa, e un drop
+    // partirebbe col countdown già consumato).
+    if (publishIso && startIso < publishIso) startIso = publishIso
     // Campo vuoto → null, non una stringa vuota passata a `new Date()`
     // (tornerebbe Invalid Date): nessuna data di fine è una scelta valida,
     // non un errore di digitazione.
@@ -942,7 +989,9 @@ export default function DiscountManager() {
       valid_from: startIso,
       valid_until: endIso,
       max_redemptions: uses,
-      is_active: form.is_active,
+      is_active: scheduling ? false : form.is_active,
+      publish_at: publishIso,
+      notify_on_publish: scheduling ? !!form.send_email : true,
       is_drop: isDrop,
       drop_starts_at: isDrop ? startIso : null,
       drop_ends_at: isDrop ? endIso : null,
@@ -1003,6 +1052,12 @@ export default function DiscountManager() {
       }
       if (clearNotice) {
         setAutoNotice({ kind: 'err', text: clearNotice })
+        setTimeout(() => setAutoNotice(null), 7000)
+      } else if (publishIso) {
+        setAutoNotice({
+          kind: 'ok',
+          text: `Programmato: esce ${formatPublishAt(publishIso)}${form.send_email ? ' e in quel momento parte l\'email a tutti gli utenti' : ', senza email'}.`,
+        })
         setTimeout(() => setAutoNotice(null), 7000)
       } else if (form.was_test && !form.is_test) {
         setAutoNotice({ kind: 'ok', text: 'Sconto pubblicato: ora lo vedono tutti. Nessuna email è partita — se vuoi annunciarlo c\'è il megafono.' })
@@ -1131,10 +1186,16 @@ export default function DiscountManager() {
     setBulkDeleting(false)
   }
 
-  const handleToggleActive = async (id, currentActive) => {
+  const handleToggleActive = async (id, currentActive, publishAt = null) => {
+    // Accendere a mano uno sconto programmato annulla l'uscita programmata
+    // (e con lei l'email di quel momento): meglio dirlo prima.
+    if (publishAt && !currentActive) {
+      const ok = window.confirm(`Questo sconto esce da solo ${formatPublishAt(publishAt)}.\n\nAccenderlo adesso? L'uscita programmata si annulla e nessuna email parte (c'è sempre il megafono).`)
+      if (!ok) return
+    }
     const { data } = await supabase
       .from('discounts')
-      .update({ is_active: !currentActive })
+      .update({ is_active: !currentActive, publish_at: null })
       .eq('id', id)
       .select('*, restaurant:restaurants(id, name)')
       .single()
@@ -1178,6 +1239,7 @@ export default function DiscountManager() {
     if (filter === 'drops') return counted.filter((d) => d.is_drop)
     if (filter === 'expired') return counted.filter((d) => isExpired(d))
     if (filter === 'tests') return counted.filter((d) => d.is_test)
+    if (filter === 'scheduled') return counted.filter((d) => d.publish_at)
     return counted
   }, [counted, filter])
 
@@ -1187,6 +1249,7 @@ export default function DiscountManager() {
     drops: discounts.filter((d) => d.is_drop).length,
     expired: discounts.filter((d) => isExpired(d)).length,
     tests: discounts.filter((d) => d.is_test).length,
+    scheduled: discounts.filter((d) => d.publish_at).length,
   }), [discounts])
 
   if (authLoading) return null
@@ -1351,6 +1414,9 @@ export default function DiscountManager() {
           <PillTab active={filter === 'drops'} count={counts.drops} onClick={() => setFilter('drops')}>Drop attivi</PillTab>
           <PillTab active={filter === 'active'} count={counts.active} onClick={() => setFilter('active')}>Sconti sempre attivi</PillTab>
           <PillTab active={filter === 'expired'} count={counts.expired} onClick={() => setFilter('expired')}>Scaduti</PillTab>
+          {(counts.scheduled > 0 || filter === 'scheduled') && (
+            <PillTab active={filter === 'scheduled'} count={counts.scheduled} onClick={() => setFilter('scheduled')}>Programmati</PillTab>
+          )}
           {(counts.tests > 0 || filter === 'tests') && (
             <PillTab active={filter === 'tests'} count={counts.tests} onClick={() => setFilter('tests')}>In prova</PillTab>
           )}
@@ -1477,7 +1543,7 @@ export default function DiscountManager() {
                 onSelect={() => toggleSelect(d.id)}
                 onEdit={() => handleEdit(d)}
                 onNotify={() => handleNotify(d)}
-                onToggleActive={() => handleToggleActive(d.id, d.is_active)}
+                onToggleActive={() => handleToggleActive(d.id, d.is_active, d.publish_at)}
                 onDelete={() => setDeleteConfirm(d)}
               />
             ))}
@@ -1866,34 +1932,92 @@ export default function DiscountManager() {
                     />
                   </FormField>
 
-                  {/* Stato attivo / in pausa */}
-                  <label
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: 12,
-                      cursor: 'pointer',
-                      padding: '10px 12px',
-                      background: 'var(--color-cream, #F5F0E4)',
-                      borderRadius: 10,
-                    }}
-                  >
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink)' }}>
-                        {form.is_active ? 'Pubblicato' : 'In pausa'}
-                      </span>
-                      <span style={{ fontSize: 11, color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
-                        {form.is_active ? (form.is_test ? 'Visibile solo a chi è invitato alla prova' : 'Visibile agli utenti') : 'Nascosto agli utenti, modificabile in seguito'}
-                      </span>
+                  {/* Stato attivo / in pausa — programmato, lo decide l'ora d'uscita */}
+                  {!(form.schedule_on && !form.is_test) && (
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 12,
+                        cursor: 'pointer',
+                        padding: '10px 12px',
+                        background: 'var(--color-cream, #F5F0E4)',
+                        borderRadius: 10,
+                      }}
+                    >
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink)' }}>
+                          {form.is_active ? 'Pubblicato' : 'In pausa'}
+                        </span>
+                        <span style={{ fontSize: 11, color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
+                          {form.is_active ? (form.is_test ? 'Visibile solo a chi è invitato alla prova' : 'Visibile agli utenti') : 'Nascosto agli utenti, modificabile in seguito'}
+                        </span>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={form.is_active}
+                        onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))}
+                        style={{ accentColor: '#E8453C', width: 18, height: 18 }}
+                      />
+                    </label>
+                  )}
+
+                  {/* Uscita programmata: resta spento fino all'ora scelta, poi
+                      si accende da solo (giro ogni 5 minuti) e, se spuntata,
+                      parte l'email. Non per le prove: quelle non escono. */}
+                  {!form.is_test && !form.was_live && (
+                    <div
+                      style={{
+                        padding: '10px 12px',
+                        background: form.schedule_on ? '#fff' : 'var(--color-cream, #F5F0E4)',
+                        border: form.schedule_on ? '1px solid var(--color-ink, #22181C)' : '1px solid transparent',
+                        borderRadius: 10,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 10,
+                      }}
+                    >
+                      <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, cursor: 'pointer' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink)' }}>
+                            Programma l'uscita
+                          </span>
+                          <span style={{ fontSize: 11, color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
+                            {form.schedule_on
+                              ? `Nascosto fino a ${formatPublishAt(fromLocalInput(form.publish_at)) || '…'}, poi si accende da solo (entro 5 minuti)`
+                              : 'Scegli giorno e ora: fino ad allora non lo vede nessuno'}
+                          </span>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={form.schedule_on}
+                          onChange={(e) => {
+                            const on = e.target.checked
+                            setForm((f) => ({
+                              ...f,
+                              schedule_on: on,
+                              publish_at: on && !f.publish_at ? defaultPublishInput() : f.publish_at,
+                              // Creando, l'annuncio all'uscita è la scelta di default.
+                              send_email: on && !editing ? true : f.send_email,
+                            }))
+                          }}
+                          style={{ accentColor: '#E8453C', width: 18, height: 18 }}
+                        />
+                      </label>
+                      {form.schedule_on && (
+                        <FormField label="Esce il" hint="Se il locale non è ancora online, lo sconto aspetta lui ed esce insieme.">
+                          <input
+                            type="datetime-local"
+                            value={form.publish_at}
+                            min={toLocalInput(new Date().toISOString())}
+                            onChange={(e) => setForm((f) => ({ ...f, publish_at: e.target.value }))}
+                            style={inputStyle}
+                          />
+                        </FormField>
+                      )}
                     </div>
-                    <input
-                      type="checkbox"
-                      checked={form.is_active}
-                      onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))}
-                      style={{ accentColor: '#E8453C', width: 18, height: 18 }}
-                    />
-                  </label>
+                  )}
 
                   {/* Sconto di prova: esiste davvero (si sblocca, il locale lo
                       convalida) ma lo vedono solo gli admin e le email scritte
@@ -1972,7 +2096,35 @@ export default function DiscountManager() {
                   {/* Email agli utenti: si sceglie solo creando. Modificando
                       lo si dice chiaro, perché era proprio la paura di
                       rimandare l'annuncio a tenere ferme le correzioni. */}
-                  {form.is_test ? null : editing ? (
+                  {form.is_test ? null : form.schedule_on ? (
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 12,
+                        cursor: 'pointer',
+                        padding: '10px 12px',
+                        background: 'var(--color-cream, #F5F0E4)',
+                        borderRadius: 10,
+                      }}
+                    >
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink)' }}>
+                          Manda l'email a tutti gli utenti quando esce
+                        </span>
+                        <span style={{ fontSize: 11, color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
+                          Parte una volta sola, all'ora dell'uscita
+                        </span>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={form.send_email}
+                        onChange={(e) => setForm((f) => ({ ...f, send_email: e.target.checked }))}
+                        style={{ accentColor: '#E8453C', width: 18, height: 18 }}
+                      />
+                    </label>
+                  ) : editing ? (
                     <p style={{ fontSize: 12, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', margin: 0, padding: '10px 12px', background: '#f7f7f7', borderRadius: 10 }}>
                       Salvare le modifiche <strong>non manda nessuna email</strong>: lo sconto si aggiorna e basta.
                       Per riannunciarlo c'è il megafono sulla card.
@@ -2054,7 +2206,7 @@ export default function DiscountManager() {
                       fontFamily: "var(--font-sans)",
                     }}
                   >
-                    {saving ? 'Salvataggio...' : editing ? 'Salva modifiche' : 'Crea sconto'}
+                    {saving ? 'Salvataggio...' : editing ? 'Salva modifiche' : form.schedule_on && !form.is_test ? 'Programma sconto' : 'Crea sconto'}
                   </button>
                 </div>
               </motion.div>

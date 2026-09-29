@@ -48,6 +48,7 @@ Questo doc descrive **cosa parte quando e perché**. Serve per:
 | 7b | Admin pubblica una convenzione (sconto non-drop) | Iscritti agli avvisi sconti | `Da oggi hai il {valore} da {Locale}` | `POST /api/notify-subscribers` type=`discount` | `src/pages/admin/DiscountManager.jsx` |
 | 7c | Ogni giorno alle ~11 (cron Vercel): sconti presi da ≥48 ore e mai usati | Chi li ha presi, se ha "I miei sconti" acceso | `Il tuo sconto da {Locale} ti aspetta` · drop: `Il tuo drop da {Locale} scade tra {X}` | `GET /api/notify-subscribers?job=discount-reminders` (Bearer `CRON_SECRET`) | nessuno — parte da sola (`vercel.json` → `crons`) |
 | 7d | ~30 min e ~1 giorno dopo che il locale ha convalidato uno sconto, se il feedback nell'app non è finito (pg_cron ogni 10 min) | Chi ha usato lo sconto, se ha "I miei sconti" acceso | `Com’è andata da {Locale}?` · stelle già date: `Mi racconti com’è andata da {Locale}?` · secondo giro: `Ieri da {Locale}: …` | `GET /api/notify-subscribers?job=feedback-asks` (token nel Vault, o `CRON_SECRET`) | nessuno — parte da sola (`supabase/redemption-feedback-cron-2026-09-29.sql`) |
+| 7e | All'ora dell'uscita programmata di un locale o di uno sconto (pg_cron ogni 5 min) | Tutti gli utenti col relativo interruttore acceso (+ il PIN al locale) | come 7 / 7b / 2 | `GET /api/notify-subscribers?job=scheduled-publish` (token nel Vault, o `CRON_SECRET`) | nessuno — parte da sola (`supabase/scheduled-publish-cron-2026-09-29.sql`); si programma dal pannello (`EditRestaurant.jsx`, `DiscountManager.jsx`) |
 | ~~8~~ | ~~Newsletter manuale (edge function)~~ | — | — | ~~Edge Function `send-newsletter`~~ | **Rimossa il 21/09/2026** — vedi §"Chi riceve le email" |
 
 ### Trigger dormant / gap identificati
@@ -230,6 +231,26 @@ le cinque stelle si toccano **dalla posta**: ogni stella porta a
   `cron_token_ok`: nessun segreto da copiare su Vercel.
 - A mano da admin: `POST { type: 'feedback-asks', dryRun: true }`.
 - Anche la ricevuta "Sconto usato" (#6) ora porta il link alle stelle.
+
+### 7e. Uscita programmata — locale o sconto che esce all'ora scelta (29/09/2026)
+
+- **Quando:** l'admin spunta "Programma l'uscita" (scheda del locale in bozza,
+  o form sconti) e sceglie giorno e ora. La riga resta nascosta con
+  `publish_at` pieno; ogni 5 minuti pg_cron chiama
+  `GET /api/notify-subscribers?job=scheduled-publish` e quello che è arrivato
+  all'ora va online.
+- **Cosa parte:** locale → "nuovo in guida" (§ Gap B, ora chiuso per questa
+  strada) se `notify_on_publish`, più il benvenuto col PIN al locale se ha
+  email e PIN; sconto → annuncio convenzione/drop se `notify_on_publish`.
+  Stesso registro doppioni di §7 (`email_notifications_log`).
+- **Uno sconto aspetta il suo locale** (non si accende né si annuncia finché
+  il locale non è online). Regole in `api/_scheduled-publish.js`, test in
+  `tests/scheduled-publish.test.mjs`.
+- **A mano, da admin:** `POST /api/notify-subscribers`
+  `{ type: 'scheduled-publish', dryRun: true }` dice cosa uscirebbe adesso.
+- **SQL:** colonne `supabase/scheduled-publish-2026-09-29.sql` (eseguito il
+  29/09); cron `supabase/scheduled-publish-cron-2026-09-29.sql` (da eseguire
+  dopo il deploy). Per spegnere: `SELECT cron.unschedule('chiamamibi-scheduled-publish');`
 
 ### ~~8. Newsletter standalone (edge function Supabase)~~ · RIMOSSA il 21/09/2026
 

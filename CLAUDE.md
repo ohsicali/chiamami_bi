@@ -123,6 +123,32 @@ e sono sotto test: se le cambi, cambia il test, non aggiungere eccezioni
 altrove. Parte a chi ha "I miei sconti" (`my_discounts`) acceso. Dettagli in
 `docs/EMAIL-FLOWS.md` §7c.
 
+## Uscita programmata di locali e sconti (29/09)
+Nel pannello si può dire "esce lunedì alle 18": **Modifica ristorante** (finché
+è in bozza) → "Programma l'uscita"; **form sconti** → "Programma l'uscita" (non
+per le prove, né per uno sconto già online). Fino a quell'ora la riga resta
+nascosta (`is_published = false` / `is_active = false`) con `publish_at`
+pieno; all'ora giusta la mette online il giro
+`/api/notify-subscribers?job=scheduled-publish` (**pg_cron ogni 5 minuti**,
+`supabase/scheduled-publish-cron-2026-09-29.sql`) e `publish_at` torna NULL.
+- All'uscita partono le stesse email della pubblicazione a mano: locale →
+  "nuovo in guida" a tutti (se `notify_on_publish`) e il PIN al locale (se ha
+  email e PIN); sconto → l'annuncio (se `notify_on_publish`).
+- **Uno sconto aspetta il suo locale**: se il locale non è ancora online resta
+  programmato e si riprova al giro dopo; programmati alla stessa ora escono
+  insieme (prima il locale). Regole in `api/_scheduled-publish.js`, sotto test
+  in `tests/scheduled-publish.test.mjs`.
+- L'annuncio (registro doppioni, destinatari, template) sta in
+  `api/_email/announce.js`, usato sia dal megafono sia dal giro; il PIN al locale
+  in `api/_email/partner.js`. Dal 29/09 l'annuncio di uno sconto è rifiutato se
+  il suo locale non è pubblicato o se lo sconto è già scaduto.
+- Accendere a mano uno sconto programmato (▶ sulla card) chiede conferma e
+  annulla l'uscita **senza email**; pubblicare a mano un locale programmato
+  ("Salva · pubblica" dopo aver tolto la spunta) manda le email come sempre.
+- SQL colonne `supabase/scheduled-publish-2026-09-29.sql` (**già eseguito** il
+  29/09). La data si mostra con `formatPublishAt()` (`src/lib/scheduledPublish.js`),
+  sempre all'ora di Roma.
+
 ## Convenzioni contenuti sconti (per riferimento futuro)
 - **Offerte "paghi X prendi Y"** (es. 3 al posto di 2): scrivere sempre in formato `AxB` (es. `3x2`, `2x1`), mai per esteso ("Paghi 2 prendi 3 Veneziane"). Vale per `title` e `discount_value` del record in `discounts`.
 - **Sticker/badge sconto** (percentuale o importo fisso su foto/card): devono sempre avere il segno meno davanti al valore, es. `-20%`, `-1€`. Gestito centralmente da `formatDiscountBadge()` / `formatDiscountBadgeShort()` in `src/lib/utils/discountFormat.js` — quando si aggiunge un nuovo punto che mostra uno sticker sconto, usare sempre queste funzioni (mai `formatDiscountValue()` da solo, che non mette il segno).

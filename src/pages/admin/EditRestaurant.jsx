@@ -14,6 +14,7 @@ import SeoTab from '../../components/admin/tabs/SeoTab'
 import { checkSeoReady, SeoLockedPlaceholder } from '../../components/admin/tabs/_SeoLockCheck'
 import TabsShell from '../../components/admin/drawer/TabsShell'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
+import { toLocalInput, fromLocalInput, defaultPublishInput, publishAtError, formatPublishAt } from '../../lib/scheduledPublish'
 
 const SECTIONS = [
   { key: 'dettagli', num: '01', label: 'Dettagli' },
@@ -49,7 +50,6 @@ export default function EditRestaurant() {
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState(null)
   const [loadError, setLoadError] = useState(null)
-  const [notifyOnPublish, setNotifyOnPublish] = useState(true)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
@@ -61,7 +61,7 @@ export default function EditRestaurant() {
       const [{ data: row, error }, secrets] = await Promise.all([
         supabase
           .from('restaurants')
-          .select(`${RESTAURANT_READABLE_COLUMNS}, restaurant_photos(photo_url, thumb_url, caption, sort_order), restaurant_locations(id, label, address, latitude, longitude, sort_order)`)
+          .select(`${RESTAURANT_READABLE_COLUMNS}, publish_at, notify_on_publish, restaurant_photos(photo_url, thumb_url, caption, sort_order), restaurant_locations(id, label, address, latitude, longitude, sort_order)`)
           .eq('id', restaurantId)
           .single(),
         // PIN ed email del partner non stanno nella select: la tabella non li
@@ -107,6 +107,18 @@ export default function EditRestaurant() {
   const handleSave = useCallback(
     async (alsoPublish) => {
       if (!form) return
+      // Uscita programmata: il locale resta in bozza e lo mette online il
+      // giro ogni 5 minuti (api/_scheduled-publish.js), con le stesse email
+      // della prima pubblicazione fatta da qui.
+      const scheduling = alsoPublish !== true && !form.is_published && form.schedule_on
+      if (scheduling) {
+        const err = publishAtError(form.publish_at)
+        if (err) {
+          setToast({ kind: 'err', text: err })
+          setTimeout(() => setToast(null), 3400)
+          return
+        }
+      }
       setSaving(true)
       const isFirstPublish = alsoPublish === true && !restaurant?.is_published
       try {
@@ -159,7 +171,9 @@ export default function EditRestaurant() {
             ? 'Salvato e pubblicato ✓'
             : restaurant?.is_published
               ? 'Aggiornato ✓'
-              : 'Salvato ✓',
+              : payload.publish_at
+                ? `Programmato: esce ${formatPublishAt(payload.publish_at)} ✓`
+                : 'Salvato ✓',
         })
         setRestaurant((prev) => ({ ...prev, ...payload }))
         setTimeout(() => setToast(null), 2400)
@@ -185,7 +199,7 @@ export default function EditRestaurant() {
           }
 
           // Notify newsletter subscribers (fire-and-forget, only if toggle is on)
-          if (token && notifyOnPublish) {
+          if (token && form.notify_on_publish) {
             fetch('/api/notify-subscribers', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -200,7 +214,7 @@ export default function EditRestaurant() {
         setSaving(false)
       }
     },
-    [form, restaurantId, restaurant, notifyOnPublish]
+    [form, restaurantId, restaurant]
   )
 
   const handleDelete = useCallback(async () => {
@@ -318,13 +332,13 @@ export default function EditRestaurant() {
                       fontWeight: 800,
                       padding: '4px 10px',
                       borderRadius: 999,
-                      background: 'var(--color-cream-deep, #F1EBE0)',
-                      color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+                      background: restaurant?.publish_at ? 'var(--color-ink, #22181C)' : 'var(--color-cream-deep, #F1EBE0)',
+                      color: restaurant?.publish_at ? '#fff' : 'var(--color-ink-55, rgba(34,24,28,0.55))',
                       textTransform: 'uppercase',
                       letterSpacing: '0.06em',
                     }}
                   >
-                    Bozza
+                    {restaurant?.publish_at ? `Esce ${formatPublishAt(restaurant.publish_at)}` : 'Bozza'}
                   </span>
                 )}
                 {form.is_disabled && (
@@ -446,7 +460,7 @@ export default function EditRestaurant() {
                   <button
                     type="button"
                     disabled={saving}
-                    onClick={() => handleSave(true)}
+                    onClick={() => handleSave(form.schedule_on ? false : true)}
                     style={{
                       background: 'var(--color-corallo, #E8453C)',
                       color: '#fff',
@@ -460,35 +474,16 @@ export default function EditRestaurant() {
                       fontFamily: 'var(--font-sans)',
                     }}
                   >
-                    {saving ? 'Salvo…' : 'Salva · pubblica'}
+                    {saving ? 'Salvo…' : form.schedule_on ? 'Salva · programma' : 'Salva · pubblica'}
                   </button>
                 </>
               )}
             </div>
           </div>
 
-          {/* Toggle "notifica iscritti" — visibile solo se il ristorante non è ancora pubblicato */}
+          {/* Uscita e email — solo finché il locale non è pubblicato */}
           {!form.is_published && (
-            <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <input
-                id="notify-on-publish"
-                type="checkbox"
-                checked={notifyOnPublish}
-                onChange={(e) => setNotifyOnPublish(e.target.checked)}
-                style={{ accentColor: 'var(--color-corallo, #E8453C)', width: 14, height: 14 }}
-              />
-              <label
-                htmlFor="notify-on-publish"
-                style={{
-                  fontSize: 12,
-                  color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
-                  fontFamily: 'var(--font-sans)',
-                  cursor: 'pointer',
-                }}
-              >
-                Notifica iscritti newsletter alla pubblicazione
-              </label>
-            </div>
+            <PublishOptions form={form} onChange={updateField} />
           )}
         </div>
 
@@ -761,7 +756,7 @@ export default function EditRestaurant() {
               <button
                 type="button"
                 disabled={saving}
-                onClick={() => handleSave(true)}
+                onClick={() => handleSave(form.schedule_on ? false : true)}
                 style={{
                   background: 'var(--color-corallo, #E8453C)',
                   color: '#fff',
@@ -776,7 +771,7 @@ export default function EditRestaurant() {
                   fontFamily: 'inherit',
                 }}
               >
-                {saving ? 'Salvo…' : 'Pubblica'}
+                {saving ? 'Salvo…' : form.schedule_on ? 'Programma' : 'Pubblica'}
               </button>
             </>
           )}
@@ -1130,6 +1125,9 @@ function toFormState(r) {
           }))
       : [],
     is_published: r.is_published !== false,
+    schedule_on: !!r.publish_at,
+    publish_at: toLocalInput(r.publish_at),
+    notify_on_publish: r.notify_on_publish !== false,
     is_disabled: r.is_disabled === true,
     verify_pin: r.verify_pin || '',
     partner_email: r.partner_email || '',
@@ -1186,5 +1184,81 @@ function toDbPayload(form, alsoPublish) {
   }
   if (alsoPublish === true) payload.is_published = true
   else payload.is_published = form.is_published
+  // Una data d'uscita vale solo per un locale ancora in bozza: pubblicato
+  // (adesso o prima) non ha più niente da aspettare.
+  payload.publish_at = !payload.is_published && form.schedule_on ? fromLocalInput(form.publish_at) : null
+  payload.notify_on_publish = form.notify_on_publish !== false
   return payload
+}
+
+/**
+ * Sotto l'intestazione, finché il locale è in bozza: se all'uscita parte
+ * l'email a tutti, e se l'uscita è adesso (bottone "Pubblica") o a un'ora
+ * scelta (bottone "Programma").
+ */
+function PublishOptions({ form, onChange }) {
+  const muted = 'var(--color-ink-55, rgba(34,24,28,0.55))'
+  const labelStyle = { fontSize: 12, color: muted, fontFamily: 'var(--font-sans)', cursor: 'pointer' }
+  const check = { accentColor: 'var(--color-corallo, #E8453C)', width: 14, height: 14 }
+  return (
+    <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <input
+          id="notify-on-publish"
+          type="checkbox"
+          checked={form.notify_on_publish}
+          onChange={(e) => onChange({ notify_on_publish: e.target.checked })}
+          style={check}
+        />
+        <label htmlFor="notify-on-publish" style={labelStyle}>
+          Manda l'email a tutti gli utenti quando esce
+        </label>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <input
+          id="schedule-publish"
+          type="checkbox"
+          checked={form.schedule_on}
+          onChange={(e) =>
+            onChange({
+              schedule_on: e.target.checked,
+              publish_at: e.target.checked && !form.publish_at ? defaultPublishInput() : form.publish_at,
+            })
+          }
+          style={check}
+        />
+        <label htmlFor="schedule-publish" style={labelStyle}>
+          Programma l'uscita
+        </label>
+        {form.schedule_on && (
+          <input
+            type="datetime-local"
+            value={form.publish_at}
+            min={toLocalInput(new Date().toISOString())}
+            onChange={(e) => onChange({ publish_at: e.target.value })}
+            aria-label="Giorno e ora dell'uscita"
+            style={{
+              fontSize: 13,
+              fontFamily: 'var(--font-sans)',
+              padding: '6px 10px',
+              borderRadius: 10,
+              border: '1px solid var(--color-line, #EAE3D7)',
+              background: '#fff',
+              color: 'var(--color-ink, #22181C)',
+            }}
+          />
+        )}
+      </div>
+      {form.schedule_on && (
+        <p style={{ fontSize: 12, color: muted, margin: 0, fontFamily: 'var(--font-sans)', maxWidth: 620 }}>
+          Resta in bozza fino a{' '}
+          <b style={{ color: 'var(--color-ink, #22181C)' }}>{formatPublishAt(fromLocalInput(form.publish_at)) || '…'}</b>
+          , poi va online da solo (entro 5 minuti)
+          {form.notify_on_publish ? ' e parte l\'email a tutti gli utenti' : ', senza email agli utenti'}
+          {form.partner_email && form.verify_pin ? '; al locale arriva il suo PIN' : ''}.
+          Gli sconti programmati per lo stesso momento escono insieme a lui.
+        </p>
+      )}
+    </div>
+  )
 }
