@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/posthog-sourcemaps.mjs",
     "lint": "eslint .",
     "test": "node --test tests/*.test.mjs",
     "preview": "vite preview"
