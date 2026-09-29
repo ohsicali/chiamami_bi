@@ -201,8 +201,10 @@ saluta coi cuori**. Chi salta riceve le email a ~30 min e ~1 giorno
   all'apertura/rientro nell'app. Non accendere un canale realtime per tutti
   gli utenti per tutta la visita: con il lancio Supabase era già saturo.
 - **Bi disegnata**: `src/components/Feedback/BiCharacter.jsx`, SVG vettoriale
-  dalla foto `public/bi-photo.webp` (capelli rame, lentiggini, orecchini d'oro,
-  felpa nera, il bao). `mood` cambia la faccia col voto (sad/meh/ok/smile/love),
+  dalle foto di Bi mandate dal proprietario il 29/09 (capelli rame vivo con la
+  riga in mezzo, eyeliner a codina, lentiggini, orecchini d'oro, collanina di
+  perline colorate, giacca nera sulla maglia a righe blu e gialla, forchetta
+  con gli spaghetti). `mood` cambia la faccia col voto (sad/meh/ok/smile/love),
   `wave` saluta, `hearts` fa salire i cuori; animazioni CSS spente con "riduci
   animazioni". La faccina per le email è `public/email-assets/bi-cartoon.png`,
   generata dallo stesso SVG: se cambi il disegno, rigenerala.

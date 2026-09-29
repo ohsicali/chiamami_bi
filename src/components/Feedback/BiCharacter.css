@@ -86,12 +86,21 @@
   animation: bi-wave 1.5s ease-in-out 0.45s infinite;
 }
 
-/* Il bao dondola un poco, come chi lo mostra. */
-.bi-char .bi-bao {
+/* La forchetta dondola un poco, come chi la mostra alla camera; gli
+   spaghetti che pendono oscillano per conto loro. */
+.bi-char .bi-food {
   transform-box: view-box;
   transform-origin: 156px 224px;
-  animation: bi-bao 3.4s ease-in-out infinite;
+  animation: bi-food 3.4s ease-in-out infinite;
 }
+
+.bi-char .bi-strand {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+  animation: bi-sway 2.2s ease-in-out infinite;
+}
+.bi-char .bi-strand-2 { animation-delay: -0.7s; }
+.bi-char .bi-strand-3 { animation-delay: -1.4s; }
 
 /* Cuori che salgono e spariscono, sfasati. */
 .bi-char .bi-heart {
@@ -128,7 +137,7 @@
   70% { transform: rotate(-12deg); }
   85% { transform: rotate(4deg); }
 }
-@keyframes bi-bao {
+@keyframes bi-food {
   0%, 100% { transform: rotate(0deg); }
   50% { transform: rotate(-2.5deg); }
 }
@@ -145,7 +154,8 @@
   .bi-char .bi-breath,
   .bi-char .bi-lock,
   .bi-char .bi-eyes,
-  .bi-char .bi-bao,
+  .bi-char .bi-food,
+  .bi-char .bi-strand,
   .bi-char .bi-forearm {
     animation: none !important;
     transition: none !important;

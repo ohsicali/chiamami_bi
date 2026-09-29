@@ -262,7 +262,7 @@ export default function RedemptionFeedback({
               <div className="rf-form-scroll">
                 <div className="rf-speech">
                   <div className="rf-speech-avatar" aria-hidden="true">
-                    <BiCharacter mood={ratingCopy(rating).mood} bao={false} />
+                    <BiCharacter mood={ratingCopy(rating).mood} food={false} />
                   </div>
                   <div className="rf-bubble">
                     <strong>{rating >= 4 ? 'Che bello!' : rating === 3 ? 'Grazie!' : 'Mi dispiace.'}</strong>{' '}

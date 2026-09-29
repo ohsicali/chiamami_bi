@@ -57,6 +57,9 @@ stelle); chi finisce vede Bi animata che ringrazia. Bi disegnata cartoon
   blocchi `starRow`/`biSays`, job `feedback-asks` in notify-subscribers. La
   ricevuta "Sconto usato" ora linka le stelle. Anteprime in
   `docs/email-preview/feedback*.html` e in `/admin/settings`.
+- Bi disegnata (`BiCharacter.jsx`) rifatta sulle cinque foto mandate dal
+  proprietario il 29/09: capelli rame vivo, eyeliner, lentiggini, collanina
+  di perline, giacca nera + maglia a righe, spaghetti sulla forchetta.
 - Test `tests/feedback-asks.test.mjs`. Screenshot del flusso verificati a
   390px e 1280px (banco di prova con Supabase simulato).
 
