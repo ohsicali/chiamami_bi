@@ -87,3 +87,36 @@ test('il fallback personalizzato viene usato quando non riconosciamo nulla', () 
   const m = authErrorMessage({ message: 'whatever' }, 'Accesso con Google non riuscito.')
   assert.equal(m, 'Accesso con Google non riuscito.')
 })
+
+// Il caso del 29/09: la protezione contro le password rubate di Supabase
+// rispondeva 422 e in pagina si leggeva "Qualcosa non ha funzionato. Riprova.".
+// Si riprovava con la stessa password, e 53 persone in un giorno non sono
+// riuscite a registrarsi.
+test('password troppo comune: si dice di sceglierne un’altra', () => {
+  const m = authErrorMessage({
+    message: 'Password is known to be weak and easy to guess, please choose a different one.',
+    code: 'weak_password',
+    status: 422,
+  })
+  isItalianSentence(m)
+  assert.match(m, /password/i)
+  assert.match(m, /Scegline/)
+  assert.notEqual(m, authErrorMessage(null))
+})
+
+test('password debole riconosciuta anche solo dal codice', () => {
+  const m = authErrorMessage({ message: 'Something new from the server', code: 'weak_password' })
+  isItalianSentence(m)
+  assert.match(m, /Scegline/)
+})
+
+test('attesa di sicurezza con i secondi che cambiano', () => {
+  for (const msg of [
+    'For security purposes, you can only request this once every 60 seconds',
+    '429: For security purposes, you can only request this after 16 seconds.',
+  ]) {
+    const m = authErrorMessage({ message: msg })
+    isItalianSentence(m)
+    assert.match(m, /riprovare/i)
+  }
+})

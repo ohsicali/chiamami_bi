@@ -7,6 +7,7 @@ import { fetchAnnouncementsEnabled, setAnnouncementsEnabled } from '../../lib/em
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import Footer from '../../components/Layout/Footer'
 import { openWelcomeTour } from '../../lib/welcomeTour'
+import { authErrorMessage } from '../../lib/utils/authErrors'
 
 const inputStyle = {
   width: '100%', background: 'var(--color-page)', borderRadius: 'var(--radius-md)',
@@ -319,7 +320,7 @@ export default function SettingsPage() {
       if (error) throw error
       setPasswordMsg({ type: 'success', text: 'Password aggiornata!' })
       setPasswordForm({ new: '', confirm: '' }); setCurrentPwd(''); setPwdUnlocked(false)
-    } catch (err) { setPasswordMsg({ type: 'error', text: err.message || 'Errore nel cambio password' }) }
+    } catch (err) { setPasswordMsg({ type: 'error', text: authErrorMessage(err, 'Non sono riuscito a cambiare la password. Riprova.') }) }
   }
 
   // ── Handlers: Google add email+password ──
@@ -365,7 +366,7 @@ export default function SettingsPage() {
         setLoginMsg({ type: 'success', text: 'Password impostata! Ora puoi accedere anche con email e password.' })
       }
       setLoginStep('done')
-    } catch (err) { setLoginMsg({ type: 'error', text: err.message || 'Errore' }) }
+    } catch (err) { setLoginMsg({ type: 'error', text: authErrorMessage(err) }) }
     setLoginLoading(false)
   }
 

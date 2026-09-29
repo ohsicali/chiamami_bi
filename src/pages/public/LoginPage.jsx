@@ -763,7 +763,19 @@ export default function LoginPage() {
                     style={{ ...inputStyle, marginBottom: 8 }}
                     required
                     minLength={6}
+                    aria-describedby={mode === 'register' ? 'register-password-hint' : undefined}
                   />
+                  {/* Supabase rifiuta le password finite negli elenchi di
+                      quelle rubate (12345678, password1…): meglio dirlo
+                      prima che scoprirlo dopo il bottone. */}
+                  {mode === 'register' && (
+                    <div
+                      id="register-password-hint"
+                      style={{ fontSize: 12, color: 'var(--color-ink-55)', margin: '-2px 2px 8px' }}
+                    >
+                      Almeno 6 caratteri, e non una di quelle comuni come 12345678 o password1.
+                    </div>
+                  )}
                   {mode === 'login' && (
                     <div style={{ textAlign: 'right', marginBottom: 18 }}>
                       <button

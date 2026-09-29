@@ -222,6 +222,11 @@ async function handleVerify({ adminClient, body, res }) {
         password: new_password,
       })
       if (updateErr) {
+        // Password finita negli elenchi di quelle rubate: la sceglie chi sta
+        // scrivendo, non è un errore del server, e va detto in italiano.
+        if (updateErr.code === 'weak_password' || /weak|pwned/i.test(updateErr.message || '')) {
+          return res.status(422).json({ error: 'Questa password è troppo comune: compare negli elenchi di password rubate. Scegline una meno prevedibile, per esempio tre parole a caso con un numero.' })
+        }
         return res.status(500).json({ error: `Errore: ${updateErr.message}` })
       }
       return res.status(200).json({ success: true, action: 'password_reset' })
