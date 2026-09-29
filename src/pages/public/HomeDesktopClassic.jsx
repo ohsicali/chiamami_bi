@@ -65,13 +65,15 @@ function formatCountdown(endsAt) {
 }
 
 const CATEGORIES = [
-  { key: 'aperitivo', emoji: '🥂', label: 'Aperitivo' },
-  { key: 'piemontese', emoji: '🍷', label: 'Piemontese' },
+  { key: 'hamburger', emoji: '🍔', label: 'Hamburger' },
   { key: 'pizza', emoji: '🍕', label: 'Pizza' },
   { key: 'giapponese', emoji: '🍣', label: 'Giapponese' },
-  { key: 'pesce', emoji: '🐟', label: 'Pesce' },
-  { key: 'colazione', emoji: '☕', label: 'Colazione' },
+  { key: 'piemontese', emoji: '🍷', label: 'Piemontese' },
   { key: 'carne', emoji: '🥩', label: 'Carne' },
+  { key: 'colazione', emoji: '☕', label: 'Colazione' },
+  { key: 'gelati', emoji: '🍦', label: 'Gelati' },
+  { key: 'aperitivo', emoji: '🥂', label: 'Aperitivo' },
+  { key: 'pesce', emoji: '🐟', label: 'Pesce' },
   { key: 'italiana', emoji: '🍝', label: 'Italiana' },
   { key: 'vegano', emoji: '🥬', label: 'Vegano' },
   { key: 'cocktail', emoji: '🍸', label: 'Cocktail' },
