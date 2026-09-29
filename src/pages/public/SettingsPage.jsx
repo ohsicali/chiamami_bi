@@ -34,7 +34,7 @@ function DeleteAccountModal({ onConfirm, onClose, busy = false, error = '' }) {
   return (
     <motion.div
       className="fixed inset-0 z-[100] flex items-center justify-center"
-      style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }}
+      style={{ background: 'rgba(0,0,0,0.55)' }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}

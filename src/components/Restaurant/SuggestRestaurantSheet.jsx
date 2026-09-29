@@ -222,7 +222,7 @@ export default function SuggestRestaurantSheet({ userId = null, userEmail = null
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        style={{ position: 'absolute', inset: 0, background: 'rgba(34,24,28,.45)', backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)', touchAction: 'none' }}
+        style={{ position: 'absolute', inset: 0, background: 'rgba(34,24,28,.48)', touchAction: 'none' }}
       />
 
       <div className="v4-sheet-container" style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>

@@ -269,16 +269,37 @@ registratore fa `clear()` sul canvas a ogni fotogramma e la mappa diventa
 bianca davvero, anche sullo schermo di chi la usa. Se la mappa non parte lo
 dicono gli eventi `map_loaded` (con `ms`), `map_error`, `map_failed` (niente
 WebGL: compare il rimando all'elenco) e `map_context_lost`.
-**Mappa pronta prima di Esplora (27/09):** la mappa Mapbox è **una sola per
-tutta la visita** (`src/components/Map/mapInstance.js`): nasce in anticipo in
-un contenitore nascosto mentre si è sulla home (`src/lib/prewarmExplore.js`, a
-browser libero; subito su /esplora; al tocco su "Esplora"; mai con risparmio
-dati o 2G) e quando si esce da Esplora non si distrugge, torna nel parcheggio.
-MapView non crea mappe: chiede `getMap()` e alla fine `parkMap()` — **mai
-`map.remove()`**. Primo ingresso da ~3 s a ~0,4 s, ritorno da ~1,9 s a ~0,25 s
-(misurati in locale). Contro: una "map load" Mapbox anche per chi Esplora non
-la apre (prima invece una a ogni ingresso), e la memoria della mappa resta
-occupata finché la scheda è aperta.
+**Mappa pronta prima di Esplora (27/09, rivista il 29/09):** la mappa Mapbox è
+**una sola per tutta la visita** (`src/components/Map/mapInstance.js`): nasce in
+anticipo in un contenitore nascosto (`src/lib/prewarmExplore.js`: subito su
+/esplora; al tocco su "Esplora"; **da computer** anche a browser libero; mai con
+risparmio dati o 2G) e quando si esce da Esplora non si distrugge, torna nel
+parcheggio. MapView non crea mappe: chiede `getMap()` e alla fine `parkMap()` —
+**mai `map.remove()`**. Ritorno in Esplora da ~1,9 s a ~0,25 s.
+**Dal telefono la mappa non nasce più da sola (29/09):** a browser libero, e
+solo dopo 3 s senza tocchi né scroll, si scarica solo il codice; la mappa nasce
+al tocco su "Esplora". Crearla sono secondi di processore (pezzi fino a ~1,4 s
+su un telefono medio) e un tocco che ci capita in mezzo aspetta: su iPhone
+l'INP della *prima* pagina della visita era 1,4 s contro 0,4 s delle
+successive. Il prezzo: il primo ingresso in Esplora da telefono non è più
+istantaneo (tocco → mappa, circa 1 s). Il parcheggio ha la classe
+`ph-no-capture`: il replay di PostHog fotografava due volte al secondo anche la
+mappa nascosta. **Non rimettere la creazione a browser libero sul telefono.**
+
+## Web Vitals (29/09) — cosa non rimettere
+Dati in PostHog → Web analytics → Web vitals (con `$os` si vede iPhone da
+Android). Tre regole nate dalle misure:
+- **Niente librerie che fotografano la pagina** (html2canvas, liquidGL): la tab
+  bar "a vetro liquido" su Android rifaceva uno screenshot dell'intera pagina a
+  ogni cambio. Il vetro della tab bar è solo CSS, uguale su tutti i telefoni.
+- **Niente `backdrop-filter` sugli sfondi a tutto schermo** delle finestre
+  (popup QR, fogli del Bi Club, filtri): su iPhone ritarda il primo disegno dopo
+  il tocco. Va bene su elementi piccoli (tab bar, header, pillole).
+- **Quello che arriva dopo il primo disegno ha già il suo posto.** In home
+  (`.hfv4-skel` in `HomeFeedV4.jsx`) i segnaposto hanno l'altezza delle sezioni
+  vere: senza, il CLS della home era 0,76 (ora 0,01). Se cambi l'altezza di una
+  sezione della home, aggiorna il suo segnaposto. Nei moduli niente
+  contenuto centrato in verticale che cambia altezza da solo (vedi `/login`).
 **Liste passate alla mappa: sempre memo.** MapView rifà tutti i pin quando
 cambia l'array `restaurants` (per identità) e avvisa la pagina dei locali
 visibili; con un filtro attivo HomePage le passava un array nuovo a ogni

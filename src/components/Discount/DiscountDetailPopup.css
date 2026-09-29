@@ -4,8 +4,11 @@
    ============================================================================ */
 .ddp-overlay {
   position: fixed; inset: 0;
-  background: rgba(34, 24, 28, 0.7);
-  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  /* Niente backdrop-filter sugli sfondi a tutto schermo (29/09): la
+     sfocatura va ricalcolata su tutta la pagina a ogni fotogramma
+     dell'apertura e su iPhone ritardava di centinaia di ms il primo
+     disegno dopo il tocco (INP). Sotto uno sfondo così scuro non si vedeva. */
+  background: rgba(34, 24, 28, 0.74);
   z-index: 110;
   display: flex; align-items: flex-end; justify-content: center;
   animation: ddpFadeIn 0.2s ease;

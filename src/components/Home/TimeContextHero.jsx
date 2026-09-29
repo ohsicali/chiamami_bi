@@ -19,7 +19,7 @@ import { getCurrentMoment, MOMENT_SLOTS, MOMENT_QUESTIONS } from '../../lib/hour
  * Compatto per necessità, non per gusto: se questo blocco cresce, il drop
  * scende sotto la piega su uno schermo da 390px e non lo vede più nessuno.
  */
-export default function TimeContextHero({ activeMomentKey, openCount, city = 'Torino' }) {
+export default function TimeContextHero({ activeMomentKey, openCount, pending = false, city = 'Torino' }) {
   const [now, setNow] = useState(() => new Date())
 
   useEffect(() => {
@@ -54,7 +54,10 @@ export default function TimeContextHero({ activeMomentKey, openCount, city = 'To
       {/* Il numero è vero: conta i locali che risultano aperti in questa
           fascia. Se è 0 non lo scriviamo — "0 locali aperti adesso" è una
           riga che allontana, non una che informa. */}
-      {openCount > 0 && (
+      {/* Mentre i locali arrivano la riga c'è già, vuota: comparendo dopo
+          spingeva giù le chip e tutta la pagina di 20px. */}
+      {pending && <p className="hfv4-moment-sub" aria-hidden="true">&nbsp;</p>}
+      {!pending && openCount > 0 && (
         <p className="hfv4-moment-sub">
           {openCount} {openCount === 1 ? 'locale aperto' : 'locali aperti'} adesso, {openCount === 1 ? 'scelto' : 'scelti'} da me
         </p>

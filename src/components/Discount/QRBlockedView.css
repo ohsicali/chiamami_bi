@@ -3,8 +3,8 @@
    ============================================================================ */
 .qrb-overlay {
   position: fixed; inset: 0;
-  background: rgba(34, 24, 28, 0.7);
-  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  /* Senza backdrop-filter: vedi .ddp-overlay in DiscountDetailPopup.css. */
+  background: rgba(34, 24, 28, 0.74);
   z-index: 120;
   display: flex; align-items: flex-end; justify-content: center;
   animation: qrbFadeIn 0.22s ease;

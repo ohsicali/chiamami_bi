@@ -284,7 +284,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-50"
-              style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}
+              style={{ background: 'rgba(0,0,0,0.45)' }}
               onClick={() => setModalOpen(false)}
             >
               <motion.div

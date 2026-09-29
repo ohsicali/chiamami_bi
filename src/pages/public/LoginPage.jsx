@@ -478,12 +478,17 @@ export default function LoginPage() {
         </div>
       </header>
 
-      {/* ─── CONTENUTO CENTRATO ─── */}
+      {/* ─── CONTENUTO — in alto sul telefono, centrato da computer ───
+          Centrato in verticale, ogni cambio d'altezza del modulo (il passo
+          del codice, un errore, "Registrati" con un campo in più) spostava
+          tutta la card, sopra e sotto: su /login metà delle visite avevano
+          un CLS sopra 0,25. Appeso in alto, si muove solo quello che sta
+          sotto la parte cambiata. */}
       <div
+        className="items-start md:items-center"
         style={{
           flex: 1,
           display: 'flex',
-          alignItems: 'center',
           justifyContent: 'center',
           padding: `24px 22px`,
           paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + 24px)`,
@@ -701,7 +706,12 @@ export default function LoginPage() {
             variants={itemVariants}
             style={{ display: 'flex', flexDirection: 'column' }}
           >
-            <AnimatePresence mode="wait">
+            {/* `initial={false}`: i campi che ci sono già all'apertura della
+                pagina (nome e password in "Registrati", password in "Accedi")
+                compaiono interi, senza crescere da altezza 0. Crescendo da soli,
+                senza un tocco, spingevano giù il resto: è CLS. L'animazione
+                resta quando si passa da una modalità all'altra. */}
+            <AnimatePresence mode="wait" initial={false}>
               {mode === 'register' && (
                 <motion.input
                   key="name"
@@ -732,7 +742,7 @@ export default function LoginPage() {
             )}
 
             {/* Password — login / register */}
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode="wait" initial={false}>
               {(mode === 'login' || mode === 'register') && (
                 <motion.div
                   key="password-field"

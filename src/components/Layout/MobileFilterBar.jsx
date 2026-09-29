@@ -71,7 +71,9 @@ function SheetModal({ open, onClose, title, children, footer }) {
           exit={{ opacity: 0 }}
           style={{
             position: 'fixed', inset: 0, zIndex: 200,
-            background: 'rgba(0,0,0,0.38)', backdropFilter: 'blur(6px)',
+            // Senza backdropFilter: una sfocatura a tutto schermo che
+            // sfuma in apertura costa centinaia di ms su iPhone (INP).
+            background: 'rgba(0,0,0,0.44)',
             display: 'flex', alignItems: isDesktop ? 'center' : 'flex-end',
             justifyContent: 'center',
           }}
