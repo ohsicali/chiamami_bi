@@ -4,9 +4,9 @@
  * Prima ogni ingresso in Esplora creava una mappa nuova e ogni uscita la
  * distruggeva: contesto WebGL, stile (93 KB), sprite, font e tessere da
  * rifare ogni volta, e sul telefono si vedeva il riquadro vuoto per qualche
- * secondo. Ora la mappa nasce una volta sola — in anticipo (`prewarmMap`: al
- * tocco su "Esplora", o a browser libero da computer, vedi
- * lib/prewarmExplore.js) — e quando si esce da Esplora non muore:
+ * secondo. Ora la mappa nasce una volta sola — in anticipo, mentre si è
+ * ancora sulla home (`prewarmMap`, vedi lib/prewarmExplore.js) — e quando si
+ * esce da Esplora non muore:
  * il suo contenitore torna in un "parcheggio" fuori schermo (`parkMap`) e
  * rientra al prossimo ingresso già disegnata, con posizione e zoom di prima.
  *

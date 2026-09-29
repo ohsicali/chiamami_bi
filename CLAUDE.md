@@ -271,20 +271,21 @@ dicono gli eventi `map_loaded` (con `ms`), `map_error`, `map_failed` (niente
 WebGL: compare il rimando all'elenco) e `map_context_lost`.
 **Mappa pronta prima di Esplora (27/09, rivista il 29/09):** la mappa Mapbox è
 **una sola per tutta la visita** (`src/components/Map/mapInstance.js`): nasce in
-anticipo in un contenitore nascosto (`src/lib/prewarmExplore.js`: subito su
-/esplora; al tocco su "Esplora"; **da computer** anche a browser libero; mai con
-risparmio dati o 2G) e quando si esce da Esplora non si distrugge, torna nel
-parcheggio. MapView non crea mappe: chiede `getMap()` e alla fine `parkMap()` —
-**mai `map.remove()`**. Ritorno in Esplora da ~1,9 s a ~0,25 s.
-**Dal telefono la mappa non nasce più da sola (29/09):** a browser libero, e
-solo dopo 3 s senza tocchi né scroll, si scarica solo il codice; la mappa nasce
-al tocco su "Esplora". Crearla sono secondi di processore (pezzi fino a ~1,4 s
-su un telefono medio) e un tocco che ci capita in mezzo aspetta: su iPhone
-l'INP della *prima* pagina della visita era 1,4 s contro 0,4 s delle
-successive. Il prezzo: il primo ingresso in Esplora da telefono non è più
-istantaneo (tocco → mappa, circa 1 s). Il parcheggio ha la classe
-`ph-no-capture`: il replay di PostHog fotografava due volte al secondo anche la
-mappa nascosta. **Non rimettere la creazione a browser libero sul telefono.**
+anticipo in un contenitore nascosto mentre si è sulla home
+(`src/lib/prewarmExplore.js`: subito su /esplora; al tocco su "Esplora"; a
+browser libero dalle altre pagine; mai con risparmio dati o 2G) e quando si esce
+da Esplora non si distrugge, torna nel parcheggio. MapView non crea mappe:
+chiede `getMap()` e alla fine `parkMap()` — **mai `map.remove()`**. Primo
+ingresso da ~3 s a ~0,4 s, ritorno da ~1,9 s a ~0,25 s. **Esplora istantanea è
+voluta** (deciso dal proprietario il 29/09, anche sapendo il costo sotto).
+Il costo: crearla sono secondi di processore (pezzi fino a ~1,4 s su un
+telefono medio) e un tocco che ci capita in mezzo aspetta — su iPhone l'INP
+della *prima* pagina della visita era 1,4 s contro 0,4 s delle successive. Per
+questo **dal telefono parte solo dopo 3 s senza tocchi né scroll** (da computer
+dopo 1,5 s), e il parcheggio ha la classe `ph-no-capture`: il replay di PostHog
+fotografava due volte al secondo anche la mappa nascosta. Se l'INP della prima
+pagina resta alto, l'alternativa misurata è creare la mappa solo al tocco su
+Esplora (tocco → mappa ~1 s): è una scelta di prodotto, chiedere prima.
 
 ## Web Vitals (29/09) — cosa non rimettere
 Dati in PostHog → Web analytics → Web vitals (con `$os` si vede iPhone da
