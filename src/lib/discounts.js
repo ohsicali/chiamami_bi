@@ -219,3 +219,31 @@ export function findUnreachableDiscounts(activeDiscounts) {
   }
   return out
 }
+
+/**
+ * Perché il database ha rifiutato uno sblocco, detto a chi lo stava facendo.
+ *
+ * Il trigger `guard_redemption_insert` (supabase/security-audit-2026-09-23.sql)
+ * blocca l'INSERT del riscatto con un codice nel messaggio: `sold_out`,
+ * `discount_expired`, `discount_not_available`. Finché la pagina non si
+ * aggiorna, chi ha davanti uno sconto appena esaurito può ancora premere
+ * "Sblocca": prima riceveva "Riprova" (Bi Club), niente (scheda del locale
+ * da telefono) o un errore non gestito (da computer, visto in PostHog il
+ * 28-29/09 su Shoro). Riprovare non serve: qui si dice cosa è successo.
+ *
+ * Restituisce `{ title, text }` per i rifiuti noti, `null` per il resto
+ * (rete, permessi...), che resta un errore vero.
+ */
+export function claimRefusal(error) {
+  const code = String(error?.message || error || '').trim()
+  switch (code) {
+    case 'sold_out':
+      return { title: 'Posti finiti', text: 'Qualcuno è stato più veloce: questo sconto è esaurito. Gli altri sconti del locale restano validi.' }
+    case 'discount_expired':
+      return { title: 'Sconto scaduto', text: 'Questo sconto non vale più.' }
+    case 'discount_not_available':
+      return { title: 'Sconto non disponibile', text: 'Questo sconto non è più attivo.' }
+    default:
+      return null
+  }
+}

@@ -4,6 +4,8 @@ import { AnimatePresence } from 'framer-motion'
 import { getCategoryInfo, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
 import { getPublicCategoryNames, getDietCategoryNames } from '../../lib/hooks/useCategories'
 import { useActiveDiscounts, useUserRedemption } from '../../lib/hooks/useDiscounts'
+import { claimRefusal } from '../../lib/discounts'
+import { captureError } from '../../lib/posthog'
 import { useOrariStatus } from '../../lib/hooks/useOrariStatus'
 import HoursPill from '../HoursPill'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -188,6 +190,14 @@ export default function DesktopRestaurantSheet({
         return null
       }
       return result
+    } catch (err) {
+      // Prima qui non c'era il catch: uno sconto esaurito nel frattempo
+      // diventava un errore non gestito (`sold_out` in PostHog) e il popup
+      // restava fermo senza dire niente.
+      const refusal = claimRefusal(err)
+      if (refusal) setBlockedMessage(refusal)
+      else { console.error(err); captureError(err) }
+      return null
     } finally {
       setInlineGenerating(false)
     }

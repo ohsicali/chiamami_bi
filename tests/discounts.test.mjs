@@ -239,3 +239,12 @@ test('findUnreachableDiscounts segnala uno sconto attivo su locale non pubblicat
   assert.equal(found.length, 1)
   assert.match(found[0].reason, /non è pubblicato/)
 })
+
+test('claimRefusal: i rifiuti del trigger diventano un messaggio, il resto no', async () => {
+  const { claimRefusal } = await import('../src/lib/discounts.js')
+  assert.equal(claimRefusal({ message: 'sold_out' }).title, 'Posti finiti')
+  assert.equal(claimRefusal(new Error('discount_expired')).title, 'Sconto scaduto')
+  assert.equal(claimRefusal({ message: 'discount_not_available' }).title, 'Sconto non disponibile')
+  assert.equal(claimRefusal({ message: 'Failed to fetch' }), null)
+  assert.equal(claimRefusal(null), null)
+})

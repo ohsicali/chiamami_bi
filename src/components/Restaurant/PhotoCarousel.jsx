@@ -7,16 +7,24 @@ import { proxyImg } from '../../lib/supabase'
 const swipeThreshold = 50
 
 export default function PhotoCarousel({ photos = [], height = '300px', restaurantName = '', city = '', dotsPosition = 'center', showCounter = false, hideDots = false, showArrows = false, onIndexChange }) {
-  const [currentIndex, setCurrentIndex] = useState(0)
+  const [rawIndex, setCurrentIndex] = useState(0)
   const [dragX, setDragX] = useState(0)
   const [loadedImages, setLoadedImages] = useState({})
   const [direction, setDirection] = useState(0)
   const containerRef = useRef(null)
 
   const normalizedPhotos = useMemo(
-    () => photos.map((p) => (typeof p === 'string' ? { photo_url: p, caption: '' } : p)),
+    () => (photos || [])
+      .filter(Boolean)
+      .map((p) => (typeof p === 'string' ? { photo_url: p, caption: '' } : p)),
     [photos]
   )
+
+  // L'indice resta quello di prima anche quando cambiano le foto (un altro
+  // locale nella stessa scheda, o la lista completa che arriva dopo quella
+  // in cache): alla quarta foto di un locale che ne ha due si leggeva
+  // `undefined.thumb_url` e la pagina andava in errore (PostHog, 28-29/09).
+  const currentIndex = Math.min(rawIndex, Math.max(0, normalizedPhotos.length - 1))
 
   const hasPhotos = normalizedPhotos.length > 0
 
@@ -51,8 +59,10 @@ export default function PhotoCarousel({ photos = [], height = '300px', restauran
     { axis: 'x', filterTaps: true }
   )
 
-  const handleImageLoad = useCallback((index) => {
-    setLoadedImages((prev) => ({ ...prev, [index]: true }))
+  // Per indirizzo, non per posizione: con foto nuove la stessa posizione è
+  // un'altra immagine, che non è ancora caricata.
+  const handleImageLoad = useCallback((url) => {
+    setLoadedImages((prev) => ({ ...prev, [url]: true }))
   }, [])
 
   const slideVariants = {
@@ -143,9 +153,9 @@ export default function PhotoCarousel({ photos = [], height = '300px', restauran
                     loading={currentIndex === 0 ? 'eager' : 'lazy'}
                     fetchPriority={currentIndex === 0 ? 'high' : 'auto'}
                     decoding="async"
-                    onLoad={() => handleImageLoad(currentIndex)}
+                    onLoad={() => handleImageLoad(fullUrl)}
                     className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${
-                      loadedImages[currentIndex] ? 'opacity-100' : 'opacity-0'
+                      loadedImages[fullUrl] ? 'opacity-100' : 'opacity-0'
                     }`}
                     style={{
                       transform: `translateX(${dragX * 0.1}px)`,

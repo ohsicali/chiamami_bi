@@ -16,7 +16,7 @@ import ValidityPill from '../../components/Discount/ValidityPill'
 import QRBlockedView from '../../components/Discount/QRBlockedView'
 import DiscountDetailPopup from '../../components/Discount/DiscountDetailPopup'
 import { checkValidity, formatShortPill, formatDays } from '../../lib/validity'
-import { filterActiveDrops, filterActiveConventions, sortByExpiry, msUntilEnd, isSoldOut } from '../../lib/discounts'
+import { filterActiveDrops, filterActiveConventions, sortByExpiry, msUntilEnd, isSoldOut, claimRefusal } from '../../lib/discounts'
 import DropCard from '../../components/Discount/DropCard'
 import AdSlot from '../../components/Ads/AdBanner'
 import { LIST_AD_AFTER } from '../../lib/adSlots'
@@ -363,6 +363,10 @@ function SconteRedesignPageInner() {
 
       showClaimedQR(deal, data)
     } catch (e) {
+      // Esaurito/scaduto nel frattempo: "Riprova" non serve, si dice cosa è
+      // successo (vedi `claimRefusal`).
+      const refusal = claimRefusal(e)
+      if (refusal) { setToast({ text: refusal.text }); return }
       console.error('Claim failed:', e)
       // The insert can commit server-side even when the JS promise rejects
       // (chained .select() RLS read miss, network glitch on the return-leg,
@@ -452,6 +456,8 @@ function SconteRedesignPageInner() {
       justSavedRef.current = true
       return data
     } catch (e) {
+      const refusal = claimRefusal(e)
+      if (refusal) { setToast({ text: refusal.text }); return null }
       console.error('Claim failed:', e)
       // Mirror the recovery in claimDeal: if the insert silently committed
       // but the promise rejected, return the row so the popup transitions

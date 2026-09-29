@@ -16,6 +16,9 @@ const NOISE = [
   /webkit\.messageHandlers/,
   // Script di un altro dominio senza CORS: niente messaggio, niente stack.
   /^Script error\.?$/,
+  // Lo scanner dei link di Outlook/Microsoft (apre i link delle email per
+  // controllarli) chiama un suo oggetto che nella pagina non c'è.
+  /Object Not Found Matching Id:\d+, MethodName:/,
 ]
 
 function messages(properties) {
