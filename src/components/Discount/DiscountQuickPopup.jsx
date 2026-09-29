@@ -77,6 +77,11 @@ export default function DiscountQuickPopup({
   const valueLabel = formatDiscountValue(deal)
   const description = deal?.description && deal.description !== deal.title ? deal.description : null
   const showPass = unlocked && !blockedMessage
+  // Stringa = sconto fuori orario ("Non è ancora il momento"); oggetto
+  // `{ title, text }` = sblocco rifiutato dal database (`claimRefusal`).
+  const blocked = typeof blockedMessage === 'string'
+    ? { title: 'Non è ancora il momento', text: blockedMessage }
+    : blockedMessage
 
   return (
     <motion.div
@@ -106,9 +111,9 @@ export default function DiscountQuickPopup({
             <div className="text-center mb-5">
               <div style={{ fontSize: 34, lineHeight: 1, marginBottom: 8 }}>🔒</div>
               <h3 className="text-lg font-bold text-primary" style={{ fontFamily: 'var(--font-sans)', fontWeight: 800 }}>
-                Non è ancora il momento
+                {blocked.title}
               </h3>
-              <p className="text-sm text-secondary mt-1.5" style={{ lineHeight: 1.5 }}>{blockedMessage}</p>
+              <p className="text-sm text-secondary mt-1.5" style={{ lineHeight: 1.5 }}>{blocked.text}</p>
             </div>
             <button
               type="button"

@@ -17,6 +17,8 @@ test('gli errori dei browser dentro le app non partono', () => {
     "undefined is not an object (evaluating 'window.webkit.messageHandlers')")), true)
   assert.equal(isNoiseException(exc('Error', 'Script error.')), true)
   assert.equal(isNoiseException({ event: '$exception', properties: { $exception_message: 'Script error.' } }), true)
+  assert.equal(isNoiseException(exc('UnhandledRejection',
+    'Non-Error promise rejection captured with value: Object Not Found Matching Id:2, MethodName:update, ParamCount:4')), true)
 })
 
 test('gli errori veri partono', () => {

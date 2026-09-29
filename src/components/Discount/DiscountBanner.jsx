@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useRestaurantDiscount, useUserRedemption } from '../../lib/hooks/useDiscounts'
+import { claimRefusal } from '../../lib/discounts'
 import QRCodeDisplay from './QRCodeDisplay'
 import SconteAuthGate from './SconteAuthGate'
 
@@ -79,7 +80,7 @@ export default function DiscountBanner({ restaurantId }) {
       }
     } catch (err) {
       console.error('Discount unlock error:', err)
-      setError(err?.message || t('discount.unlockError'))
+      setError(claimRefusal(err)?.text || t('discount.unlockError'))
     } finally {
       setGenerating(false)
     }

@@ -18,6 +18,8 @@ import { checkValidity, computeNextValidWindow } from '../../lib/validity'
 import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { getPublicCategoryNames, getDietCategoryNames } from '../../lib/hooks/useCategories'
 import { useActiveDiscounts, useRestaurantDiscount, useUserRedemption } from '../../lib/hooks/useDiscounts'
+import { claimRefusal } from '../../lib/discounts'
+import { captureError } from '../../lib/posthog'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
 import { formatAddress } from '../../lib/utils/formatAddress'
@@ -155,7 +157,11 @@ function FloatingDiscountBar({ discounts: discountsFromParent, restaurantId, res
       }
       return result
     } catch (err) {
-      console.error(err)
+      // Esaurito/scaduto nel frattempo: lo si dice nel popup. Il resto è un
+      // errore vero e va in PostHog, altrimenti resta solo nella console.
+      const refusal = claimRefusal(err)
+      if (refusal) setBlockedMessage(refusal)
+      else { console.error(err); captureError(err) }
       return null
     } finally {
       setGenerating(false)
@@ -755,7 +761,7 @@ export default function RestaurantSheet({
                 borderRadius: 14, padding: '4px 10px',
                 fontSize: 13, fontWeight: 600, color: '#fff', letterSpacing: 0.5,
               }}>
-                {photoIndex + 1} / {photoCount}
+                {Math.min(photoIndex, photoCount - 1) + 1} / {photoCount}
               </div>
             )}
 
