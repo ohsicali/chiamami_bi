@@ -33,7 +33,7 @@ dove siamo. Aggiorna a ogni step importante.
 | Promemoria sconti presi e non usati | — | 🚧 In review | Branch `claude/reminder-unused-discount-rj5sx6`. **Nessun SQL.** Cron Vercel giornaliero. Vedi sezione "24/09 — promemoria" sotto. |
 | Admin Analytics — numeri veri e più chiari | — | 🚧 In review | SQL `supabase/admin-analytics-2026-09-23.sql` **già eseguito** (connettore Supabase). Vedi sezione "23/09 — admin Analytics" sotto. |
 | Tutorial di benvenuto dopo la registrazione | #310 | ✅ Merged (cf52e71) | **Nessun SQL.** 7 schermate saltabili (4 sugli sconti), parte dalla spunta "Ci sei" appena l'account è confermato; finito si va alla home. Fix 28/09: con Google (flusso implicit, niente `?code=`) diceva "Accesso effettuato!" e partiva solo sulla home. Vedi CLAUDE.md "Tutorial di benvenuto". |
-| Feedback dopo la convalida (festa, stelle, Bi che ringrazia, email 30 min / 1 giorno) | — | 🚧 In review | Branch `claude/ecstatic-goldberg-0ikk3f`. SQL `supabase/redemption-feedback-2026-09-29.sql` **già eseguito** il 29/09 (connettore). **Dopo il merge** eseguire `supabase/redemption-feedback-cron-2026-09-29.sql` (pg_cron + pg_net, giro ogni 10 min). Vedi sezione "29/09 — feedback" sotto e CLAUDE.md. |
+| Feedback dopo la convalida (festa, stelle, Bi che ringrazia, email 30 min / 1 giorno, recensioni in /verify) | #320 | ✅ Merged (9d3cf06) | SQL `redemption-feedback-2026-09-29.sql`, `verify-feedback-list-2026-09-29.sql` e `redemption-feedback-cron-2026-09-29.sql` **tutti eseguiti** il 29/09. Giro email attivo (pg_cron `chiamamibi-feedback-asks`, ogni 10 min; prima chiamata: 200). Vedi sezione "29/09 — feedback" sotto e CLAUDE.md. |
 
 ## 29/09 — feedback dopo lo sconto convalidato
 
@@ -77,13 +77,14 @@ stelle); chi finisce vede Bi animata che ringrazia. Bi disegnata cartoon
 - Test `tests/feedback-asks.test.mjs`. Screenshot del flusso verificati a
   390px e 1280px (banco di prova con Supabase simulato).
 
-**Da fare dopo il merge**:
-1. eseguire `supabase/redemption-feedback-cron-2026-09-29.sql` (abilita
-   pg_cron e pg_net, genera il token nel Vault, programma il giro ogni 10
-   minuti) — prima del deploy l'endpoint risponderebbe 405;
-2. prova vera: prendere uno sconto con un account di test, convalidarlo da
-   /verify con il telefono dell'utente col QR aperto → festa e stelle;
-3. `POST {type:'feedback-asks', dryRun:true}` da admin per vedere il giro.
+**Dopo il merge (29/09, fatto)**: eseguito
+`supabase/redemption-feedback-cron-2026-09-29.sql` (pg_cron + pg_net, token
+nel Vault, job `chiamamibi-feedback-asks` ogni 10 minuti). Prima chiamata a
+mano via pg_net: 200, `{"open":0,"planned":0,…}`. Le risposte del giro si
+leggono in `net._http_response`. Per spegnerlo:
+`SELECT cron.unschedule('chiamamibi-feedback-asks');`
+La prova vera nell'app l'ha fatta il proprietario col locale di prova: festa,
+stelle, modulo e grazie arrivati al convalidare.
 
 ## 24/09 — promemoria: sconti presi e non ancora usati
 
