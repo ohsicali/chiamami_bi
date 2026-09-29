@@ -12,10 +12,12 @@
 
 // Chiave (minuscola, come sottostringa del messaggio) → frase da mostrare.
 const KNOWN = [
-  ['invalid login credentials', 'Email o password non corretti.'],
+  ['invalid login credentials', 'Email o password non corretti. Se ti eri iscritto con Google, usa «Continua con Google».'],
   ['email not confirmed', 'Devi prima confermare l’email: controlla la posta, anche nello spam.'],
-  ['user already registered', 'Esiste già un account con questa email. Prova ad accedere.'],
-  ['already registered', 'Esiste già un account con questa email. Prova ad accedere.'],
+  // Tanti si sono iscritti con Google e poi riprovano con email e password.
+  ['user already registered', 'Esiste già un account con questa email. Prova ad accedere, o usa «Continua con Google» se ti eri iscritto così.'],
+  ['already registered', 'Esiste già un account con questa email. Prova ad accedere, o usa «Continua con Google» se ti eri iscritto così.'],
+  ['user_already_exists', 'Esiste già un account con questa email. Prova ad accedere, o usa «Continua con Google» se ti eri iscritto così.'],
   ['password should be at least', 'La password è troppo corta: servono almeno 6 caratteri.'],
   // La protezione di Supabase contro le password rubate (Have I Been Pwned)
   // rifiuta quelle che compaiono negli elenchi finiti online: "12345678",
@@ -34,7 +36,10 @@ const KNOWN = [
     'Per sicurezza puoi riprovare fra qualche secondo.'],
   ['email rate limit exceeded', 'Troppi tentativi ravvicinati. Riprova fra qualche minuto.'],
   ['over_email_send_rate_limit', 'Troppi tentativi ravvicinati. Riprova fra qualche minuto.'],
-  ['token has expired', 'Il codice è scaduto. Richiedine uno nuovo.'],
+  // Supabase dice "expired or is invalid" sia per il codice scaduto sia per
+  // una cifra sbagliata, che è il caso più frequente: non si può sapere quale.
+  ['token has expired', 'Il codice non è giusto o è scaduto. Ricontrollalo, oppure fatti mandare un codice nuovo.'],
+  ['otp_expired', 'Il codice non è giusto o è scaduto. Ricontrollalo, oppure fatti mandare un codice nuovo.'],
   ['invalid token', 'Il codice non è corretto. Controlla e riprova.'],
   // La posta di Supabase non riesce a partire (credenziali SMTP rifiutate,
   // provider giù): non è colpa di chi si sta registrando e non c'è niente

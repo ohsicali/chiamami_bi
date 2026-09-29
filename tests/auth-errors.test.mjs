@@ -120,3 +120,22 @@ test('attesa di sicurezza con i secondi che cambiano', () => {
     assert.match(m, /riprovare/i)
   }
 })
+
+// Codice sbagliato o scaduto: Supabase non distingue, e il caso più comune
+// è una cifra sbagliata. Dire solo "scaduto" mandava fuori strada.
+test('codice non valido: si dice di ricontrollarlo o farselo rimandare', () => {
+  for (const e of [{ message: 'Token has expired or is invalid', code: 'otp_expired' }, { message: '', code: 'otp_expired' }]) {
+    const m = authErrorMessage(e)
+    isItalianSentence(m)
+    assert.match(m, /codice/i)
+    assert.match(m, /nuovo/i)
+  }
+})
+
+// Email già iscritta (spesso con Google): Supabase risponde 200 con un utente
+// senza identità; useAuth lo trasforma in questo errore.
+test('email già iscritta: si indica anche Google', () => {
+  const m = authErrorMessage({ message: 'User already registered', code: 'user_already_exists' })
+  isItalianSentence(m)
+  assert.match(m, /Google/)
+})
