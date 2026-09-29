@@ -17,10 +17,21 @@ const KNOWN = [
   ['user already registered', 'Esiste già un account con questa email. Prova ad accedere.'],
   ['already registered', 'Esiste già un account con questa email. Prova ad accedere.'],
   ['password should be at least', 'La password è troppo corta: servono almeno 6 caratteri.'],
+  // La protezione di Supabase contro le password rubate (Have I Been Pwned)
+  // rifiuta quelle che compaiono negli elenchi finiti online: "12345678",
+  // "password1", il nome della squadra col numero. Senza questa riga si
+  // leggeva "Qualcosa non ha funzionato. Riprova." e si riprovava con la
+  // stessa password: il 29/09 in 24 ore 53 persone su ~225 si sono fermate
+  // qui senza riuscire a registrarsi, una dopo venti tentativi.
+  ['password is known to be weak', 'Questa password è troppo comune: compare negli elenchi di password rubate. Scegline una meno prevedibile, per esempio tre parole a caso con un numero.'],
+  ['password should contain at least one character', 'La password è troppo semplice: aggiungi lettere maiuscole, numeri o simboli.'],
+  ['weak_password', 'Questa password è troppo facile da indovinare. Scegline una meno prevedibile, per esempio tre parole a caso con un numero.'],
   ['unable to validate email address', 'Questo indirizzo email non sembra valido.'],
   ['invalid email', 'Questo indirizzo email non sembra valido.'],
-  ['for security purposes, you can only request this once every 60 seconds',
-    'Per sicurezza puoi riprovare fra un minuto.'],
+  // Il testo cambia coi secondi che mancano ("once every 60 seconds",
+  // "after 16 seconds"): si guarda solo l'inizio.
+  ['for security purposes, you can only request this',
+    'Per sicurezza puoi riprovare fra qualche secondo.'],
   ['email rate limit exceeded', 'Troppi tentativi ravvicinati. Riprova fra qualche minuto.'],
   ['over_email_send_rate_limit', 'Troppi tentativi ravvicinati. Riprova fra qualche minuto.'],
   ['token has expired', 'Il codice è scaduto. Richiedine uno nuovo.'],
@@ -42,7 +53,9 @@ const KNOWN = [
 ]
 
 export function authErrorMessage(err, fallback = 'Qualcosa non ha funzionato. Riprova.') {
-  const raw = String(err?.message || err || '').toLowerCase()
+  // `code` conta quanto il messaggio: supabase-js mette in `code` il motivo
+  // ("weak_password") anche quando il testo cambia da una versione all'altra.
+  const raw = [err?.message || err || '', err?.code || ''].join(' ').toLowerCase().trim()
   if (!raw) return fallback
   for (const [needle, message] of KNOWN) {
     if (raw.includes(needle)) return message
