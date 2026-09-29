@@ -208,6 +208,16 @@ export function AuthProvider({ children }) {
       },
     }))
     if (error) throw error
+    // Email già registrata e confermata (anche con Google): Supabase non dà
+    // errore, per non far scoprire a chiunque chi è iscritto, ma restituisce
+    // un utente finto senza identità e non manda nessun codice. Senza questo
+    // controllo si finiva sulla schermata del codice ad aspettare un'email
+    // che non parte.
+    if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      const err = new Error('User already registered')
+      err.code = 'user_already_exists'
+      throw err
+    }
     return { needsConfirmation: !data?.session }
   }, [])
 

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { authErrorMessage } from '../../lib/utils/authErrors'
+import { suggestEmailFix } from '../../lib/utils/emailTypo'
 import { TR_REVEAL } from '../../lib/motion'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
@@ -123,6 +124,14 @@ export default function LoginPage() {
   // Acceso solo dopo che il codice è stato accettato: tiene l'animazione di
   // conferma finché non si passa alla pagina successiva.
   const [confirmed, setConfirmed] = useState(false)
+  // "Intendevi …@libero.it?": si guarda il dominio quando si lascia il campo
+  // (non mentre si scrive, se no "gmail.c" diventa un suggerimento a metà) e
+  // al primo invio della registrazione, per chi l'ha fatto compilare al
+  // telefono senza mai toccare il campo. Il suggerimento ferma l'invio una
+  // volta sola: chi lo ignora e ripreme va avanti con l'indirizzo suo.
+  const [emailChecked, setEmailChecked] = useState(false)
+  const [typoShownFor, setTypoShownFor] = useState('')
+  const emailSuggestion = emailChecked ? suggestEmailFix(email) : null
   const [maskedRecovery, setMaskedRecovery] = useState('')
   const [captchaToken, setCaptchaToken] = useState('')
   const captchaRequired = !!import.meta.env.VITE_TURNSTILE_SITE_KEY
@@ -236,6 +245,15 @@ export default function LoginPage() {
       return
     }
 
+    // Email con un dominio che sembra sbagliato: il codice di conferma
+    // finirebbe nel nulla. Lo si fa notare una volta, poi decide chi scrive.
+    if (mode === 'register' && suggestEmailFix(email) && typoShownFor !== email) {
+      setEmailChecked(true)
+      setTypoShownFor(email)
+      setError('Controlla l\u2019email: il codice di conferma arriva lì. Se è giusta, premi di nuovo.')
+      return
+    }
+
     setSubmitting(true)
 
     try {
@@ -317,7 +335,28 @@ export default function LoginPage() {
         setConfirmed(true)
         startWelcome()
       } else if (mode === 'login') {
-        await signIn(email, password)
+        try {
+          await signIn(email, password)
+        } catch (err) {
+          // Registrato ma mai confermato: "conferma l'email" da solo non
+          // bastava, perché la conferma è un codice da scrivere qui, e da
+          // "Accedi" la schermata del codice non si raggiungeva più. Ci si va
+          // direttamente, con un codice nuovo (quello vecchio può essere
+          // scaduto). Se il rinvio è rifiutato (fatto meno di un minuto fa)
+          // vale ancora quello arrivato prima.
+          if (err?.code === 'email_not_confirmed' || /email not confirmed/i.test(err?.message || '')) {
+            setSignupOtp('')
+            setMode('confirm_signup')
+            try {
+              await resendSignupOtp(email)
+              setSuccess('Il tuo account aspetta ancora la conferma: ti ho mandato un codice nuovo.')
+            } catch {
+              setSuccess('Il tuo account aspetta ancora la conferma: scrivi il codice che ti ho mandato per email.')
+            }
+            return
+          }
+          throw err
+        }
         redirectAfterAuth()
       } else {
         const { needsConfirmation } = await signUp(email, password, fullName)
@@ -374,7 +413,7 @@ export default function LoginPage() {
 
   const subtitleText =
     mode === 'forgot' ? 'Inserisci la tua email e ti invieremo un link per reimpostarla'
-    : mode === 'confirm_signup' ? `Ti ho mandato un codice a ${email}. Scrivilo qui sotto e sei dentro.`
+    : mode === 'confirm_signup' ? `Ti ho mandato un codice a ${email}. Scrivilo qui sotto e sei dentro (se non lo vedi, guarda nello spam).`
     : mode === 'recovery_forgot' ? 'Ti invieremo un codice sull\u2019email di recupero'
     : mode === 'recovery_otp' ? `Abbiamo inviato un codice a ${maskedRecovery || 'la tua email di recupero'}`
     : mode === 'recovery_newpwd' ? 'Scegli una nuova password per il tuo account'
@@ -735,10 +774,31 @@ export default function LoginPage() {
                 placeholder="Email"
                 autoComplete="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                style={{ ...inputStyle, marginBottom: (mode === 'login' || mode === 'register') ? 12 : 18 }}
+                onChange={(e) => { setEmail(e.target.value); setEmailChecked(false) }}
+                onBlur={() => setEmailChecked(true)}
+                style={{ ...inputStyle, marginBottom: emailSuggestion ? 6 : (mode === 'login' || mode === 'register') ? 12 : 18 }}
                 required
               />
+            )}
+            {mode !== 'confirm_signup' && emailSuggestion && (
+              <div
+                role="status"
+                style={{ fontSize: 13, color: 'var(--color-ink-70)', margin: '0 2px 12px', lineHeight: 1.4 }}
+              >
+                Intendevi{' '}
+                <button
+                  type="button"
+                  onClick={() => { setEmail(emailSuggestion); setEmailChecked(false); setError('') }}
+                  style={{
+                    color: 'var(--color-corallo-ink)', fontWeight: 800, background: 'none',
+                    border: 'none', padding: 0, cursor: 'pointer', fontSize: 13,
+                    textDecoration: 'underline', fontFamily: 'inherit',
+                  }}
+                >
+                  {emailSuggestion}
+                </button>
+                ?
+              </div>
             )}
 
             {/* Password — login / register */}
