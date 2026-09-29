@@ -211,10 +211,15 @@ saluta coi cuori**. Chi salta riceve le email a ~30 min e ~1 giorno
 - Regole in `src/lib/redemptionFeedback.js` (sotto test in
   `tests/feedback-asks.test.mjs`): si apre entro 3 ore dalla convalida, solo
   senza stelle; la festa solo nei primi 5 minuti; mai su login, admin, /verify.
-- **Le stelle si salvano al tocco**, subito e con `fetch(..., { keepalive: true })`
-  (`rateFeedbackNow`): chi vota e chiude il sito un attimo dopo il voto l'ha
-  dato. L'ultimo voto si rimanda anche su "Avanti" e quando la pagina si
-  nasconde, perché due tocchi rapidi possono arrivare in ordine inverso.
+- **Niente si perde**: le stelle partono al tocco con `navigator.sendBeacon`
+  (`rateFeedbackNow` in `src/lib/feedbackApi.js`), e se chi scrive il modulo
+  chiude l'app o cambia scheda senza premere "Manda a Bi" il modulo si manda
+  da solo (`submitFeedbackNow`, evento PostHog `feedback_autosaved`). Beacon
+  e non `fetch keepalive`: la fetch con le intestazioni di Supabase fa prima
+  la verifica CORS e, chiudendo nello stesso istante, non arrivava (provato
+  il 29/09); il beacon è un modulo form-urlencoded con `?apikey=`
+  nell'indirizzo e parte in un giro solo. L'ultimo voto si rimanda anche su
+  "Avanti" e quando la pagina si nasconde.
 - **I ristoratori vedono le recensioni** in /verify, scheda **Recensioni** e
   riquadro in dashboard (`src/components/Verify/VerifyReviews.jsx`, RPC
   `verify_feedback_list` col device token, solo il proprio locale, del

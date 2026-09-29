@@ -4,7 +4,7 @@ import BiCharacter from './BiCharacter'
 import { formatDiscountBadge } from '../../lib/utils/discountFormat'
 import { proxyImg } from '../../lib/supabase'
 import { track } from '../../lib/posthog'
-import { rateFeedbackNow, submitFeedback } from '../../lib/feedbackApi'
+import { rateFeedbackNow, submitFeedback, submitFeedbackNow } from '../../lib/feedbackApi'
 import {
   COMMENT_MAX,
   DISCOUNT_OPTIONS,
@@ -100,12 +100,16 @@ export default function RedemptionFeedback({
     return () => { document.body.style.overflow = prev === 'hidden' ? '' : prev }
   }, [variant])
 
-  // Il voto si salva al tocco, subito e con `keepalive`: chi dà le stelle e
-  // chiude il sito un istante dopo le ha date comunque. Due tocchi rapidi
+  // Il voto si salva al tocco, subito e col beacon (feedbackApi.js): chi dà
+  // le stelle e chiude il sito nello stesso istante le ha date comunque. Due tocchi rapidi
   // potrebbero arrivare al DB in ordine inverso: per questo l'ultimo voto si
   // rimanda quando si va avanti e quando la pagina si nasconde o si chiude.
+  // Stessa cosa per il modulo: chi ha scritto qualcosa e chiude l'app senza
+  // premere "Manda a Bi" non lo perde — si manda da solo, come mandato.
   const ratingRef = useRef(rating)
   const sentRef = useRef(false) // il modulo è partito: da lì niente più rinvii
+  const draftRef = useRef({ step, answers, comment })
+  useEffect(() => { draftRef.current = { step, answers, comment } })
   const saveRating = (n) => {
     if (!n || !data?.token) return
     rateFeedbackNow(data.token, n, source).then((r) => {
@@ -122,7 +126,14 @@ export default function RedemptionFeedback({
   useEffect(() => {
     const flush = () => {
       if (sentRef.current || !ratingRef.current || !data?.token) return
-      rateFeedbackNow(data.token, ratingRef.current, source)
+      const d = draftRef.current
+      const text = String(d.comment || '').trim()
+      if (d.step === 'form' && hasFeedbackContent({ answers: d.answers, comment: text })) {
+        submitFeedbackNow(data.token, { rating: ratingRef.current, answers: d.answers, comment: text }, source)
+        track('feedback_autosaved', { rating: ratingRef.current, source, has_comment: text.length > 0 })
+      } else {
+        rateFeedbackNow(data.token, ratingRef.current, source)
+      }
     }
     const onVisibility = () => { if (document.visibilityState === 'hidden') flush() }
     document.addEventListener('visibilitychange', onVisibility)

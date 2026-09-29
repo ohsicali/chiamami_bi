@@ -55,24 +55,61 @@ export async function getFeedback(token) {
 }
 
 /**
- * Il voto, spedito subito e con `keepalive`: la richiesta arriva al DB
- * anche se chi ha toccato la stella chiude la pagina un attimo dopo (una
- * fetch normale verrebbe interrotta con la pagina). Va diretta all'RPC di
- * PostgREST con la chiave pubblica: `feedback_rate` è concessa ad anon e
- * l'autorizzazione è il token della riga.
+ * Spedisce una chiamata RPC con `navigator.sendBeacon`: è l'unico modo che il
+ * browser garantisce anche mentre la pagina si chiude. Una fetch, anche con
+ * `keepalive`, ha bisogno di due giri (la verifica CORS e poi la richiesta)
+ * e chiudendo nello stesso istante del tocco si perdeva — provato il 29/09.
+ * Il beacon parte in un giro solo perché è un modulo "semplice": corpo
+ * form-urlencoded (PostgREST lo accetta per le RPC) e chiave pubblica
+ * nell'indirizzo (`?apikey=`, che il gateway di Supabase accetta) invece che
+ * nelle intestazioni. Le funzioni sono concesse ad anon: l'autorizzazione è
+ * il token della riga.
+ *
+ * @returns {boolean} true se il browser ha preso in carico l'invio
  */
-export function rateFeedbackNow(token, rating, source = 'app') {
+function beaconRpc(fn, params) {
   const url = import.meta.env.VITE_SUPABASE_URL
   const key = import.meta.env.VITE_SUPABASE_ANON_KEY
-  if (!url || !key || !token) return Promise.resolve({ error: 'offline' })
-  return fetch(`${url}/rest/v1/rpc/feedback_rate`, {
-    method: 'POST',
-    keepalive: true,
-    headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ p_token: token, p_rating: rating, p_source: source }),
+  if (!url || !key || typeof navigator === 'undefined' || typeof navigator.sendBeacon !== 'function') return false
+  const body = new URLSearchParams()
+  for (const [k, v] of Object.entries(params)) {
+    if (v == null) continue
+    body.set(k, typeof v === 'object' ? JSON.stringify(v) : String(v))
+  }
+  try {
+    return navigator.sendBeacon(`${url}/rest/v1/rpc/${fn}?apikey=${encodeURIComponent(key)}`, body)
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Il voto, spedito al tocco: col beacon (arriva anche se la pagina si chiude
+ * subito dopo), e se il browser non lo prende con una fetch normale che sa
+ * dire se è andata male.
+ */
+export function rateFeedbackNow(token, rating, source = 'app') {
+  if (!token || !rating) return Promise.resolve({ error: 'invalid' })
+  if (beaconRpc('feedback_rate', { p_token: token, p_rating: rating, p_source: source })) {
+    return Promise.resolve({ ok: true, beacon: true })
+  }
+  return rateFeedback(token, rating, source)
+}
+
+/**
+ * Il modulo, quando chi sta scrivendo chiude l'app o cambia scheda senza aver
+ * premuto "Manda a Bi": quello che ha scritto non si perde (e da lì in poi
+ * non riceve più le email che chiedono il resto).
+ */
+export function submitFeedbackNow(token, { rating, answers, comment }, source = 'app') {
+  if (!token || !rating) return false
+  return beaconRpc('feedback_submit', {
+    p_token: token,
+    p_rating: rating,
+    p_answers: answers || {},
+    p_comment: comment || null,
+    p_source: source,
   })
-    .then((r) => (r.ok ? r.json() : { error: `http_${r.status}` }))
-    .catch((e) => ({ error: e?.message || 'network' }))
 }
 
 export async function rateFeedback(token, rating, source = 'app') {

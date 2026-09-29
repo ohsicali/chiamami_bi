@@ -60,7 +60,12 @@ stelle); chi finisce vede Bi animata che ringrazia. Bi disegnata cartoon
 - Bi disegnata (`BiCharacter.jsx`) rifatta sulle cinque foto mandate dal
   proprietario il 29/09: capelli rame vivo, eyeliner, lentiggini, collanina
   di perline, giacca nera + maglia a righe, spaghetti sulla forchetta.
-- Stelle salvate al tocco con `keepalive` (anche chiudendo subito il sito).
+- Stelle salvate al tocco col beacon e modulo mandato da solo se si esce
+  senza premere "Manda". **Provato il 29/09 sul DB vero** (sito in locale +
+  Playwright): stelle dal link email, stella toccata e uscita immediata,
+  modulo scritto e uscita senza inviare (accenti e apostrofi compresi) →
+  tutto salvato; /verify del locale di prova mostra le due recensioni vere
+  da telefono e da computer; l'admin (RLS con la sua sessione) vede 2 su 2.
 - Recensioni nell'area ristoratori: scheda **Recensioni** in /verify e
   riquadro in dashboard; SQL `supabase/verify-feedback-list-2026-09-29.sql`
   **eseguito il 29/09** (provato: col token giusto le righe del locale,

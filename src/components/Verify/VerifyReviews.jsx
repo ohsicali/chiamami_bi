@@ -30,7 +30,7 @@ function useVerifyFeedback(restaurantId, deviceToken, onSessionExpired) {
     if (!enabled) return undefined
     let cancelled = false
     supabase
-      .rpc('verify_feedback_list', { p_restaurant_id: restaurantId, p_device_token: deviceToken, p_limit: 100 })
+      .rpc('verify_feedback_list', { p_restaurant_id: restaurantId, p_device_token: deviceToken, p_limit: 200 })
       .then(({ data, error }) => {
         if (cancelled) return
         if (data?.error === 'unauthorized') { onSessionExpired?.(); return }
