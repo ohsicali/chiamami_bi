@@ -1,0 +1,301 @@
+/* Recensioni nell'area ristoratori — vedi VerifyReviews.jsx.
+   Stesso vocabolario di /verify (VerifyPage.css): card a 20px, etichette in
+   maiuscoletto, inchiostro per il blocco che conta, oro per le stelle. */
+
+.vr { font-family: var(--font-sans); color: var(--color-ink); padding-bottom: 12px; }
+
+/* Stelle con riempimento parziale */
+.vr-stars {
+  position: relative;
+  display: inline-block;
+  line-height: 1;
+  letter-spacing: 2px;
+  white-space: nowrap;
+}
+.vr-stars-off { color: var(--color-ink-15); }
+.vr-stars-on {
+  position: absolute;
+  inset: 0 auto 0 0;
+  overflow: hidden;
+  color: #F5B82E;
+}
+
+/* ── Media + distribuzione ─────────────────────────────────────────── */
+.vr-hero {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 18px;
+  align-items: center;
+  background: var(--color-ink);
+  color: #fff;
+  border-radius: 22px;
+  padding: 20px 18px;
+  margin-bottom: 12px;
+  animation: vr-rise 0.4s var(--ease-out) both;
+}
+.vr-hero::before {
+  content: "";
+  position: absolute;
+  right: -40px;
+  top: -50px;
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245, 184, 46, 0.22), rgba(245, 184, 46, 0) 70%);
+  pointer-events: none;
+}
+.vr-hero-avg { text-align: center; min-width: 96px; position: relative; }
+.vr-hero-avg .n {
+  font-weight: 900;
+  font-size: 52px;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  margin-bottom: 6px;
+}
+.vr-hero .vr-stars-off { color: rgba(255, 255, 255, 0.18); }
+.vr-hero-avg .c {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.62);
+}
+.vr-hero-dist { display: grid; gap: 6px; position: relative; }
+.vr-dist-row {
+  display: grid;
+  grid-template-columns: 26px 1fr 22px;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  font-weight: 800;
+}
+.vr-dist-row .s { color: rgba(255, 255, 255, 0.7); }
+.vr-dist-row .k { text-align: right; color: rgba(255, 255, 255, 0.7); }
+.vr-dist-row .bar {
+  height: 8px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+.vr-dist-row .fill {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #F5B82E, #FFD36E);
+  transition: width 0.7s var(--ease-out);
+}
+
+/* ── Due numeri ────────────────────────────────────────────────────── */
+.vr-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.vr-tile {
+  background: var(--color-card);
+  border: 1px solid var(--color-line);
+  border-radius: 18px;
+  padding: 14px 14px 12px;
+  animation: vr-rise 0.4s var(--ease-out) 0.06s both;
+}
+.vr-tile .n {
+  font-weight: 900;
+  font-size: 28px;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--color-ok);
+}
+.vr-tile .l { font-size: 12.5px; font-weight: 800; margin-top: 6px; }
+.vr-tile .m { font-size: 11px; color: var(--color-ink-55); margin-top: 2px; }
+
+/* ── Cosa piace / da migliorare ────────────────────────────────────── */
+.vr-block { margin-bottom: 14px; }
+.vr-lbl {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-55);
+  margin-bottom: 8px;
+}
+.vr-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.vr-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 11px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.vr-chip b {
+  font-weight: 900;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.7);
+}
+.vr-chip.good { background: var(--color-ok-bg); color: var(--color-ok); }
+.vr-chip.bad { background: var(--color-danger-bg); color: var(--color-danger); }
+
+/* ── Filtro ────────────────────────────────────────────────────────── */
+.vr-filter {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 99px;
+  background: var(--color-cream);
+  margin: 6px 0 12px;
+}
+.vr-filter button {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--color-ink-55);
+  padding: 8px 6px;
+  border-radius: 99px;
+  cursor: pointer;
+  transition: background-color var(--dur-pop) var(--ease-out), color var(--dur-pop) var(--ease-out);
+}
+.vr-filter button.on { background: var(--color-card); color: var(--color-ink); box-shadow: 0 2px 8px rgba(34, 24, 28, 0.08); }
+
+/* ── Le recensioni ─────────────────────────────────────────────────── */
+.vr-list { display: grid; gap: 10px; }
+.vr-card {
+  background: var(--color-card);
+  border: 1px solid var(--color-line);
+  border-radius: 18px;
+  padding: 14px 15px;
+  animation: vr-rise 0.38s var(--ease-out) both;
+}
+.vr-card.is-low { border-color: #F3D2CE; }
+.vr-card-head { display: flex; align-items: center; gap: 10px; }
+.vr-av {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 900;
+  font-size: 15px;
+  flex: none;
+}
+.vr-card-who { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.vr-card-who .nm { font-weight: 800; font-size: 14px; }
+.vr-card-who .tm {
+  font-size: 11.5px;
+  color: var(--color-ink-55);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vr-card-text {
+  position: relative;
+  margin: 12px 0 0;
+  padding-left: 14px;
+  font-size: 15px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  border-left: 3px solid var(--color-corallo-soft);
+}
+.vr-card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.vr-tag {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: 99px;
+  background: var(--color-cream);
+  color: var(--color-ink-70);
+}
+.vr-tag.good { background: var(--color-ok-bg); color: var(--color-ok); }
+.vr-tag.bad { background: var(--color-danger-bg); color: var(--color-danger); }
+.vr-tag.warn { background: var(--color-warn-bg); color: var(--color-warn); }
+
+.vr-none, .vr-loading, .vr-error {
+  text-align: center;
+  padding: 28px 12px;
+  font-size: 13px;
+  color: var(--color-ink-55);
+}
+.vr-error { color: var(--color-danger); }
+.vr-spin {
+  display: block;
+  width: 26px;
+  height: 26px;
+  margin: 0 auto 10px;
+  border: 3px solid var(--color-line);
+  border-top-color: var(--color-corallo);
+  border-radius: 50%;
+  animation: verifySpin 0.8s linear infinite;
+}
+.vr-foot { margin: 16px 4px 0; font-size: 11.5px; line-height: 1.5; color: var(--color-ink-55); text-align: center; }
+
+/* ── Vuoto ─────────────────────────────────────────────────────────── */
+.vr-empty {
+  text-align: center;
+  padding: 18px 16px 8px;
+}
+.vr-empty-bi {
+  width: 128px;
+  margin: 0 auto 6px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--color-corallo-wash);
+  aspect-ratio: 1;
+}
+.vr-empty-bi svg { width: 118%; height: auto; margin: 4% 0 0 -9%; }
+.vr-empty h3 { margin: 10px 0 6px; font-size: 18px; font-weight: 900; letter-spacing: -0.02em; }
+.vr-empty p { margin: 0 auto; max-width: 320px; font-size: 13.5px; line-height: 1.5; color: var(--color-ink-70); }
+
+/* ── Il riquadro in dashboard ──────────────────────────────────────── */
+.vr-teaser {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  font: inherit;
+  color: #fff;
+  background: var(--color-ink);
+  border: 0;
+  border-radius: 20px;
+  padding: 14px 16px;
+  margin: 0 0 12px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--dur-press) var(--ease-out);
+}
+.vr-teaser:active { transform: scale(0.985); }
+.vr-teaser.is-empty { background: var(--color-cream); color: var(--color-ink); }
+.vr-teaser-avg { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: none; }
+.vr-teaser-avg .n { font-weight: 900; font-size: 30px; line-height: 1; letter-spacing: -0.03em; }
+.vr-teaser .vr-stars-off { color: rgba(255, 255, 255, 0.2); }
+.vr-teaser-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.vr-teaser-body .t { font-weight: 800; font-size: 14px; }
+.vr-teaser-body .q {
+  font-size: 12.5px;
+  line-height: 1.4;
+  opacity: 0.72;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.vr-teaser-arr { font-size: 26px; font-weight: 300; opacity: 0.6; flex: none; }
+
+@keyframes vr-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vr-hero, .vr-tile, .vr-card { animation: none; }
+  .vr-dist-row .fill { transition: none; }
+}

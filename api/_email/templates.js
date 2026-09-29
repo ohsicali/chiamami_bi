@@ -625,7 +625,7 @@ export function feedbackAskEmail({
 
   const intro = rated
     ? `${esc(lead(`mi hai dato ${stelle} per ${restaurantName}: grazie!`))} Se ti va, raccontami cosa ti è piaciuto (o cosa no). Bastano due righe, e mi servono per scegliere i posti del Bi Club.${SIGN}`
-    : `${esc(lead(`${ieri ? 'ieri' : 'poco fa'} hai usato ${sconto}da ${restaurantName}.`))} Com’è andata? Dimmelo con un tocco: lo leggo io, e mi serve per scegliere i posti del Bi Club.${SIGN}`
+    : `${esc(lead(`${ieri ? 'ieri' : 'poco fa'} hai usato ${sconto}da ${restaurantName}.`))} Com’è andata? Dimmelo con un tocco: lo leggo io, lo vede anche il locale, e mi serve per scegliere i posti del Bi Club.${SIGN}`
 
   return {
     subject,

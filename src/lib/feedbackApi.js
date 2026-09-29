@@ -54,6 +54,27 @@ export async function getFeedback(token) {
   return data || { error: 'not_found' }
 }
 
+/**
+ * Il voto, spedito subito e con `keepalive`: la richiesta arriva al DB
+ * anche se chi ha toccato la stella chiude la pagina un attimo dopo (una
+ * fetch normale verrebbe interrotta con la pagina). Va diretta all'RPC di
+ * PostgREST con la chiave pubblica: `feedback_rate` è concessa ad anon e
+ * l'autorizzazione è il token della riga.
+ */
+export function rateFeedbackNow(token, rating, source = 'app') {
+  const url = import.meta.env.VITE_SUPABASE_URL
+  const key = import.meta.env.VITE_SUPABASE_ANON_KEY
+  if (!url || !key || !token) return Promise.resolve({ error: 'offline' })
+  return fetch(`${url}/rest/v1/rpc/feedback_rate`, {
+    method: 'POST',
+    keepalive: true,
+    headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ p_token: token, p_rating: rating, p_source: source }),
+  })
+    .then((r) => (r.ok ? r.json() : { error: `http_${r.status}` }))
+    .catch((e) => ({ error: e?.message || 'network' }))
+}
+
 export async function rateFeedback(token, rating, source = 'app') {
   if (!isSupabaseConfigured()) return { error: 'offline' }
   const { data, error } = await supabase.rpc('feedback_rate', { p_token: token, p_rating: rating, p_source: source })

@@ -4,7 +4,7 @@ import BiCharacter from './BiCharacter'
 import { formatDiscountBadge } from '../../lib/utils/discountFormat'
 import { proxyImg } from '../../lib/supabase'
 import { track } from '../../lib/posthog'
-import { rateFeedback, submitFeedback } from '../../lib/feedbackApi'
+import { rateFeedbackNow, submitFeedback } from '../../lib/feedbackApi'
 import {
   COMMENT_MAX,
   DISCOUNT_OPTIONS,
@@ -100,23 +100,43 @@ export default function RedemptionFeedback({
     return () => { document.body.style.overflow = prev === 'hidden' ? '' : prev }
   }, [variant])
 
-  // Il voto si salva al tocco (con un attimo di respiro, se si cambia idea).
-  const saveTimer = useRef(null)
+  // Il voto si salva al tocco, subito e con `keepalive`: chi dà le stelle e
+  // chiude il sito un istante dopo le ha date comunque. Due tocchi rapidi
+  // potrebbero arrivare al DB in ordine inverso: per questo l'ultimo voto si
+  // rimanda quando si va avanti e quando la pagina si nasconde o si chiude.
+  const ratingRef = useRef(rating)
+  const sentRef = useRef(false) // il modulo è partito: da lì niente più rinvii
+  const saveRating = (n) => {
+    if (!n || !data?.token) return
+    rateFeedbackNow(data.token, n, source).then((r) => {
+      if (r?.error) setError('Non riesco a salvare il voto. Riprova tra un attimo.')
+    })
+  }
   const pickRating = (n) => {
     setRating(n)
+    ratingRef.current = n
     setError(null)
-    clearTimeout(saveTimer.current)
-    saveTimer.current = setTimeout(() => {
-      rateFeedback(data.token, n, source).then((r) => {
-        if (r?.error) setError('Non riesco a salvare il voto. Riprova tra un attimo.')
-      })
-    }, 350)
+    saveRating(n)
     try { navigator.vibrate?.(12) } catch { /* niente */ }
   }
-  useEffect(() => () => clearTimeout(saveTimer.current), [])
+  useEffect(() => {
+    const flush = () => {
+      if (sentRef.current || !ratingRef.current || !data?.token) return
+      rateFeedbackNow(data.token, ratingRef.current, source)
+    }
+    const onVisibility = () => { if (document.visibilityState === 'hidden') flush() }
+    document.addEventListener('visibilitychange', onVisibility)
+    window.addEventListener('pagehide', flush)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('pagehide', flush)
+    }
+  }, [data?.token, source])
 
   const goForm = () => {
     if (!rating) return
+    // Il voto definitivo, per l'ordine (vedi sopra).
+    saveRating(rating)
     track('feedback_rated', { rating, source })
     setStep('form')
   }
@@ -141,13 +161,13 @@ export default function RedemptionFeedback({
     if (!canSend) return
     setSending(true)
     setError(null)
-    clearTimeout(saveTimer.current)
     const r = await submitFeedback(data.token, { rating, answers, comment: comment.trim() }, source)
     setSending(false)
     if (r?.error) {
       setError('Non è partito. Controlla la connessione e riprova.')
       return
     }
+    sentRef.current = true
     track('feedback_submitted', {
       rating,
       source,
@@ -217,7 +237,7 @@ export default function RedemptionFeedback({
               <h2 className="rf-title">
                 Com’è andata da <span className="rf-title-place">{restaurantName}</span>?
               </h2>
-              <p className="rf-sub">Dimmelo con le stelle: lo leggo io, Bi.</p>
+              <p className="rf-sub">Dimmelo con le stelle: lo leggo io, e lo vede anche il locale.</p>
               <StarRating value={rating} onChange={pickRating} reduce={reduce} />
               <p className="rf-rating-label" aria-live="polite">
                 <AnimatePresence mode="wait" initial={false}>
@@ -306,6 +326,7 @@ export default function RedemptionFeedback({
                     <span className="rf-count">{comment.length}/{COMMENT_MAX}</span>
                   )}
                 </label>
+                <p className="rf-privacy">Stelle, risposte e messaggio li vede anche il locale, con il tuo nome di battesimo.</p>
               </div>
 
               {error && <p className="rf-error" role="alert">{error}</p>}

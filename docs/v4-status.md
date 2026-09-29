@@ -60,6 +60,15 @@ stelle); chi finisce vede Bi animata che ringrazia. Bi disegnata cartoon
 - Bi disegnata (`BiCharacter.jsx`) rifatta sulle cinque foto mandate dal
   proprietario il 29/09: capelli rame vivo, eyeliner, lentiggini, collanina
   di perline, giacca nera + maglia a righe, spaghetti sulla forchetta.
+- Stelle salvate al tocco con `keepalive` (anche chiudendo subito il sito).
+- Recensioni nell'area ristoratori: scheda **Recensioni** in /verify e
+  riquadro in dashboard; SQL `supabase/verify-feedback-list-2026-09-29.sql`
+  **eseguito il 29/09** (provato: col token giusto le righe del locale,
+  token sbagliato → `unauthorized`). Chi scrive è avvisato che lo vede
+  anche il locale.
+- Dati di prova in bozza (29/09): locale "TEST — Prova feedback Bi"
+  (non pubblicato), sconto spento, riscatto di beatrice.rigato@gmail.com e
+  un device `user_agent = 'test-claude'`. **Da cancellare** a prova finita.
 - Test `tests/feedback-asks.test.mjs`. Screenshot del flusso verificati a
   390px e 1280px (banco di prova con Supabase simulato).
 

@@ -211,6 +211,16 @@ saluta coi cuori**. Chi salta riceve le email a ~30 min e ~1 giorno
 - Regole in `src/lib/redemptionFeedback.js` (sotto test in
   `tests/feedback-asks.test.mjs`): si apre entro 3 ore dalla convalida, solo
   senza stelle; la festa solo nei primi 5 minuti; mai su login, admin, /verify.
+- **Le stelle si salvano al tocco**, subito e con `fetch(..., { keepalive: true })`
+  (`rateFeedbackNow`): chi vota e chiude il sito un attimo dopo il voto l'ha
+  dato. L'ultimo voto si rimanda anche su "Avanti" e quando la pagina si
+  nasconde, perché due tocchi rapidi possono arrivare in ordine inverso.
+- **I ristoratori vedono le recensioni** in /verify, scheda **Recensioni** e
+  riquadro in dashboard (`src/components/Verify/VerifyReviews.jsx`, RPC
+  `verify_feedback_list` col device token, solo il proprio locale, del
+  cliente solo il nome di battesimo — SQL `supabase/verify-feedback-list-2026-09-29.sql`,
+  già eseguito). Chi lascia il feedback lo sa: la schermata delle stelle e il
+  modulo dicono che lo vede anche il locale. Non togliere quelle due righe.
 - Admin: `/admin/feedback` (stelle, messaggi, media per locale). PostHog:
   `feedback_shown`, `feedback_rated`, `feedback_submitted`, `feedback_skipped`.
 - Il giro delle email parte da **pg_cron** (`supabase/redemption-feedback-cron-2026-09-29.sql`),
