@@ -14,7 +14,8 @@ import SeoTab from '../../components/admin/tabs/SeoTab'
 import { checkSeoReady, SeoLockedPlaceholder } from '../../components/admin/tabs/_SeoLockCheck'
 import TabsShell from '../../components/admin/drawer/TabsShell'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
-import { toLocalInput, fromLocalInput, defaultPublishInput, publishAtError, formatPublishAt } from '../../lib/scheduledPublish'
+import { toLocalInput, fromLocalInput, publishAtError, formatPublishAt } from '../../lib/scheduledPublish'
+import PublishSchedule from '../../components/admin/PublishSchedule'
 
 const SECTIONS = [
   { key: 'dettagli', num: '01', label: 'Dettagli' },
@@ -481,9 +482,9 @@ export default function EditRestaurant() {
             </div>
           </div>
 
-          {/* Uscita e email — solo finché il locale non è pubblicato */}
+          {/* Quando esce e se parte l'email — solo finché il locale è in bozza */}
           {!form.is_published && (
-            <PublishOptions form={form} onChange={updateField} />
+            <PublishSchedule form={form} onChange={updateField} />
           )}
         </div>
 
@@ -500,7 +501,7 @@ export default function EditRestaurant() {
             onChange={setActiveTab}
           >
             {activeTab === 'dettagli' && (
-              <DettagliTab form={form} onChange={updateField} restaurantId={restaurantId} isNew={isNew} />
+              <DettagliTab form={form} onChange={updateField} restaurantId={restaurantId} isNew={isNew} canSchedule={!restaurant?.is_published} />
             )}
             {activeTab === 'foto' && (
               <FotoGalleriaTab form={form} onChange={updateField} restaurantId={restaurantId} />
@@ -602,7 +603,7 @@ export default function EditRestaurant() {
             </nav>
 
             <Section id="sec-dettagli" num="01" title="Dettagli">
-              <DettagliTab form={form} onChange={updateField} restaurantId={restaurantId} isNew={isNew} />
+              <DettagliTab form={form} onChange={updateField} restaurantId={restaurantId} isNew={isNew} canSchedule={!restaurant?.is_published} />
             </Section>
             <Section id="sec-foto" num="02" title="Foto & galleria">
               <FotoGalleriaTab form={form} onChange={updateField} restaurantId={restaurantId} />
@@ -1191,74 +1192,3 @@ function toDbPayload(form, alsoPublish) {
   return payload
 }
 
-/**
- * Sotto l'intestazione, finché il locale è in bozza: se all'uscita parte
- * l'email a tutti, e se l'uscita è adesso (bottone "Pubblica") o a un'ora
- * scelta (bottone "Programma").
- */
-function PublishOptions({ form, onChange }) {
-  const muted = 'var(--color-ink-55, rgba(34,24,28,0.55))'
-  const labelStyle = { fontSize: 12, color: muted, fontFamily: 'var(--font-sans)', cursor: 'pointer' }
-  const check = { accentColor: 'var(--color-corallo, #E8453C)', width: 14, height: 14 }
-  return (
-    <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <input
-          id="notify-on-publish"
-          type="checkbox"
-          checked={form.notify_on_publish}
-          onChange={(e) => onChange({ notify_on_publish: e.target.checked })}
-          style={check}
-        />
-        <label htmlFor="notify-on-publish" style={labelStyle}>
-          Manda l'email a tutti gli utenti quando esce
-        </label>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <input
-          id="schedule-publish"
-          type="checkbox"
-          checked={form.schedule_on}
-          onChange={(e) =>
-            onChange({
-              schedule_on: e.target.checked,
-              publish_at: e.target.checked && !form.publish_at ? defaultPublishInput() : form.publish_at,
-            })
-          }
-          style={check}
-        />
-        <label htmlFor="schedule-publish" style={labelStyle}>
-          Programma l'uscita
-        </label>
-        {form.schedule_on && (
-          <input
-            type="datetime-local"
-            value={form.publish_at}
-            min={toLocalInput(new Date().toISOString())}
-            onChange={(e) => onChange({ publish_at: e.target.value })}
-            aria-label="Giorno e ora dell'uscita"
-            style={{
-              fontSize: 13,
-              fontFamily: 'var(--font-sans)',
-              padding: '6px 10px',
-              borderRadius: 10,
-              border: '1px solid var(--color-line, #EAE3D7)',
-              background: '#fff',
-              color: 'var(--color-ink, #22181C)',
-            }}
-          />
-        )}
-      </div>
-      {form.schedule_on && (
-        <p style={{ fontSize: 12, color: muted, margin: 0, fontFamily: 'var(--font-sans)', maxWidth: 620 }}>
-          Resta in bozza fino a{' '}
-          <b style={{ color: 'var(--color-ink, #22181C)' }}>{formatPublishAt(fromLocalInput(form.publish_at)) || '…'}</b>
-          , poi va online da solo (entro 5 minuti)
-          {form.notify_on_publish ? ' e parte l\'email a tutti gli utenti' : ', senza email agli utenti'}
-          {form.partner_email && form.verify_pin ? '; al locale arriva il suo PIN' : ''}.
-          Gli sconti programmati per lo stesso momento escono insieme a lui.
-        </p>
-      )}
-    </div>
-  )
-}
