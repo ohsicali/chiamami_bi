@@ -84,6 +84,9 @@ export function useRestaurantDiscount(restaurantId) {
       .select('*, products:discount_products(id, name, note, photo_url, thumb_url, sort_order)')
       .eq('restaurant_id', restaurantId)
       .eq('is_active', true)
+      // Gli sconti di prova arrivano solo da `useActiveDiscounts`, che li
+      // chiede per l'email invitata: qui un admin li vedrebbe tutti (RLS).
+      .eq('is_test', false)
       .or(`valid_until.is.null,valid_until.gt.${new Date().toISOString()}`)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -259,6 +262,45 @@ export function useUserRedemption(discountId, userId) {
 // firing duplicate identical queries to Supabase.
 let activeDiscountsInFlight = null
 
+// Sconti di prova (`is_test`, supabase/discount-test-mode-2026-09-29.sql):
+// la copia in cache CDN è quella di un visitatore anonimo e non li ha mai.
+// Chi ha una sessione li chiede a parte, filtrati sulla PROPRIA email in
+// `discount_testers` — anche un admin, che per RLS li vedrebbe tutti, qui
+// riceve solo quelli a cui è invitato. Per quasi tutti la risposta è vuota:
+// il "niente" resta buono qualche minuto, così non è una query in più a
+// ogni pagina.
+const NO_TESTS_TTL = 5 * 60 * 1000
+async function fetchMyTestDiscounts() {
+  let user = null
+  try { user = (await supabase.auth.getSession()).data.session?.user || null } catch { /* offline */ }
+  const email = user?.email?.toLowerCase()
+  if (!email) return []
+  const key = `cb_no_test_discounts:${user.id}`
+  try {
+    const ts = Number(sessionStorage.getItem(key))
+    if (ts && Date.now() - ts < NO_TESTS_TTL) return []
+  } catch { /* private mode */ }
+  const { data, error } = await supabase
+    .from('discounts')
+    .select(`${ACTIVE_DISCOUNTS_SELECT}, testers:discount_testers!inner(email)`)
+    .eq('is_test', true)
+    .eq('testers.email', email)
+    .eq('is_active', true)
+    .or(`valid_until.is.null,valid_until.gt.${new Date().toISOString()}`)
+    .order('created_at', { ascending: false })
+  if (error) return []
+  if (!data?.length) {
+    try { sessionStorage.setItem(key, String(Date.now())) } catch { /* private mode */ }
+    return []
+  }
+  // `testers` serviva solo al filtro: fuori dall'oggetto sconto.
+  return data.map((row) => {
+    const d = { ...row }
+    delete d.testers
+    return d
+  })
+}
+
 function fetchActiveDiscounts() {
   if (activeDiscountsInFlight) return activeDiscountsInFlight
   // Copia in cache CDN prima (vedi lib/publicQueries.js); query diretta se
@@ -273,12 +315,18 @@ function fetchActiveDiscounts() {
   const viaCache = isAdminPath()
     ? Promise.resolve(null)
     : fetchPublic('discounts').catch(() => null)
-  activeDiscountsInFlight = viaCache
-    .then((data) => data || direct())
-    .then((data) => {
-      const fresh = data || []
+  activeDiscountsInFlight = Promise.all([
+    viaCache.then((data) => data || direct()),
+    fetchMyTestDiscounts().catch(() => []),
+  ])
+    .then(([data, tests]) => {
+      // Un admin, con la query diretta, riceve per RLS anche le prove degli
+      // altri: le toglie, e rimette solo le sue.
+      const fresh = (data || []).filter((d) => !d.is_test)
+      // In localStorage le prove non vanno: su un telefono condiviso
+      // resterebbero lì dopo l'uscita dall'account.
       writeActiveDiscountsCache(fresh)
-      return fresh
+      return tests.length ? [...tests, ...fresh] : fresh
     })
     .finally(() => {
       // Release the lock so subsequent navigations can revalidate.
@@ -351,7 +399,9 @@ export function useMyDiscounts(userId) {
         .order('generated_at', { ascending: false })
         .then(({ data }) => {
           if (cancelled) return
-          const items = data || []
+          // Sconto non più leggibile (una prova da cui si è stati tolti):
+          // il riscatto resta nel DB ma qui non c'è niente da mostrare.
+          const items = (data || []).filter(r => r.discount)
           setActive(items.filter(r => r.status === 'generated'))
           setUsed(items.filter(r => r.status === 'redeemed'))
           setLoading(false)

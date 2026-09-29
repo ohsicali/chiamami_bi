@@ -59,7 +59,24 @@ const EMPTY_FORM = {
   // Solo alla creazione: l'annuncio a tutti gli utenti. Una modifica non
   // manda mai email (vedi handleSave), e nel form la casella non c'è.
   send_email: true,
+  // Sconto di prova: lo vedono solo gli admin e le email scritte qui
+  // (supabase/discount-test-mode-2026-09-29.sql). `was_test` ricorda com'era
+  // all'apertura, per capire quando "Salva" lo sta pubblicando.
+  is_test: false,
+  testers: '',
+  was_test: false,
+  clear_test_redemptions: true,
 }
+
+// Le email degli invitati come le scrive l'admin (virgole, spazi, a capo)
+// → elenco pulito, minuscolo, senza doppioni.
+const parseTesterEmails = (text) =>
+  [...new Set(String(text || '').split(/[\s,;]+/).map((e) => e.trim().toLowerCase()).filter((e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)))]
+
+// L'ultimo elenco usato, per non riscriverlo a ogni prova con lo stesso locale.
+const LAST_TESTERS_KEY = 'cb_admin_last_testers'
+const readLastTesters = () => { try { return localStorage.getItem(LAST_TESTERS_KEY) || '' } catch { return '' } }
+const writeLastTesters = (v) => { try { localStorage.setItem(LAST_TESTERS_KEY, v) } catch { /* private mode */ } }
 
 // Restituisce il valore di periodo nel formato giusto per l'input
 // (date per sconti/evidenza, datetime-local per drop).
@@ -82,7 +99,7 @@ function countdown(target) {
   return { label: 'Al termine', value: `${h}h ${m}m` }
 }
 
-function DropCard({ d, selected, notifyLog, notifying, active, partnerTotal, flash, onSelect, onEdit, onNotify, onToggleActive, onDelete }) {
+function DropCard({ d, testers, selected, notifyLog, notifying, active, partnerTotal, flash, onSelect, onEdit, onNotify, onToggleActive, onDelete }) {
   const isDrop = d.is_drop
   const isFeatured = d.is_featured && !d.is_drop
   const ttl = countdown(discountEndsAt(d))
@@ -210,11 +227,33 @@ function DropCard({ d, selected, notifyLog, notifying, active, partnerTotal, fla
               Pausa
             </span>
           )}
+          {d.is_test && (
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 800,
+                padding: '2px 8px',
+                borderRadius: 999,
+                border: '1px dashed var(--color-ink, #22181C)',
+                color: 'var(--color-ink, #22181C)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+              }}
+            >
+              Prova
+            </span>
+          )}
         </h4>
         <div style={{ fontSize: 11, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', fontWeight: 600, marginTop: 3 }}>
           {d.title}
           {d.conditions ? ` · ${d.conditions}` : ''}
         </div>
+        {d.is_test && (
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-ink, #22181C)', marginTop: 4 }}>
+            Non è online · lo vedono solo gli admin
+            {testers?.length ? ` e ${testers.join(', ')}` : ''}
+          </div>
+        )}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginTop: 10 }}>
           <Counter label="Presi" value={taken} flashKey={flash?.kind === 'taken' ? flash.at : null} />
           <Counter label="Utilizzati" value={used} tone="green" flashKey={flash?.kind === 'used' ? flash.at : null} />
@@ -310,8 +349,8 @@ function DropCard({ d, selected, notifyLog, notifying, active, partnerTotal, fla
       >
         <ActionIcon
           onClick={onNotify}
-          disabled={notifying || !active}
-          title={notifyLog ? `Già inviato a ${notifyLog.sent_count} iscritti — clicca per inviare di nuovo` : !active ? 'Attiva per notificare' : 'Notifica iscritti newsletter'}
+          disabled={notifying || !active || d.is_test}
+          title={d.is_test ? 'Sconto di prova: pubblicalo per tutti prima di mandare l\'email' : notifyLog ? `Già inviato a ${notifyLog.sent_count} iscritti — clicca per inviare di nuovo` : !active ? 'Attiva per notificare' : 'Notifica iscritti newsletter'}
           color={notifyLog ? '#2C7A4A' : 'var(--color-ink)'}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -581,6 +620,8 @@ export default function DiscountManager() {
   // Banner pubblicitari che mostrano uno sconto: { [discount_id]: [id, ...] }.
   // Servono in fase di cancellazione — vedi `handleDelete`.
   const [adsByDiscount, setAdsByDiscount] = useState({})
+  // Invitati degli sconti di prova: { [discount_id]: ['email', ...] }.
+  const [testersByDiscount, setTestersByDiscount] = useState({})
 
   const [form, setForm] = useState(EMPTY_FORM)
 
@@ -618,7 +659,13 @@ export default function DiscountManager() {
       supabase.from('sponsored_placements').select('id, discount_id').not('discount_id', 'is', null),
       // Chi ha un PIN: il PIN non si legge dalla tabella, lo dà l'RPC admin.
       fetchRestaurantSecrets().catch(() => ({})),
-    ]).then(([discRes, restRes, partRes, adsRes, secrets]) => {
+      supabase.from('discount_testers').select('discount_id, email').order('created_at'),
+    ]).then(([discRes, restRes, partRes, adsRes, secrets, testersRes]) => {
+      const tmap = {}
+      ;(testersRes?.data || []).forEach((t) => {
+        tmap[t.discount_id] = [...(tmap[t.discount_id] || []), t.email]
+      })
+      setTestersByDiscount(tmap)
       const restPhotoMap = {}
       ;(restRes.data || []).forEach((r) => {
         restPhotoMap[r.id] = r.restaurant_photos?.[0]?.photo_url || null
@@ -732,6 +779,10 @@ export default function DiscountManager() {
       max_uses: (isDrop ? (d.max_quantity || d.max_redemptions) : d.max_redemptions) || '',
       is_active: d.is_active,
       send_email: false,
+      is_test: !!d.is_test,
+      testers: (testersByDiscount[d.id] || []).join(', '),
+      was_test: !!d.is_test,
+      clear_test_redemptions: true,
     })
     setEditing(d.id)
     setShowForm(true)
@@ -768,6 +819,29 @@ export default function DiscountManager() {
     return { error: null, rows: data || [] }
   }
 
+  /**
+   * Riallinea `discount_testers` all'elenco del form. Uno sconto non di
+   * prova non ha invitati: l'elenco vuoto cancella quelli rimasti.
+   */
+  const syncTesters = async (discountId, emails) => {
+    const before = testersByDiscount[discountId] || []
+    const same = before.length === emails.length && before.every((e) => emails.includes(e))
+    if (same) return { error: null }
+    const { error: delErr } = await supabase.from('discount_testers').delete().eq('discount_id', discountId)
+    if (delErr) return { error: delErr.message }
+    if (emails.length) {
+      const { error } = await supabase.from('discount_testers').insert(emails.map((email) => ({ discount_id: discountId, email })))
+      if (error) return { error: error.message }
+    }
+    setTestersByDiscount((prev) => {
+      const next = { ...prev }
+      if (emails.length) next[discountId] = emails
+      else delete next[discountId]
+      return next
+    })
+    return { error: null }
+  }
+
   const handleSave = async () => {
     const restId = form.restaurant_id || newPartner?.id
     if (!restId || !form.title || !form.discount_value) return
@@ -802,6 +876,12 @@ export default function DiscountManager() {
         return
       }
     }
+    const testerEmails = form.is_test ? parseTesterEmails(form.testers) : []
+    if (form.is_test && testerEmails.length === 0) {
+      setSaveError('Sconto di prova: scrivi almeno un\'email di chi lo deve vedere (quella con cui ha l\'account).')
+      return
+    }
+
     setSaving(true)
     setSaveError(null)
 
@@ -868,6 +948,9 @@ export default function DiscountManager() {
       drop_ends_at: isDrop ? endIso : null,
       max_quantity: isDrop ? uses : null,
       is_featured: isFeatured,
+      // Nasce già di prova (mai visibile al pubblico, neanche per un attimo);
+      // da prova a normale = pubblicato per tutti.
+      is_test: !!form.is_test,
     }
     const withProducts = '*, products:discount_products(id, name, note, photo_url, thumb_url, sort_order), restaurant:restaurants(id, name)'
     const result = editing
@@ -888,6 +971,21 @@ export default function DiscountManager() {
         setSaving(false)
         return
       }
+      const savedTesters = await syncTesters(result.data.id, testerEmails)
+      if (savedTesters.error) {
+        setSaveError(`Sconto salvato, ma gli invitati alla prova no: ${savedTesters.error}`)
+        setSaving(false)
+        return
+      }
+      if (form.is_test) writeLastTesters(testerEmails.join(', '))
+      // Pubblicato adesso: i riscatti fatti durante la prova non sono clienti
+      // veri — via, se l'admin lo lascia spuntato (il trigger riallinea i
+      // contatori, e con loro vanno le stelle date per prova).
+      let clearNotice = null
+      if (form.was_test && !form.is_test && form.clear_test_redemptions) {
+        const { error: rErr } = await supabase.from('discount_redemptions').delete().eq('discount_id', result.data.id)
+        if (rErr) clearNotice = `Sconto pubblicato, ma i riscatti di prova non sono stati cancellati: ${rErr.message}`
+      }
       const saved = { ...result.data, products: savedProducts.rows }
       if (editing) setDiscounts((p) => p.map((d) => (d.id === editing ? saved : d)))
       else setDiscounts((p) => [saved, ...p])
@@ -900,8 +998,15 @@ export default function DiscountManager() {
       // modifiche" non manda mai email — correggere una didascalia non è
       // un nuovo sconto. Il server fa la stessa verifica (`onCreate`: rifiuta
       // uno sconto che non è appena nato) e tiene il registro dei doppioni.
-      if (!editing && result.data.is_active && form.send_email) {
+      if (!editing && result.data.is_active && form.send_email && !result.data.is_test) {
         notifyOnPublish(saved)
+      }
+      if (clearNotice) {
+        setAutoNotice({ kind: 'err', text: clearNotice })
+        setTimeout(() => setAutoNotice(null), 7000)
+      } else if (form.was_test && !form.is_test) {
+        setAutoNotice({ kind: 'ok', text: 'Sconto pubblicato: ora lo vedono tutti. Nessuna email è partita — se vuoi annunciarlo c\'è il megafono.' })
+        setTimeout(() => setAutoNotice(null), 7000)
       }
     }
     setSaving(false)
@@ -1072,6 +1177,7 @@ export default function DiscountManager() {
     if (filter === 'active') return counted.filter((d) => isActive(d))
     if (filter === 'drops') return counted.filter((d) => d.is_drop)
     if (filter === 'expired') return counted.filter((d) => isExpired(d))
+    if (filter === 'tests') return counted.filter((d) => d.is_test)
     return counted
   }, [counted, filter])
 
@@ -1080,6 +1186,7 @@ export default function DiscountManager() {
     active: discounts.filter((d) => isActive(d)).length,
     drops: discounts.filter((d) => d.is_drop).length,
     expired: discounts.filter((d) => isExpired(d)).length,
+    tests: discounts.filter((d) => d.is_test).length,
   }), [discounts])
 
   if (authLoading) return null
@@ -1244,6 +1351,9 @@ export default function DiscountManager() {
           <PillTab active={filter === 'drops'} count={counts.drops} onClick={() => setFilter('drops')}>Drop attivi</PillTab>
           <PillTab active={filter === 'active'} count={counts.active} onClick={() => setFilter('active')}>Sconti sempre attivi</PillTab>
           <PillTab active={filter === 'expired'} count={counts.expired} onClick={() => setFilter('expired')}>Scaduti</PillTab>
+          {(counts.tests > 0 || filter === 'tests') && (
+            <PillTab active={filter === 'tests'} count={counts.tests} onClick={() => setFilter('tests')}>In prova</PillTab>
+          )}
         </div>
 
         {/* ── Loading ── */}
@@ -1357,6 +1467,7 @@ export default function DiscountManager() {
               <DropCard
                 key={d.id}
                 d={d}
+                testers={testersByDiscount[d.id]}
                 selected={selectedIds.has(d.id)}
                 notifyLog={notifyLogs[`${d.is_drop ? 'drop' : 'discount'}:${d.id}`]}
                 notifying={notifyingId === d.id}
@@ -1773,7 +1884,7 @@ export default function DiscountManager() {
                         {form.is_active ? 'Pubblicato' : 'In pausa'}
                       </span>
                       <span style={{ fontSize: 11, color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
-                        {form.is_active ? 'Visibile agli utenti' : 'Nascosto agli utenti, modificabile in seguito'}
+                        {form.is_active ? (form.is_test ? 'Visibile solo a chi è invitato alla prova' : 'Visibile agli utenti') : 'Nascosto agli utenti, modificabile in seguito'}
                       </span>
                     </div>
                     <input
@@ -1784,10 +1895,84 @@ export default function DiscountManager() {
                     />
                   </label>
 
+                  {/* Sconto di prova: esiste davvero (si sblocca, il locale lo
+                      convalida) ma lo vedono solo gli admin e le email scritte
+                      qui. Il DB lo nasconde a tutti gli altri. */}
+                  <div
+                    style={{
+                      padding: '10px 12px',
+                      background: form.is_test ? '#fff' : 'var(--color-cream, #F5F0E4)',
+                      border: form.is_test ? '1px dashed var(--color-ink, #22181C)' : '1px solid transparent',
+                      borderRadius: 10,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 10,
+                    }}
+                  >
+                    <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, cursor: 'pointer' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink)' }}>
+                          Sconto di prova
+                        </span>
+                        <span style={{ fontSize: 11, color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
+                          {form.is_test
+                            ? 'Non va online: lo vedono solo gli admin e le email qui sotto, nessuna email parte'
+                            : form.was_test
+                              ? 'Salvando lo pubblichi: da adesso lo vedono tutti'
+                              : 'Per provarlo col locale prima di metterlo online'}
+                        </span>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={form.is_test}
+                        onChange={(e) => {
+                          const on = e.target.checked
+                          setForm((f) => ({ ...f, is_test: on, testers: on && !f.testers ? readLastTesters() : f.testers }))
+                        }}
+                        style={{ accentColor: '#E8453C', width: 18, height: 18 }}
+                      />
+                    </label>
+                    {form.is_test && (
+                      <FormField
+                        label="Chi lo vede"
+                        hint="Le email degli account, separate da virgola. Lo trovano in home, nel Bi Club e sulla scheda del locale."
+                      >
+                        <input
+                          type="text"
+                          value={form.testers}
+                          onChange={(e) => setForm((f) => ({ ...f, testers: e.target.value }))}
+                          placeholder="nome@esempio.it"
+                          autoCapitalize="none"
+                          autoCorrect="off"
+                          spellCheck={false}
+                          style={inputStyle}
+                        />
+                      </FormField>
+                    )}
+                    {form.was_test && !form.is_test && (() => {
+                      const taken = live.byDiscount[editing]?.taken || 0
+                      if (!taken) return null
+                      return (
+                        <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer', fontSize: 12, color: 'var(--color-ink)' }}>
+                          <input
+                            type="checkbox"
+                            checked={form.clear_test_redemptions}
+                            onChange={(e) => setForm((f) => ({ ...f, clear_test_redemptions: e.target.checked }))}
+                            style={{ accentColor: '#E8453C', width: 16, height: 16, marginTop: 1 }}
+                          />
+                          <span>
+                            Cancella {taken === 1 ? 'lo sconto preso' : `i ${taken} sconti presi`} durante la prova
+                            (così contatori e posti ripartono da zero)
+                          </span>
+                        </label>
+                      )
+                    })()}
+                  </div>
+
                   {/* Email agli utenti: si sceglie solo creando. Modificando
                       lo si dice chiaro, perché era proprio la paura di
                       rimandare l'annuncio a tenere ferme le correzioni. */}
-                  {editing ? (
+                  {form.is_test ? null : editing ? (
                     <p style={{ fontSize: 12, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', margin: 0, padding: '10px 12px', background: '#f7f7f7', borderRadius: 10 }}>
                       Salvare le modifiche <strong>non manda nessuna email</strong>: lo sconto si aggiorna e basta.
                       Per riannunciarlo c'è il megafono sulla card.
