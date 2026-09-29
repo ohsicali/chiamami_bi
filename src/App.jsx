@@ -13,6 +13,7 @@ import { captureError, posthogConsentDenied, posthogConsentGranted, posthogIdent
 import { claimChunkReload, isChunkLoadError } from './lib/chunkReload'
 import { prewarmExplore, scheduleExplorePrewarm } from './lib/prewarmExplore'
 import WelcomeTourGate from './components/Onboarding/WelcomeTourGate'
+import RedemptionFeedbackGate from './components/Feedback/RedemptionFeedbackGate'
 
 // CookieConsent is rendered after first paint via requestIdleCallback so it
 // doesn't compete with the LCP. The library + its CSS adds ~20 kB to the
@@ -94,8 +95,10 @@ const NewsletterManager = lazy(() => import('./pages/admin/NewsletterManager'))
 const ApplicationManager = lazy(() => import('./pages/admin/ApplicationManager'))
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'))
 const SuggestionsManager = lazy(() => import('./pages/admin/SuggestionsManager'))
+const FeedbackManager = lazy(() => import('./pages/admin/FeedbackManager'))
 const PrivacyPage = lazy(() => import('./pages/public/PrivacyPage'))
 const EmailPreferencesPage = lazy(() => import('./pages/public/EmailPreferencesPage'))
+const FeedbackPage = lazy(() => import('./pages/public/FeedbackPage'))
 const TermsPage = lazy(() => import('./pages/public/TermsPage'))
 const AuthCallback = lazy(() => import('./pages/public/AuthCallback'))
 const ResetPasswordPage = lazy(() => import('./pages/public/ResetPasswordPage'))
@@ -137,7 +140,7 @@ export default function App() {
   useEffect(() => {
     const p = location.pathname
     if (p === '/esplora') prewarmExplore()
-    else if (!p.startsWith('/admin') && p !== '/verify' && p !== '/partner') scheduleExplorePrewarm()
+    else if (!p.startsWith('/admin') && p !== '/verify' && p !== '/partner' && p !== '/feedback') scheduleExplorePrewarm()
   }, [location.pathname])
 
   // Defer the cookie banner until the browser is idle. If the user has already
@@ -224,8 +227,10 @@ export default function App() {
   const isVerify = location.pathname === '/verify'
   const isLogin = location.pathname === '/login'
   const isChiedi = location.pathname.startsWith('/chiedi')
-  const showTabBar = !isAdmin && !isRestaurantDetail && !isPartner && !isVerify && !isLogin && !isChiedi
-  const showDesktopNav = !isAdmin && !isVerify && !isLogin
+  // /feedback arriva dall'email ed è una schermata sola, come il login.
+  const isFeedback = location.pathname === '/feedback'
+  const showTabBar = !isAdmin && !isRestaurantDetail && !isPartner && !isVerify && !isLogin && !isChiedi && !isFeedback
+  const showDesktopNav = !isAdmin && !isVerify && !isLogin && !isFeedback
 
   return (
     <>
@@ -276,6 +281,7 @@ export default function App() {
           <Route path="/admin/newsletter" element={<NewsletterManager />} />
           <Route path="/admin/applications" element={<ApplicationManager />} />
           <Route path="/admin/suggestions" element={<SuggestionsManager />} />
+          <Route path="/admin/feedback" element={<FeedbackManager />} />
           <Route path="/admin/settings" element={<AdminSettings />} />
           <Route path="/partner" element={<PartnerLandingPage />} />
           <Route path="/deals" element={<DealsPage />} />
@@ -286,6 +292,7 @@ export default function App() {
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/preferenze-email" element={<EmailPreferencesPage />} />
+          <Route path="/feedback" element={<FeedbackPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -299,6 +306,10 @@ export default function App() {
     {/* Tutorial di benvenuto: una volta sola, dopo la registrazione
         (regole in src/lib/welcomeTour.js). */}
     <WelcomeTourGate />
+
+    {/* Sconto convalidato dal locale: festa, stelle e feedback per Bi
+        (regole in src/lib/redemptionFeedback.js). */}
+    <RedemptionFeedbackGate />
     </AdsProvider>
     </ErrorBoundary>
 

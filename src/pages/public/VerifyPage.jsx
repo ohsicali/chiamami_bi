@@ -8,6 +8,7 @@ import SuccessResult from '../../components/Verify/SuccessResult'
 import { formatAddress } from '../../lib/utils/formatAddress'
 import AlreadyUsedResult from '../../components/Verify/AlreadyUsedResult'
 import ShortCodeInput from '../../components/Verify/ShortCodeInput'
+import VerifyReviews, { ReviewsTeaser } from '../../components/Verify/VerifyReviews'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
 import { SHORT_CODE_LENGTH, isShortCode, normalizeShortCode } from '../../lib/shortCode'
 import MetaTags from '../../components/SEO/MetaTags'
@@ -752,6 +753,14 @@ function AuthedView({ restaurant, onLogout, deviceToken, onSessionExpired }) {
             deviceToken={deviceToken}
             onSessionExpired={onSessionExpired}
             onOpenScanner={openScanner}
+            onOpenReviews={() => setTab('recensioni')}
+          />
+        )}
+        {tab === 'recensioni' && (
+          <VerifyReviews
+            restaurant={restaurant}
+            deviceToken={deviceToken}
+            onSessionExpired={onSessionExpired}
           />
         )}
         {tab === 'impostazioni' && (
@@ -814,10 +823,11 @@ function CameraIcon({ size = 22, color = 'currentColor' }) {
   )
 }
 
-/* Pill tab bar — 3 tab (Dashboard / Scansiona / Impostazioni) */
+/* Pill tab bar — 4 tab (Dashboard / Scansiona / Recensioni / Impostazioni) */
 const V4_TABS = [
   { key: 'dashboard', label: 'Dashboard' },
   { key: 'scan', label: 'Scansiona' },
+  { key: 'recensioni', label: 'Recensioni' },
   { key: 'impostazioni', label: 'Impostazioni' },
 ]
 
@@ -1698,6 +1708,7 @@ function DesktopShell({
   const navItems = [
     { key: 'dashboard', label: 'Dashboard', icon: '◈' },
     { key: 'scan', label: 'Scansiona', iconNode: <CameraIcon size={16} />, action: onOpenScanner },
+    { key: 'recensioni', label: 'Recensioni', icon: '★' },
     { key: 'impostazioni', label: 'Impostazioni', icon: '⚙' },
   ]
 
@@ -1749,7 +1760,24 @@ function DesktopShell({
             deviceToken={deviceToken}
             onSessionExpired={onSessionExpired}
             onOpenScanner={onOpenScanner}
+            onOpenReviews={() => onTabChange('recensioni')}
           />
+        )}
+        {tab === 'recensioni' && (
+          <>
+            <div className="v4-dsk-crumb">{restaurant?.name || '—'}</div>
+            <h1 className="v4-dsk-title">Recensioni</h1>
+            <div className="v4-dsk-sub">
+              <span className="meta">Cosa dicono i clienti Bi dopo lo sconto</span>
+            </div>
+            <div style={{ maxWidth: 620 }}>
+              <VerifyReviews
+                restaurant={restaurant}
+                deviceToken={deviceToken}
+                onSessionExpired={onSessionExpired}
+              />
+            </div>
+          </>
         )}
         {tab === 'impostazioni' && (
           <>
@@ -1783,7 +1811,7 @@ function DesktopShell({
 }
 
 /* Desktop Dashboard — hero verde + scan tile + 4-col stats + storico expandable */
-function DesktopDashboard({ restaurant, deviceToken, onSessionExpired, onOpenScanner }) {
+function DesktopDashboard({ restaurant, deviceToken, onSessionExpired, onOpenScanner, onOpenReviews }) {
   const [stats, setStats] = useState(null)
   const [discount, setDiscount] = useState(null)
   const [activity, setActivity] = useState([])
@@ -1929,6 +1957,15 @@ function DesktopDashboard({ restaurant, deviceToken, onSessionExpired, onOpenSca
       </div>
 
       <Stats4 stats={stats} range={range} />
+
+      <div style={{ maxWidth: 620 }}>
+        <ReviewsTeaser
+          restaurant={restaurant}
+          deviceToken={deviceToken}
+          onSessionExpired={onSessionExpired}
+          onOpen={onOpenReviews}
+        />
+      </div>
 
       <div className="v4-dsk-card" style={{ marginTop: 8 }}>
         <h4>
@@ -2122,7 +2159,7 @@ function defaultRange() {
   return { kind: '30d', from, to, label: 'Ultimi 30 giorni' }
 }
 
-function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
+function DashboardTab({ restaurant, deviceToken, onSessionExpired, onOpenReviews }) {
   const [stats, setStats] = useState(null)
   const [statsError, setStatsError] = useState(null)
   const [discount, setDiscount] = useState(null)
@@ -2282,6 +2319,12 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
       <RangePicker range={range} onChange={setRange} />
       <ScontoHero discount={discount} />
       <Stats4 stats={stats} range={range} />
+      <ReviewsTeaser
+        restaurant={restaurant}
+        deviceToken={deviceToken}
+        onSessionExpired={onSessionExpired}
+        onOpen={onOpenReviews}
+      />
 
       <div className="v4-section-lbl">
         Ultime verifiche

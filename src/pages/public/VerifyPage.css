@@ -209,12 +209,15 @@
 }
 .v4-tab {
   flex: 1;
-  padding: 10px 8px;
+  min-width: 0;
+  padding: 10px 4px;
   text-align: center;
   border-radius: 999px;
   font-family: var(--font-sans);
   font-weight: 800;
-  font-size: 13px;
+  /* quattro schede: sui telefoni stretti il testo si stringe un poco */
+  font-size: clamp(11px, 3.3vw, 13px);
+  white-space: nowrap;
   color: var(--color-ink-55);
   cursor: pointer;
   background: transparent;

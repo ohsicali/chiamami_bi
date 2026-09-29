@@ -34,7 +34,7 @@ const SWITCHES = [
   {
     key: 'my_discounts',
     label: 'I miei sconti',
-    hint: 'Promemoria sugli sconti che hai preso e non ancora usato.',
+    hint: 'Promemoria sugli sconti che hai preso e non ancora usato, e dopo averne usato uno la domanda su com’è andata.',
   },
 ]
 

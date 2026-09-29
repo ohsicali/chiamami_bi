@@ -611,3 +611,59 @@ export function dataTable(rows) {
     </table>
   </td></tr>`
 }
+
+/* ── Feedback ──────────────────────────────────────────────────────── */
+
+const STAR_GOLD = '#F5B82E'
+const STAR_OFF = '#E3DACB'
+
+/**
+ * Le cinque stelle da toccare nella posta: ognuna è un link a
+ * /feedback?t=…&stelle=N, che salva il voto e apre il modulo. Il carattere
+ * ★ e non un'immagine: con le foto spente (in Gmail è la regola) resta
+ * tutto al suo posto, e non pesa niente.
+ *
+ * Con `rating` (già dato nell'app) le stelle sono accese fin lì e non sono
+ * link: il voto c'è, adesso si chiede il resto.
+ */
+export function starRow({ href, rating = null, labels = ['Proprio no', 'Da tornarci!'] }) {
+  const cells = [1, 2, 3, 4, 5].map((n) => {
+    const on = rating != null && n <= rating
+    const star = `<span style="font-family:Arial,sans-serif;font-size:38px;line-height:1;color:${rating != null ? (on ? STAR_GOLD : STAR_OFF) : STAR_GOLD};">&#9733;</span>`
+    const inner = rating == null && href
+      ? `<a href="${esc(href(n))}" title="${n} ${n === 1 ? 'stella' : 'stelle'}" style="text-decoration:none;display:block;padding:4px 2px;">${star}</a>`
+      : `<span style="display:block;padding:4px 2px;">${star}</span>`
+    return `<td align="center" width="52" style="width:52px;">${inner}</td>`
+  }).join('')
+  const legend = rating == null && labels
+    ? `<tr>
+        <td colspan="2" align="left" style="padding-top:2px;font-family:${FONT_BODY};font-size:10.5px;color:${COLORS.footerClaim};">${esc(labels[0])}</td>
+        <td></td>
+        <td colspan="2" align="right" style="padding-top:2px;font-family:${FONT_BODY};font-size:10.5px;color:${COLORS.footerClaim};">${esc(labels[1])}</td>
+      </tr>`
+    : ''
+  return `<tr><td align="center" style="padding:18px 20px 0;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
+      <tr>${cells}</tr>
+      ${legend}
+    </table>
+  </td></tr>`
+}
+
+/**
+ * Bi che parla: la sua faccina tonda a sinistra, la frase a destra. La
+ * faccina è un PNG già tondo (fondo trasparente), così non dipende dal
+ * border-radius che Outlook ignora; con le foto spente resta l'alt "Bi".
+ */
+export function biSays(html, { padding = '16px 20px 0' } = {}) {
+  return `<tr><td style="padding:${padding};">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td width="60" valign="top" style="width:60px;padding-right:12px;">
+          <img src="${SITE_URL}/email-assets/bi-cartoon.png" width="48" height="48" alt="Bi" style="display:block;width:48px;height:48px;border:0;" />
+        </td>
+        <td valign="middle" style="font-family:${FONT_BODY};font-size:15px;line-height:1.55;color:${COLORS.body};">${html}</td>
+      </tr>
+    </table>
+  </td></tr>`
+}

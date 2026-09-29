@@ -8,6 +8,7 @@ Disallow: /admin/
 Disallow: /auth/
 Disallow: /login
 Disallow: /verify
+Disallow: /feedback
 Disallow: /reset-password
 Disallow: /profile
 Disallow: /profile/

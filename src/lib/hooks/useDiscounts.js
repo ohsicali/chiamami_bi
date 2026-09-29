@@ -25,7 +25,7 @@ function writeActiveDiscountsCache(data) {
 // N redemption cards = N parallel WebSocket subscriptions.
 const redemptionChannels = new Map()
 
-function subscribeToRedemptions(userId, listener) {
+export function subscribeToRedemptions(userId, listener) {
   if (!userId || !isSupabaseConfigured()) return () => {}
   let entry = redemptionChannels.get(userId)
   if (!entry) {

@@ -27,7 +27,7 @@ import { applyCors } from './_cors.js'
 import { verifyTurnstile } from './_turnstile.js'
 import {
   welcomeEmail, newDiscountEmail, newRestaurantEmail,
-  discountClaimedEmail, discountUsedEmail, discountReminderEmail, partnerWelcomeEmail,
+  discountClaimedEmail, discountUsedEmail, discountReminderEmail, feedbackAskEmail, partnerWelcomeEmail,
   suggestionConfirmationEmail, partnerApplicationConfirmationEmail,
   recoveryOtpEmail, internalSuggestionEmail, internalPartnerApplicationEmail, SAMPLE,
 } from './_email/templates.js'
@@ -269,7 +269,14 @@ async function handleDiscountUsed(req, res) {
   })
   if (!first) return res.status(200).json({ ok: true, skipped: 'already-sent' })
 
-  const mail = discountUsedEmail(discountUsedProps(red))
+  // La riga del feedback nasce con la convalida (trigger): il suo token
+  // porta alle stelle senza dover fare l'accesso.
+  const { data: fb } = await admin
+    .from('redemption_feedback').select('token').eq('redemption_id', red.id).maybeSingle()
+  const mail = discountUsedEmail({
+    ...discountUsedProps(red),
+    feedbackHref: fb?.token ? `${PUBLIC_SITE}/feedback?t=${fb.token}` : null,
+  })
   const r = await sendEmail({ to, ...mail })
   if (!r.ok) {
     await logFailure(admin, { userId: red.user_id, kind: 'discount-used', refId: red.id, toEmail: to, error: r.error })
@@ -302,6 +309,8 @@ async function handlePreview(req, res) {
     'new-place': () => newRestaurantEmail({ ...SAMPLE.newRestaurant, unsubscribeUrl: u }),
     'discount-claimed': () => discountClaimedEmail(SAMPLE.discountClaimed),
     'discount-used': () => discountUsedEmail(SAMPLE.discountUsed),
+    'feedback-ask': () => feedbackAskEmail({ ...SAMPLE.feedbackAsk, unsubscribeUrl: u }),
+    'feedback-ask-rated': () => feedbackAskEmail({ ...SAMPLE.feedbackAskRated, unsubscribeUrl: u }),
     // Il promemoria ha due vesti come l'annuncio: crema per la convenzione,
     // corallo col countdown per il drop. Si provano tutte e due.
     'discount-reminder': () => discountReminderEmail({ ...SAMPLE.discountReminder, now: new Date(), claimedAt: new Date(Date.now() - 4 * 86_400_000).toISOString(), unsubscribeUrl: u }),

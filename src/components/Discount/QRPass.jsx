@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import QRCode from 'qrcode'
 import ShortCodeCard from './ShortCodeCard'
@@ -11,6 +11,7 @@ import {
   formatSlots,
   DAY_SHORT_LABELS,
 } from '../../lib/validity'
+import { QR_PASS_EVENT, REDEMPTION_VALIDATED_EVENT } from '../../lib/redemptionFeedback'
 import './QRPass.css'
 
 /**
@@ -289,6 +290,26 @@ export function QRPassSheet({
     : null
   const pdf = useDiscountPdf(redemption?.id, name)
   const [showInfo, setShowInfo] = useState(false)
+
+  // Il pass aperto lo sa anche RedemptionFeedbackGate: finché è qui, guarda
+  // se il locale convalida il codice, e quando succede lo chiude e apre la
+  // festa + il feedback (src/lib/redemptionFeedback.js).
+  const redemptionId = redemption?.id
+  const onCloseRef = useRef(onClose)
+  useEffect(() => { onCloseRef.current = onClose })
+  useEffect(() => {
+    if (!redemptionId) return undefined
+    const say = (open) => window.dispatchEvent(new CustomEvent(QR_PASS_EVENT, { detail: { open, redemptionId } }))
+    const onValidated = (e) => {
+      if (e?.detail?.redemptionId === redemptionId) onCloseRef.current?.()
+    }
+    say(true)
+    window.addEventListener(REDEMPTION_VALIDATED_EVENT, onValidated)
+    return () => {
+      say(false)
+      window.removeEventListener(REDEMPTION_VALIDATED_EVENT, onValidated)
+    }
+  }, [redemptionId])
 
   return (
     <div className="qrp-sheet">

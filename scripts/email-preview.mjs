@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import {
   welcomeEmail, newDiscountEmail, newRestaurantEmail,
-  discountClaimedEmail, discountUsedEmail, discountReminderEmail, partnerWelcomeEmail,
+  discountClaimedEmail, discountUsedEmail, discountReminderEmail, feedbackAskEmail, partnerWelcomeEmail,
   suggestionConfirmationEmail, partnerApplicationConfirmationEmail,
   recoveryOtpEmail, internalSuggestionEmail, internalPartnerApplicationEmail,
   SAMPLE,
@@ -46,6 +46,8 @@ const EMAIL = [
   ['Sconto usato', 'usato', discountUsedEmail(SAMPLE.discountUsed)],
   ['Promemoria — sconto non usato', 'promemoria', discountReminderEmail({ ...SAMPLE.discountReminder, photos: [FOTO], unsubscribeUrl: UNSUB })],
   ['Promemoria — drop in scadenza', 'promemoria-drop', discountReminderEmail({ ...SAMPLE.discountReminder, photos: [FOTO], isDrop: true, endsAt: '2026-09-26T20:00:00Z', others: 0, unsubscribeUrl: UNSUB })],
+  ['Com’è andata? — senza stelle', 'feedback', feedbackAskEmail({ ...SAMPLE.feedbackAsk, unsubscribeUrl: UNSUB })],
+  ['Com’è andata? — stelle date', 'feedback-stelle', feedbackAskEmail({ ...SAMPLE.feedbackAskRated, unsubscribeUrl: UNSUB })],
   ['Benvenuto ristoratore — col PIN', 'ristoratore', partnerWelcomeEmail(SAMPLE.partnerWelcome)],
   ['Conferma suggerimento', 'suggerimento', suggestionConfirmationEmail(SAMPLE.suggestionConfirmation)],
   ['Conferma candidatura partner', 'candidatura', partnerApplicationConfirmationEmail(SAMPLE.partnerApplicationConfirmation)],
