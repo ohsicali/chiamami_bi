@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-28 (Tutorial di benvenuto dopo la registrazione)
+Ultima modifica: 2026-09-29 (Feedback dopo lo sconto convalidato)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -33,6 +33,40 @@ dove siamo. Aggiorna a ogni step importante.
 | Promemoria sconti presi e non usati | — | 🚧 In review | Branch `claude/reminder-unused-discount-rj5sx6`. **Nessun SQL.** Cron Vercel giornaliero. Vedi sezione "24/09 — promemoria" sotto. |
 | Admin Analytics — numeri veri e più chiari | — | 🚧 In review | SQL `supabase/admin-analytics-2026-09-23.sql` **già eseguito** (connettore Supabase). Vedi sezione "23/09 — admin Analytics" sotto. |
 | Tutorial di benvenuto dopo la registrazione | #310 | ✅ Merged (cf52e71) | **Nessun SQL.** 7 schermate saltabili (4 sugli sconti), parte dalla spunta "Ci sei" appena l'account è confermato; finito si va alla home. Fix 28/09: con Google (flusso implicit, niente `?code=`) diceva "Accesso effettuato!" e partiva solo sulla home. Vedi CLAUDE.md "Tutorial di benvenuto". |
+| Feedback dopo la convalida (festa, stelle, Bi che ringrazia, email 30 min / 1 giorno) | — | 🚧 In review | Branch `claude/ecstatic-goldberg-0ikk3f`. SQL `supabase/redemption-feedback-2026-09-29.sql` **già eseguito** il 29/09 (connettore). **Dopo il merge** eseguire `supabase/redemption-feedback-cron-2026-09-29.sql` (pg_cron + pg_net, giro ogni 10 min). Vedi sezione "29/09 — feedback" sotto e CLAUDE.md. |
+
+## 29/09 — feedback dopo lo sconto convalidato
+
+Richiesta del proprietario: quando il ristoratore convalida il codice, sullo
+schermo dell'utente un'animazione dice che è convalidato, poi stelle da 1 a 5
+che non si saltano, poi un modulo (saltabile) per scrivere a Bi; chi salta
+riceve un'email dopo mezz'ora e dopo un giorno (anche chi ha dato solo le
+stelle); chi finisce vede Bi animata che ringrazia. Bi disegnata cartoon
+"premium", nello stile del sito.
+
+**Fatto**:
+- SQL `supabase/redemption-feedback-2026-09-29.sql` (**eseguito il 29/09**,
+  provato in transazione annullata: il trigger crea la riga, rate/submit
+  salvano, token falso → `not_found`): tabella `redemption_feedback`, trigger
+  alla convalida, RPC `feedback_get/rate/submit` (anon+authenticated, col
+  token), `cron_token_ok` (solo service role).
+- App: `src/components/Feedback/` (Gate, esperienza, Bi in SVG), pagina
+  `/feedback` per i link delle email, `/admin/feedback`. `QRPassSheet` dice
+  al Gate quando è aperto e si chiude alla convalida.
+- Email: `api/_email/feedback.js` (regole + giro), `feedbackAskEmail`,
+  blocchi `starRow`/`biSays`, job `feedback-asks` in notify-subscribers. La
+  ricevuta "Sconto usato" ora linka le stelle. Anteprime in
+  `docs/email-preview/feedback*.html` e in `/admin/settings`.
+- Test `tests/feedback-asks.test.mjs`. Screenshot del flusso verificati a
+  390px e 1280px (banco di prova con Supabase simulato).
+
+**Da fare dopo il merge**:
+1. eseguire `supabase/redemption-feedback-cron-2026-09-29.sql` (abilita
+   pg_cron e pg_net, genera il token nel Vault, programma il giro ogni 10
+   minuti) — prima del deploy l'endpoint risponderebbe 405;
+2. prova vera: prendere uno sconto con un account di test, convalidarlo da
+   /verify con il telefono dell'utente col QR aperto → festa e stelle;
+3. `POST {type:'feedback-asks', dryRun:true}` da admin per vedere il giro.
 
 ## 24/09 — promemoria: sconti presi e non ancora usati
 

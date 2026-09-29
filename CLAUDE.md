@@ -181,6 +181,39 @@ corallo + countdown solo sul drop, convenzione crema e oro, badge verde da
 qui (nomi dei bottoni, «I miei vantaggi», come si usa il QR), aggiorna anche il
 testo in `WelcomeTour.jsx`.**
 
+## Feedback dopo la convalida — festa, stelle, Bi che ringrazia (29/09)
+Quando il locale convalida il codice (/verify), sul telefono di chi l'ha usato:
+**festa** a tutto corallo ("Sconto convalidato!", spunta, coriandoli) →
+**stelle da 1 a 5, che NON si saltano** (niente X, niente Salta, Esc non
+chiude: deciso dal proprietario) → **modulo per Bi**, saltabile (cosa è
+piaciuto, com'è andato lo sconto, ci torneresti, due righe) → **Bi che
+saluta coi cuori**. Chi salta riceve le email a ~30 min e ~1 giorno
+(`docs/EMAIL-FLOWS.md` §7d, regole in `FEEDBACK_RULES`, sotto test).
+- **DB**: `redemption_feedback`, una riga per convalida creata dal trigger
+  `tr_redemption_feedback_on_redeem`. Il browser non ci scrive mai: legge la
+  propria riga e passa dalle RPC `feedback_get/rate/submit` col `token` della
+  riga — lo stesso che sta nei link delle email (`/feedback?t=…&stelle=N`),
+  così dall'email non serve accedere. SQL `supabase/redemption-feedback-2026-09-29.sql`.
+- **Come se ne accorge l'app** (`RedemptionFeedbackGate` in `App.jsx`): il
+  realtime dei riscatti è acceso **solo mentre un QR è aperto** (`QRPassSheet`
+  lo annuncia con `QR_PASS_EVENT`, e si chiude da solo alla convalida), più un
+  controllo ogni pochi secondi dello stato di quel riscatto, più un controllo
+  all'apertura/rientro nell'app. Non accendere un canale realtime per tutti
+  gli utenti per tutta la visita: con il lancio Supabase era già saturo.
+- **Bi disegnata**: `src/components/Feedback/BiCharacter.jsx`, SVG vettoriale
+  dalla foto `public/bi-photo.webp` (capelli rame, lentiggini, orecchini d'oro,
+  felpa nera, il bao). `mood` cambia la faccia col voto (sad/meh/ok/smile/love),
+  `wave` saluta, `hearts` fa salire i cuori; animazioni CSS spente con "riduci
+  animazioni". La faccina per le email è `public/email-assets/bi-cartoon.png`,
+  generata dallo stesso SVG: se cambi il disegno, rigenerala.
+- Regole in `src/lib/redemptionFeedback.js` (sotto test in
+  `tests/feedback-asks.test.mjs`): si apre entro 3 ore dalla convalida, solo
+  senza stelle; la festa solo nei primi 5 minuti; mai su login, admin, /verify.
+- Admin: `/admin/feedback` (stelle, messaggi, media per locale). PostHog:
+  `feedback_shown`, `feedback_rated`, `feedback_submitted`, `feedback_skipped`.
+- Il giro delle email parte da **pg_cron** (`supabase/redemption-feedback-cron-2026-09-29.sql`),
+  non da `vercel.json`: sul piano Hobby i cron Vercel sono uno al giorno.
+
 ## Sblocco sconti — QR e codice a 6 caratteri
 Ogni riscatto (`discount_redemptions`) ha due codici: il `qr_code`
 (`BiSc-…`, dentro il QR) e lo `short_code` di sei caratteri — una lettera e

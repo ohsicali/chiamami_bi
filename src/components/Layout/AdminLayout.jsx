@@ -81,6 +81,13 @@ function SuggestionIcon(props) {
     </svg>
   )
 }
+function FeedbackIcon(props) {
+  return (
+    <svg {...iconProps} {...props}>
+      <path d="M12 2.6l2.83 5.74 6.33.92-4.58 4.46 1.08 6.3L12 17.04l-5.66 2.98 1.08-6.3L2.84 9.26l6.33-.92L12 2.6z" />
+    </svg>
+  )
+}
 function ApplicationIcon(props) {
   return (
     <svg {...iconProps} {...props}>
@@ -179,6 +186,7 @@ const MENU_SECTIONS = [
     items: [
       { to: '/admin/users', label: 'Utenti', icon: UsersIcon },
       { to: '/admin/suggestions', label: 'Suggerimenti', icon: SuggestionIcon, counterKey: 'suggestions' },
+      { to: '/admin/feedback', label: 'Feedback', icon: FeedbackIcon },
     ],
   },
   {

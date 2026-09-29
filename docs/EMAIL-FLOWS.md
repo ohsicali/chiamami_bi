@@ -47,6 +47,7 @@ Questo doc descrive **cosa parte quando e perché**. Serve per:
 | 7 | Admin pubblica un nuovo drop | Iscritti agli avvisi sconti (batch) | `Ho acceso un drop da {Locale}` | `POST /api/notify-subscribers` type=`drop` | `src/pages/admin/DiscountManager.jsx` |
 | 7b | Admin pubblica una convenzione (sconto non-drop) | Iscritti agli avvisi sconti | `Da oggi hai il {valore} da {Locale}` | `POST /api/notify-subscribers` type=`discount` | `src/pages/admin/DiscountManager.jsx` |
 | 7c | Ogni giorno alle ~11 (cron Vercel): sconti presi da ≥48 ore e mai usati | Chi li ha presi, se ha "I miei sconti" acceso | `Il tuo sconto da {Locale} ti aspetta` · drop: `Il tuo drop da {Locale} scade tra {X}` | `GET /api/notify-subscribers?job=discount-reminders` (Bearer `CRON_SECRET`) | nessuno — parte da sola (`vercel.json` → `crons`) |
+| 7d | ~30 min e ~1 giorno dopo che il locale ha convalidato uno sconto, se il feedback nell'app non è finito (pg_cron ogni 10 min) | Chi ha usato lo sconto, se ha "I miei sconti" acceso | `Com’è andata da {Locale}?` · stelle già date: `Mi racconti com’è andata da {Locale}?` · secondo giro: `Ieri da {Locale}: …` | `GET /api/notify-subscribers?job=feedback-asks` (token nel Vault, o `CRON_SECRET`) | nessuno — parte da sola (`supabase/redemption-feedback-cron-2026-09-29.sql`) |
 | ~~8~~ | ~~Newsletter manuale (edge function)~~ | — | — | ~~Edge Function `send-newsletter`~~ | **Rimossa il 21/09/2026** — vedi §"Chi riceve le email" |
 
 ### Trigger dormant / gap identificati
@@ -193,6 +194,37 @@ Questo doc descrive **cosa parte quando e perché**. Serve per:
   il codice a sei caratteri da dettare.
 - **Il primo giro** trova l'arretrato: stimati ~100 destinatari (un'email a
   testa), poi il resto si distribuisce nei giorni seguenti.
+
+### 7d. Com'è andata? — dopo lo sconto convalidato (29/09/2026)
+
+Quando il locale convalida il codice, sul telefono di chi l'ha usato parte
+la festa "Sconto convalidato!", poi le **stelle da 1 a 5 (non si saltano)**,
+poi un modulo facoltativo per Bi, poi Bi (disegnata) che ringrazia. Dettagli
+dell'app in CLAUDE.md, "Feedback dopo la convalida".
+
+Chi non arriva in fondo riceve fino a **due email**:
+- **~30 minuti** dopo la convalida (`feedback-ask-1`), fino a 12 ore dopo;
+- **~1 giorno** dopo (`feedback-ask-2`), fino a 3 giorni dopo, almeno 12 ore
+  dopo la prima.
+
+Niente email a chi ha mandato il modulo; chi ha dato solo le stelle riceve la
+versione "raccontami di più" con le sue stelle accese. Di notte (23–8, Roma)
+non parte niente; una persona riceve al massimo un'email a giro. Senza stelle,
+le cinque stelle si toccano **dalla posta**: ogni stella porta a
+`/feedback?t=<token>&stelle=N`, che salva il voto e apre il modulo (il token
+è l'autorizzazione, non serve accedere).
+
+- Regole: `FEEDBACK_RULES` in `api/_email/feedback.js`, sotto test in
+  `tests/feedback-asks.test.mjs`. Se le cambi, cambia il test.
+- Template: `feedbackAskEmail()` in `templates.js`, blocchi `starRow` e
+  `biSays` (la faccina di Bi è `public/email-assets/bi-cartoon.png`).
+- Giro: **pg_cron ogni 10 minuti** → `GET /api/notify-subscribers?job=feedback-asks`.
+  Non Vercel: sul piano Hobby i cron partono una volta al giorno. Il cron si
+  fa riconoscere con un token che il DB genera e tiene nel Vault
+  (`chiamamibi_cron_token`), verificato dall'endpoint con la RPC
+  `cron_token_ok`: nessun segreto da copiare su Vercel.
+- A mano da admin: `POST { type: 'feedback-asks', dryRun: true }`.
+- Anche la ricevuta "Sconto usato" (#6) ora porta il link alle stelle.
 
 ### ~~8. Newsletter standalone (edge function Supabase)~~ · RIMOSSA il 21/09/2026
 

@@ -16,6 +16,10 @@
  * - POST { type: 'discount-reminders', dryRun?: boolean } → lo stesso giro
  *   lanciato a mano da un admin; con `dryRun` dice chi riceverebbe cosa
  *   senza spedire niente.
+ *
+ * E le email "com'è andata?" dopo uno sconto convalidato (_email/feedback.js):
+ * - GET  ?job=feedback-asks → ogni 10 minuti da pg_cron (token nel Vault);
+ * - POST { type: 'feedback-asks', dryRun?: boolean } → a mano, da admin.
  */
 import { createClient } from '@supabase/supabase-js'
 import { rateLimit, maybeCleanup } from './_rate-limit.js'
@@ -26,6 +30,7 @@ import { formatDiscountBadge, pickPerk } from './_email/discount.js'
 import { countdownWords } from './_email/content.js'
 import { claimedCount, remainingCount, discountEndsAt } from '../src/lib/discounts.js'
 import { runDiscountReminders } from './_email/reminders.js'
+import { runFeedbackAsks } from './_email/feedback.js'
 
 const SITE_URL = 'https://chiamamibi.com'
 // Quanto può essere "giovane" uno sconto per l'annuncio automatico alla
@@ -36,6 +41,7 @@ const CREATE_WINDOW_MS = 15 * 60 * 1000
 export default async function handler(req, res) {
   if (applyCors(req, res)) return
   if (req.method === 'GET' && req.query?.job === 'discount-reminders') return handleReminderCron(req, res)
+  if (req.method === 'GET' && req.query?.job === 'feedback-asks') return handleFeedbackCron(req, res)
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   maybeCleanup()
@@ -81,6 +87,13 @@ export default async function handler(req, res) {
   }
 
   const { type, id, force, onCreate } = req.body || {}
+  if (type === 'feedback-asks') {
+    try {
+      return res.status(200).json(await runFeedbackAsks(admin, { dryRun: !!req.body?.dryRun }))
+    } catch (err) {
+      return res.status(500).json({ error: err.message })
+    }
+  }
   if (type === 'discount-reminders') {
     try {
       const summary = await runDiscountReminders(admin, { dryRun: !!req.body?.dryRun })
@@ -206,6 +219,49 @@ async function handleReminderCron(req, res) {
     return res.status(200).json(summary)
   } catch (err) {
     console.error('[discount-reminders]', err.message)
+    return res.status(500).json({ error: err.message })
+  }
+}
+
+/**
+ * GET ?job=feedback-asks — le email "com'è andata?" dopo uno sconto
+ * convalidato (regole in _email/feedback.js). Parte ogni 10 minuti da
+ * pg_cron (supabase/redemption-feedback-cron-2026-09-29.sql), che si fa
+ * riconoscere col token che il DB tiene nel Vault: lo si verifica con la
+ * RPC `cron_token_ok`, così il segreto non va copiato su Vercel. Vale anche
+ * `CRON_SECRET`, per lanciarlo a mano.
+ */
+async function handleFeedbackCron(req, res) {
+  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!supabaseUrl || !serviceRoleKey || !process.env.RESEND_API_KEY) {
+    return res.status(500).json({ error: 'Server configuration error' })
+  }
+  const limited = rateLimit(req, { key: 'feedback-cron', max: 6, windowMs: 60_000 })
+  if (limited) return res.status(429).json({ error: limited })
+
+  const header = String(req.headers.authorization || '')
+  const token = header.startsWith('Bearer ') ? header.slice(7).trim() : ''
+  if (!token) return res.status(401).json({ error: 'Unauthorized' })
+  const admin = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+  const secret = process.env.CRON_SECRET
+  let ok = !!secret && token === secret
+  if (!ok) {
+    const { data } = await admin.rpc('cron_token_ok', { p_token: token })
+    ok = data === true
+  }
+  if (!ok) return res.status(401).json({ error: 'Unauthorized' })
+
+  try {
+    const summary = await runFeedbackAsks(admin)
+    if (summary.planned || summary.errors.length) {
+      console.log('[feedback-asks]', JSON.stringify({ ...summary, errors: summary.errors.slice(0, 5) }))
+    }
+    return res.status(200).json(summary)
+  } catch (err) {
+    console.error('[feedback-asks]', err.message)
     return res.status(500).json({ error: err.message })
   }
 }

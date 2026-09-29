@@ -25,7 +25,7 @@ import {
   h1, h2, p, lede, eyebrow, metaLine, divider, button, offerCard, codeBlock,
   successBox, photoMosaic, dropCard, conventionOffer, microNote,
   textLink, signature, checklist, checkRows, steps, note, dataTable, spacer,
-  esc, SIGN,
+  starRow, biSays, esc, SIGN,
 } from './blocks.js'
 import { isBareDiscountValue } from './discount.js'
 import { claimedWords, clipSentences, conventionValidity, countdownWords, metaFor, perkBeyondValue } from './content.js'
@@ -62,6 +62,7 @@ const MOTIVO = {
   locali: `Ricevi questa email perché hai un account su ${BRAND.name} e gli avvisi sui nuovi locali sono accesi.`,
   ricevuta: `Ricevi questa email perché hai preso questo sconto dal tuo account ${BRAND.name}.`,
   promemoria: `Ricevi questa email perché hai preso questo sconto dal tuo account ${BRAND.name} e i promemoria sui tuoi sconti sono accesi.`,
+  feedback: `Ricevi questa email perché hai usato uno sconto dal tuo account ${BRAND.name} e gli avvisi sui tuoi sconti sono accesi.`,
   partner: `Ricevi questa email perché il tuo locale è nella Guida di Bi.`,
   sicurezza: `Ricevi questa email perché è stata chiesta una modifica al tuo account ${BRAND.name}.`,
   interna: 'Notifica automatica del sito, non serve rispondere.',
@@ -391,7 +392,7 @@ export function discountClaimedEmail({ value, restaurantName, perk, conditions, 
 /*  5. Sconto usato — la conferma                                      */
 /* ================================================================== */
 
-export function discountUsedEmail({ value, restaurantName, whenLabel, href = `${SITE_URL}/sconti` }) {
+export function discountUsedEmail({ value, restaurantName, whenLabel, href = `${SITE_URL}/sconti`, feedbackHref = null }) {
   return {
     subject: `Sconto usato da ${restaurantName}`,
     ...renderEmail({
@@ -409,7 +410,12 @@ export function discountUsedEmail({ value, restaurantName, whenLabel, href = `${
         p('Questo sconto adesso è chiuso. Nel Bi Club ce ne sono altri pronti.'),
         button('Vedi gli altri sconti', href, { bg: COLORS.corallo }),
         divider({ gold: true }),
-        p(`Com'è andata da ${esc(restaurantName)}? Rispondi a questa email e dimmelo: mi serve per decidere chi resta nella guida.`, { size: 15 }),
+        // Col link al feedback (la riga nata con la convalida) si risponde
+        // con le stelle; senza, resta la risposta all'email.
+        feedbackHref
+          ? p(`Com'è andata da ${esc(restaurantName)}? Dimmelo con le stelle: mi serve per decidere chi resta nella guida.`, { size: 15 })
+          : p(`Com'è andata da ${esc(restaurantName)}? Rispondi a questa email e dimmelo: mi serve per decidere chi resta nella guida.`, { size: 15 }),
+        feedbackHref ? textLink('Dimmi com’è andata →', feedbackHref) : '',
         signature('— Bi'),
         spacer(22),
       ],
@@ -422,7 +428,9 @@ export function discountUsedEmail({ value, restaurantName, whenLabel, href = `${
         'Questo sconto adesso è chiuso. Gli altri sono qui:',
         href,
         '',
-        `Com'è andata? Rispondi a questa email e dimmelo: mi serve per decidere chi resta nella guida.`,
+        feedbackHref
+          ? `Com'è andata? Dimmelo qui, con le stelle: ${feedbackHref}`
+          : `Com'è andata? Rispondi a questa email e dimmelo: mi serve per decidere chi resta nella guida.`,
         '',
         '— Bi',
       ].filter((l) => l !== '').join('\n'),
@@ -583,6 +591,73 @@ export function discountReminderEmail({
         '',
         ...coda,
       ].filter((l) => l !== '').join('\n'),
+    }),
+  }
+}
+
+/* ================================================================== */
+/*  5-ter. Com'è andata? — dopo lo sconto convalidato                  */
+/* ================================================================== */
+
+/**
+ * La domanda dopo la cena, a chi non ha finito il feedback nell'app.
+ * Chi la manda e quando: `api/_email/feedback.js` (~30 minuti e ~1 giorno
+ * dopo la convalida). Due versioni:
+ *   - niente stelle ancora: le cinque stelle si toccano dalla posta, ognuna
+ *     porta a /feedback già col voto salvato;
+ *   - stelle date, modulo saltato: le sue stelle accese e "raccontami di più".
+ * Porta il link "Scegli cosa ricevere" (è una domanda nostra, non una
+ * ricevuta) e parte solo con "I miei sconti" acceso.
+ */
+export function feedbackAskEmail({
+  name, restaurantName, value, rating = null, round = 1, city,
+  starHref, formHref, unsubscribeUrl,
+}) {
+  const rated = rating != null
+  const ieri = round === 2
+  // "Giulia, mi hai dato…" / senza nome "Mi hai dato…".
+  const lead = (t) => (name ? `${name}, ${t}` : t.charAt(0).toUpperCase() + t.slice(1))
+  const sconto = value ? `il tuo ${value} ` : 'lo sconto '
+  const subject = rated
+    ? (ieri ? `Ieri da ${restaurantName}: mi racconti di più?` : `Mi racconti com’è andata da ${restaurantName}?`)
+    : (ieri ? `Ieri da ${restaurantName}: com’è andata?` : `Com’è andata da ${restaurantName}?`)
+  const stelle = rating === 1 ? 'una stella' : `${rating} stelle`
+
+  const intro = rated
+    ? `${esc(lead(`mi hai dato ${stelle} per ${restaurantName}: grazie!`))} Se ti va, raccontami cosa ti è piaciuto (o cosa no). Bastano due righe, e mi servono per scegliere i posti del Bi Club.${SIGN}`
+    : `${esc(lead(`${ieri ? 'ieri' : 'poco fa'} hai usato ${sconto}da ${restaurantName}.`))} Com’è andata? Dimmelo con un tocco: lo leggo io, e mi serve per scegliere i posti del Bi Club.${SIGN}`
+
+  return {
+    subject,
+    ...renderEmail({
+      preheader: rated
+        ? `Le tue ${stelle} le ho viste. Due righe in più mi aiutano tanto.`
+        : 'Un tocco su una stella, e se ti va due righe. Lo leggo io.',
+      reason: MOTIVO.feedback,
+      unsubscribeUrl,
+      city,
+      blocks: [
+        eyebrow('Com’è andata?', { padding: '22px 20px 0' }),
+        h1(rated ? `Raccontami di più su ${restaurantName}` : `Com’è andata da ${restaurantName}?`),
+        biSays(intro),
+        starRow({ href: rated ? null : starHref, rating }),
+        rated
+          ? button('Racconta a Bi →', formHref, { align: 'center', padding: '20px 20px 0' })
+          : microNote('Tocca una stella: si apre la pagina per aggiungere due righe, se ti va.', { padding: '12px 20px 0' }),
+        spacer(24),
+      ],
+      text: [
+        rated
+          ? lead(`mi hai dato ${stelle} per ${restaurantName}: grazie!`)
+          : `${lead(`${ieri ? 'ieri' : 'poco fa'} hai usato ${sconto}da ${restaurantName}.`)} Com’è andata?`,
+        '',
+        rated
+          ? 'Se ti va, raccontami cosa ti è piaciuto (o cosa no). Bastano due righe:'
+          : 'Dimmelo con le stelle, da 1 a 5:',
+        rated ? formHref : [1, 2, 3, 4, 5].map((n) => `${n} ${n === 1 ? 'stella' : 'stelle'}: ${starHref(n)}`).join('\n'),
+        '',
+        '— Bi',
+      ].join('\n'),
     }),
   }
 }
@@ -893,6 +968,19 @@ export const SAMPLE = {
   discountUsed: {
     value: '−50%', restaurantName: 'Bar Stampa',
     whenLabel: 'oggi alle 13:20', href: `${SITE_URL}/sconti`,
+    feedbackHref: `${SITE_URL}/feedback?t=00000000-0000-0000-0000-000000000000`,
+  },
+  feedbackAsk: {
+    name: 'Giulia', restaurantName: 'Bar Stampa', value: '−50%', rating: null, round: 1,
+    city: 'Torino',
+    starHref: (n) => `${SITE_URL}/feedback?t=00000000-0000-0000-0000-000000000000&stelle=${n}`,
+    formHref: `${SITE_URL}/feedback?t=00000000-0000-0000-0000-000000000000`,
+  },
+  feedbackAskRated: {
+    name: 'Giulia', restaurantName: 'Bar Stampa', value: '−50%', rating: 4, round: 2,
+    city: 'Torino',
+    starHref: (n) => `${SITE_URL}/feedback?t=00000000-0000-0000-0000-000000000000&stelle=${n}`,
+    formHref: `${SITE_URL}/feedback?t=00000000-0000-0000-0000-000000000000`,
   },
   partnerWelcome: {
     nomeLocale: 'Bar Stampa', pin: '481902',
