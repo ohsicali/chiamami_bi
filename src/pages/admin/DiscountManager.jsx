@@ -56,6 +56,9 @@ const EMPTY_FORM = {
   no_end_date: false, // true → ends_at resta vuoto apposta, non "non ancora scelto"
   max_uses: '',
   is_active: true,
+  // Solo alla creazione: l'annuncio a tutti gli utenti. Una modifica non
+  // manda mai email (vedi handleSave), e nel form la casella non c'è.
+  send_email: true,
 }
 
 // Restituisce il valore di periodo nel formato giusto per l'input
@@ -657,6 +660,14 @@ export default function DiscountManager() {
   const handleNotify = async (d, { force = false } = {}) => {
     if (!d?.id) return
     const type = d.is_drop ? 'drop' : 'discount'
+    // Il megafono sta accanto alla matita: un tocco sbagliato mandava
+    // l'email a tutti gli utenti senza chiedere niente. Ora chiede sempre
+    // (il "già inviato, vuoi rimandarlo?" resta sotto, per i doppioni).
+    if (!force) {
+      const who = d.restaurant?.name ? ` di ${d.restaurant.name}` : ''
+      const ok = window.confirm(`Mandare l'email su «${d.title}»${who} a tutti gli utenti?\n\nParte subito e non si può annullare.`)
+      if (!ok) return
+    }
     setNotifyingId(d.id)
     try {
       const { data: { session } } = await supabase.auth.getSession()
@@ -720,6 +731,7 @@ export default function DiscountManager() {
       no_end_date: !endSource,
       max_uses: (isDrop ? (d.max_quantity || d.max_redemptions) : d.max_redemptions) || '',
       is_active: d.is_active,
+      send_email: false,
     })
     setEditing(d.id)
     setShowForm(true)
@@ -883,12 +895,12 @@ export default function DiscountManager() {
       resetForm()
       if (pendingPin) setPinPopup(pendingPin)
 
-      // L'annuncio parte da solo quando lo sconto nasce già attivo.
-      // Solo alla creazione: su una modifica manderebbe una seconda email
-      // per lo stesso sconto a chi l'ha già ricevuta. E comunque il server
-      // tiene il registro (email_notifications_log) e rifiuta il doppione,
-      // questo è il primo dei due sbarramenti.
-      if (!editing && result.data.is_active) {
+      // L'annuncio parte da solo quando lo sconto nasce già attivo e la
+      // casella "Manda l'email" è spuntata. Solo alla creazione: "Salva
+      // modifiche" non manda mai email — correggere una didascalia non è
+      // un nuovo sconto. Il server fa la stessa verifica (`onCreate`: rifiuta
+      // uno sconto che non è appena nato) e tiene il registro dei doppioni.
+      if (!editing && result.data.is_active && form.send_email) {
         notifyOnPublish(saved)
       }
     }
@@ -914,7 +926,7 @@ export default function DiscountManager() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ type: d.is_drop ? 'drop' : 'discount', id: d.id }),
+        body: JSON.stringify({ type: d.is_drop ? 'drop' : 'discount', id: d.id, onCreate: true }),
       })
       const json = await res.json().catch(() => ({}))
       if (res.ok) {
@@ -1209,6 +1221,7 @@ export default function DiscountManager() {
         {/* ── In diretta: sconti presi e utilizzati ── */}
         <LiveRedemptionsPanel
           events={live.events}
+          usedEvents={live.usedEvents}
           today={live.today}
           status={live.status}
           loaded={live.loaded}
@@ -1770,6 +1783,48 @@ export default function DiscountManager() {
                       style={{ accentColor: '#E8453C', width: 18, height: 18 }}
                     />
                   </label>
+
+                  {/* Email agli utenti: si sceglie solo creando. Modificando
+                      lo si dice chiaro, perché era proprio la paura di
+                      rimandare l'annuncio a tenere ferme le correzioni. */}
+                  {editing ? (
+                    <p style={{ fontSize: 12, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', margin: 0, padding: '10px 12px', background: '#f7f7f7', borderRadius: 10 }}>
+                      Salvare le modifiche <strong>non manda nessuna email</strong>: lo sconto si aggiorna e basta.
+                      Per riannunciarlo c'è il megafono sulla card.
+                    </p>
+                  ) : (
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 12,
+                        cursor: form.is_active ? 'pointer' : 'not-allowed',
+                        padding: '10px 12px',
+                        background: 'var(--color-cream, #F5F0E4)',
+                        borderRadius: 10,
+                        opacity: form.is_active ? 1 : 0.55,
+                      }}
+                    >
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink)' }}>
+                          Manda l'email a tutti gli utenti
+                        </span>
+                        <span style={{ fontSize: 11, color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
+                          {form.is_active
+                            ? 'Parte una volta sola, appena crei lo sconto'
+                            : 'Da in pausa non parte: potrai mandarla col megafono'}
+                        </span>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={form.is_active && form.send_email}
+                        disabled={!form.is_active}
+                        onChange={(e) => setForm((f) => ({ ...f, send_email: e.target.checked }))}
+                        style={{ accentColor: '#E8453C', width: 18, height: 18 }}
+                      />
+                    </label>
+                  )}
 
                   {saveError && (
                     <p style={{ fontSize: 11, color: '#dc2626', margin: 0, padding: 10, background: '#fef2f2', borderRadius: 8, border: '1px solid #fecaca' }}>

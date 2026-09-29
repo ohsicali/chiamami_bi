@@ -1,9 +1,12 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef, Fragment } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import AdminLayout from '../../components/Layout/AdminLayout'
 import KpiCard from '../../components/admin/KpiCard'
+import { useAdminActivity, ACTIVITY_FILTERS } from '../../lib/hooks/useAdminActivity'
+import { useLoadMoreOnScroll } from '../../lib/hooks/useLoadMoreOnScroll'
+import { dayLabel, dayKey, timeLabel } from '../../lib/activityFeed'
 import { filterActive, filterActiveDrops, sortByExpiry, findUnreachableDiscounts, discountEndsAt } from '../../lib/discounts'
 
 /* ------------------------------------------------------------------ */
@@ -12,17 +15,6 @@ import { filterActive, filterActiveDrops, sortByExpiry, findUnreachableDiscounts
 const DAY_MS = 24 * 60 * 60 * 1000
 const WEEK_MS = 7 * DAY_MS
 const MONTH_MS = 30 * DAY_MS
-
-function relativeTime(date) {
-  if (!date) return ''
-  const diff = Math.floor((Date.now() - new Date(date).getTime()) / 1000)
-  if (diff < 60) return 'Adesso'
-  if (diff < 3600) return `${Math.floor(diff / 60)} min fa`
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h fa`
-  if (diff < 172800) return 'Ieri'
-  if (diff < 604800) return `${Math.floor(diff / 86400)}g fa`
-  return new Date(date).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
-}
 
 function formatDateLong() {
   return new Date().toLocaleDateString('it-IT', {
@@ -35,7 +27,6 @@ function formatDateLong() {
 function bucketByDay(items, dateField, days = 8) {
   // Returns array of `days` length: count of items per day, oldest first, today last.
   const buckets = new Array(days).fill(0)
-  const now = Date.now()
   const dayStart = new Date()
   dayStart.setHours(0, 0, 0, 0)
   const todayStart = dayStart.getTime()
@@ -72,7 +63,11 @@ function countdown(target) {
 function ActivityIcon({ type }) {
   const styles = {
     redemption: { bg: 'var(--color-green-wash, #E8F5D8)', label: '✓' },
+    taken: { bg: 'var(--color-cream, #F5F0E4)', label: '🎟' },
     drop: { bg: 'var(--color-corallo-wash, #FDEDEB)', label: '🔥' },
+    discount: { bg: 'var(--color-oro-wash, #F5EDDD)', label: '%' },
+    restaurant: { bg: 'var(--color-cream, #F5F0E4)', label: '🍽' },
+    review: { bg: 'var(--color-cream, #F5F0E4)', label: '★' },
     signup: { bg: 'var(--color-oro-wash, #F5EDDD)', label: '+' },
     application: { bg: 'var(--color-cream, #F5F0E4)', label: '📥' },
     suggestion: { bg: 'var(--color-cream, #F5F0E4)', label: '✉' },
@@ -171,7 +166,6 @@ export default function AdminDashboard() {
     discounts: new Array(8).fill(8),
     redemptions: new Array(8).fill(8),
   })
-  const [recentActivity, setRecentActivity] = useState([])
   const [topRestaurants, setTopRestaurants] = useState([])
   const [activeDrop, setActiveDrop] = useState(null)
   // Sconti attivi che il sito pubblico non mostrerebbe (Blocco 8, rete di sicurezza)
@@ -223,11 +217,6 @@ export default function AdminDashboard() {
           usersRecent,
           discRecent,
           redempRecent,
-          actRedemptions,
-          actApplications,
-          actSuggestions,
-          actSignups,
-          actDrops,
           inboxRows,
           topViews,
         ] = await Promise.all([
@@ -252,11 +241,6 @@ export default function AdminDashboard() {
           supabase.from('profiles').select('created_at').gte('created_at', eightDaysAgo),
           supabase.from('discounts').select('created_at').gte('created_at', eightDaysAgo),
           supabase.from('discount_redemptions').select('redeemed_at').eq('status', 'redeemed').gte('redeemed_at', eightDaysAgo),
-          supabase.from('discount_redemptions').select('id, status, redeemed_at, discount_id, user_id, discounts(title, discount_value, restaurants(name))').eq('status', 'redeemed').order('redeemed_at', { ascending: false }).limit(6),
-          supabase.from('partner_applications').select('id, restaurant_name, city, status, created_at').order('created_at', { ascending: false }).limit(6),
-          supabase.from('restaurant_suggestions').select('id, restaurant_name, status, created_at').order('created_at', { ascending: false }).limit(6),
-          supabase.from('profiles').select('id, full_name, email, created_at').order('created_at', { ascending: false }).limit(6),
-          supabase.from('discounts').select('id, title, created_at, restaurants(name)').eq('is_drop', true).order('created_at', { ascending: false }).limit(6),
           supabase.from('partner_applications').select('id, restaurant_name, city, message, created_at').eq('status', 'pending').order('created_at', { ascending: false }).limit(3),
           // I conteggi li fa il DB: le righe di page_views in 7 giorni sono
           // decine di migliaia e PostgREST ne restituisce al massimo 1000.
@@ -313,47 +297,6 @@ export default function AdminDashboard() {
 
         setActiveDrop(activeDropsList[0] || null)
         setInboxApps(inboxRows.data || [])
-
-        // ── Recent activity UNION ──
-        const activity = []
-        ;(actRedemptions.data || []).forEach((row) => {
-          activity.push({
-            type: 'redemption',
-            at: row.redeemed_at,
-            text: `Riscatto ${row.discounts?.discount_value || ''} da ${row.discounts?.restaurants?.name || '—'}`,
-          })
-        })
-        ;(actApplications.data || []).forEach((row) => {
-          activity.push({
-            type: 'application',
-            at: row.created_at,
-            text: `Candidatura da ${row.restaurant_name}${row.city ? ` — ${row.city}` : ''}`,
-          })
-        })
-        ;(actSuggestions.data || []).forEach((row) => {
-          activity.push({
-            type: 'suggestion',
-            at: row.created_at,
-            text: `Suggerimento: ${row.restaurant_name}`,
-          })
-        })
-        ;(actSignups.data || []).forEach((row) => {
-          const name = row.full_name || (row.email ? row.email.split('@')[0] : 'Nuovo utente')
-          activity.push({
-            type: 'signup',
-            at: row.created_at,
-            text: `${name} si è registrato`,
-          })
-        })
-        ;(actDrops.data || []).forEach((row) => {
-          activity.push({
-            type: 'drop',
-            at: row.created_at,
-            text: `Drop schedulato · ${row.restaurants?.name || '—'}`,
-          })
-        })
-        activity.sort((a, b) => new Date(b.at) - new Date(a.at))
-        setRecentActivity(activity.slice(0, 8))
 
         // ── Top restaurants by views (7d) ──
         // Le schede dei locali stanno su /restaurant/<slug>: prima qui si
@@ -538,7 +481,7 @@ export default function AdminDashboard() {
           }}
           className="max-md:!grid-cols-1"
         >
-          <ActivityCard items={recentActivity} />
+          <ActivityCard enabled={!!user} />
           <TopRestaurantsCard items={topRestaurants} />
         </div>
 
@@ -712,7 +655,7 @@ function DropSpotlight({ drop }) {
           />
         </div>
         <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-ink-70, rgba(34,24,28,0.7))' }}>
-          {redeemed} su {target} redenzioni
+          {redeemed} su {target} presi
           {drop.max_redemptions ? ` · ${Math.max(0, target - redeemed)} posti rimasti` : ''}
         </div>
       </div>
@@ -747,44 +690,141 @@ function DropSpotlight({ drop }) {
   )
 }
 
-function ActivityCard({ items }) {
+function ActivityCard({ enabled }) {
+  const [filter, setFilter] = useState('all')
+  const { items, loading, done, loadMore } = useAdminActivity({ enabled, filter })
+  const scrollRef = useRef(null)
+  const sentinelRef = useLoadMoreOnScroll(loadMore, {
+    enabled: !done && items.length > 0,
+    rootRef: scrollRef,
+    watch: items.length,
+  })
+  const muted = 'var(--color-ink-55, rgba(34,24,28,0.55))'
+
   return (
-    <div style={cardStyle}>
+    <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
       <div style={cardHeadStyle}>
-        <h3 style={cardTitleStyle}>Attività recente</h3>
-        <span style={cardMetaStyle}>cosa è successo oggi</span>
+        <h3 style={cardTitleStyle}>Cronologia attività</h3>
+        <span style={cardMetaStyle}>scorri per vedere tutto</span>
       </div>
-      {items.length === 0 && (
-        <div style={{ padding: 24, textAlign: 'center', fontSize: 12, color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
-          Nessuna attività recente
-        </div>
-      )}
-      {items.map((item, i) => (
-        <div
-          key={i}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            padding: '11px 0',
-            borderBottom: i === items.length - 1 ? 0 : '1px dashed var(--color-line, #EAE3D7)',
-            fontSize: 13,
-          }}
-        >
-          <ActivityIcon type={item.type} />
-          <div style={{ flex: 1, color: 'var(--color-ink)', lineHeight: 1.4 }}>{item.text}</div>
-          <div
+
+      <div role="tablist" aria-label="Filtra la cronologia" style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+        {ACTIVITY_FILTERS.map((f) => {
+          const active = filter === f.id
+          return (
+            <button
+              key={f.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => setFilter(f.id)}
+              style={{
+                border: active ? 0 : '1px solid var(--color-line, #EAE3D7)',
+                background: active ? 'var(--color-ink, #22181C)' : '#fff',
+                color: active ? '#fff' : 'var(--color-ink, #22181C)',
+                borderRadius: 999,
+                padding: '4px 11px',
+                fontSize: 11.5,
+                fontWeight: 800,
+                cursor: 'pointer',
+                fontFamily: 'var(--font-sans)',
+              }}
+            >
+              {f.label}
+            </button>
+          )
+        })}
+      </div>
+
+      <div
+        ref={scrollRef}
+        style={{ maxHeight: 520, overflowY: 'auto', overscrollBehavior: 'contain', margin: '0 -6px', padding: '0 6px' }}
+      >
+        {!loading && done && items.length === 0 && (
+          <div style={{ padding: 24, textAlign: 'center', fontSize: 12, color: muted }}>
+            Nessuna attività
+          </div>
+        )}
+        {items.map((item, i) => {
+          const newDay = i === 0 || dayKey(items[i - 1].at) !== dayKey(item.at)
+          const lastOfDay = i === items.length - 1 || dayKey(items[i + 1].at) !== dayKey(item.at)
+          return (
+            <Fragment key={item.key}>
+              {newDay && (
+                <div
+                  style={{
+                    position: 'sticky',
+                    top: 0,
+                    zIndex: 1,
+                    background: '#fff',
+                    padding: i === 0 ? '0 0 6px' : '14px 0 6px',
+                    fontSize: 10,
+                    fontWeight: 800,
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                    color: muted,
+                  }}
+                >
+                  {dayLabel(item.at)}
+                </div>
+              )}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: '10px 0',
+                  borderBottom: lastOfDay ? 0 : '1px dashed var(--color-line, #EAE3D7)',
+                  fontSize: 13,
+                }}
+              >
+                <ActivityIcon type={item.type} />
+                <div style={{ flex: 1, minWidth: 0, color: 'var(--color-ink)', lineHeight: 1.4 }}>
+                  {item.text}
+                  {item.value && (
+                    <span style={{ marginLeft: 6, fontWeight: 900, color: 'var(--color-corallo, #E8453C)' }}>{item.value}</span>
+                  )}
+                </div>
+                <time
+                  dateTime={item.at}
+                  title={item.at ? new Date(item.at).toLocaleString('it-IT') : ''}
+                  style={{ fontSize: 11, color: muted, fontWeight: 600, flexShrink: 0 }}
+                >
+                  {timeLabel(item.at)}
+                </time>
+              </div>
+            </Fragment>
+          )
+        })}
+        <div ref={sentinelRef} style={{ height: 1 }} aria-hidden />
+        {loading && (
+          <div style={{ padding: '12px 0', textAlign: 'center', fontSize: 12, color: muted }}>Carico…</div>
+        )}
+        {!loading && !done && items.length > 0 && (
+          <button
+            type="button"
+            onClick={loadMore}
             style={{
-              fontSize: 11,
-              color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
-              fontWeight: 600,
-              flexShrink: 0,
+              display: 'block',
+              margin: '10px auto 4px',
+              background: 'none',
+              border: 0,
+              fontSize: 12,
+              fontWeight: 800,
+              color: 'var(--color-corallo, #E8453C)',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-sans)',
             }}
           >
-            {relativeTime(item.at)}
+            Carica altre attività
+          </button>
+        )}
+        {done && items.length > 0 && (
+          <div style={{ padding: '12px 0 4px', textAlign: 'center', fontSize: 11, color: muted }}>
+            Inizio della cronologia · {items.length} attività
           </div>
-        </div>
-      ))}
+        )}
+      </div>
     </div>
   )
 }

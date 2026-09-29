@@ -6,6 +6,7 @@ import { getCurrentMoment } from '../../lib/hours'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import BiLogoMark from '../../components/UI/BiLogoMark'
 import { PhotoOrEmoji } from '../../components/UI/SmartImage'
+import { CHAT_MAINTENANCE } from '../../lib/chatMaintenance'
 import './ChiediPage.css'
 
 /**
@@ -16,6 +17,11 @@ import './ChiediPage.css'
  * - URL persistente: /chiedi/:conversationId (replace dopo il primo invio).
  */
 export default function ChiediPage() {
+  if (CHAT_MAINTENANCE) return <ChiediMaintenance />
+  return <ChiediChat />
+}
+
+function ChiediChat() {
   const { user } = useAuth()
   const { city } = useCity()
   const navigate = useNavigate()
@@ -365,6 +371,58 @@ export default function ChiediPage() {
           onClose={() => { setShowAuthGate(false); setPendingMessage(null) }}
         />
       )}
+    </div>
+  )
+}
+
+/* ============================================================ */
+/*  Manutenzione (vedi lib/chatMaintenance.js)                     */
+/* ============================================================ */
+function ChiediMaintenance() {
+  const navigate = useNavigate()
+  return (
+    <div className="chiedi-page">
+      <header className="cp-header">
+        <button
+          type="button"
+          className="cp-h-back"
+          aria-label="Indietro"
+          onClick={() => navigate(-1)}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+        <div className="cp-h-title">
+          <div className="cp-h-mark"><BiLogoMark style={{ width: '88%', height: '88%' }} /></div>
+          <div className="cp-h-text">
+            <strong>Chiedi a Bi</strong>
+            <small><span className="cp-dot cp-dot-off" />in manutenzione</small>
+          </div>
+        </div>
+        <span className="cp-h-spacer" aria-hidden="true" />
+      </header>
+
+      <div className="cp-body cp-maint-body">
+        <section className="cp-maint" role="status">
+          <div className="cp-av-iconic">
+            <BiLogoMark style={{ width: '88%', height: '88%' }} />
+            <span className="cp-sp" aria-hidden="true">✦</span>
+            <span className="cp-ring" aria-hidden="true" />
+          </div>
+          <span className="cp-maint-chip">Lavori in corso</span>
+          <h1>Stiamo migliorando il servizio.</h1>
+          <div className="cp-sub">Torno presto, più bella di prima</div>
+          <p>
+            La chat con Bi è in pausa: la stiamo rifacendo
+            con una grafica premium tutta nuova. Tornerà disponibile a breve.
+          </p>
+          <div className="cp-maint-actions">
+            <Link to="/esplora" className="cp-maint-btn cp-maint-btn-primary">Esplora i locali</Link>
+            <Link to="/sconti" className="cp-maint-btn">Vedi gli sconti</Link>
+          </div>
+        </section>
+      </div>
     </div>
   )
 }

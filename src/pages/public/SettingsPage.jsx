@@ -6,6 +6,7 @@ import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { fetchAnnouncementsEnabled, setAnnouncementsEnabled } from '../../lib/emailPrefs'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import Footer from '../../components/Layout/Footer'
+import { openWelcomeTour } from '../../lib/welcomeTour'
 
 const inputStyle = {
   width: '100%', background: 'var(--color-page)', borderRadius: 'var(--radius-md)',
@@ -26,7 +27,7 @@ const cardStyle = {
 }
 
 /* ── Delete Account Modal ── */
-function DeleteAccountModal({ onConfirm, onClose }) {
+function DeleteAccountModal({ onConfirm, onClose, busy = false, error = '' }) {
   const [step, setStep] = useState(1)
   const [confirmText, setConfirmText] = useState('')
 
@@ -90,17 +91,25 @@ function DeleteAccountModal({ onConfirm, onClose }) {
                 fontWeight: 700, marginBottom: 16, border: '2px solid var(--color-line)',
               }}
             />
+            {error && (
+              <p role="alert" style={{ fontSize: 12.5, color: 'var(--color-danger)', textAlign: 'center', margin: '-4px 0 14px', lineHeight: 1.4 }}>
+                {error}
+              </p>
+            )}
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={onClose} style={{
+              <button onClick={onClose} disabled={busy} style={{
                 flex: 1, padding: '12px 0', borderRadius: 14, background: 'var(--color-page)',
-                border: 'none', fontSize: 13, fontWeight: 600, color: 'var(--color-ink-55)', cursor: 'pointer',
+                border: 'none', fontSize: 13, fontWeight: 600, color: 'var(--color-ink-55)',
+                cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.5 : 1,
               }}>Annulla</button>
-              <button onClick={onConfirm} disabled={confirmText !== 'ELIMINA'} style={{
+              {/* Spento mentre la richiesta è in corso: il secondo tocco partiva
+                  mentre il primo stava già cancellando l'account. */}
+              <button onClick={onConfirm} disabled={busy || confirmText !== 'ELIMINA'} aria-busy={busy} style={{
                 flex: 1, padding: '12px 0', borderRadius: 14, background: '#DC2626',
                 border: 'none', fontSize: 13, fontWeight: 700, color: '#fff',
-                cursor: confirmText === 'ELIMINA' ? 'pointer' : 'default',
-                opacity: confirmText === 'ELIMINA' ? 1 : 0.4,
-              }}>Elimina account</button>
+                cursor: !busy && confirmText === 'ELIMINA' ? 'pointer' : 'default',
+                opacity: confirmText === 'ELIMINA' ? (busy ? 0.7 : 1) : 0.4,
+              }}>{busy ? 'Elimino…' : 'Elimina account'}</button>
             </div>
           </>
         )}
@@ -165,6 +174,8 @@ export default function SettingsPage() {
 
   // ── Delete ──
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
 
   // ── Init ──
   useEffect(() => {
@@ -373,19 +384,73 @@ export default function SettingsPage() {
   }
 
   // ── Handlers: Delete ──
+  /**
+   * Fuori dall'account appena cancellato, e di sicuro.
+   *
+   * Prima si faceva il logout normale e si aspettava: ma l'account non
+   * esisteva più, il logout restava appeso e il popup restava aperto come se
+   * non fosse successo niente. Chi ripremeva "Elimina account" leggeva
+   * "Invalid or expired token" (28/09, dai log di Supabase: cancellazione
+   * riuscita, poi due richieste con la sessione morta).
+   *
+   * Ora: logout solo su questo dispositivo con un tempo massimo; poi la
+   * sessione salvata si toglie comunque a mano (anche col logout "locale" la
+   * libreria prova a parlare col server, e se quello resta appeso la
+   * sessione resterebbe lì); infine la home ricaricata da zero, così nessun
+   * pezzo della pagina si ricorda dell'utente che non c'è più.
+   */
+  const leaveDeletedAccount = async () => {
+    await Promise.race([
+      signOut({ scope: 'local' }).catch(() => {}),
+      new Promise((resolve) => setTimeout(resolve, 1500)),
+    ])
+    try {
+      Object.keys(window.localStorage)
+        .filter((k) => k.startsWith('sb-') && k.endsWith('-auth-token'))
+        .forEach((k) => window.localStorage.removeItem(k))
+    } catch {
+      // storage bloccato: il ricaricamento più sotto basta lo stesso, la
+      // sessione di un account cancellato non si rinnova
+    }
+    window.location.replace('/')
+  }
+
+  const callDeleteAccount = (token) => fetch('/api/delete-account', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+  })
+
   const handleDeleteAccount = async () => {
-    if (!user) return
+    // Un tocco solo: il secondo partiva mentre il primo stava già cancellando.
+    if (!user || deleting) return
+    setDeleting(true)
+    setDeleteError('')
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      const response = await fetch('/api/delete-account', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-      })
-      if (!response.ok) { const err = await response.json(); throw new Error(err.error || 'Errore') }
-      await signOut()
-      navigate('/', { replace: true })
+      if (!session?.access_token) { leaveDeletedAccount(); return }
+
+      let response = await callDeleteAccount(session.access_token)
+
+      // 401: il server non riconosce la sessione. O è scaduta (si rinnova e si
+      // riprova una volta), o l'account non c'è già più (cancellato da un
+      // altro dispositivo o da un tocco precedente): in quel caso il rinnovo
+      // fallisce e non resta niente da cancellare, si esce e basta.
+      if (response.status === 401) {
+        const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession()
+        if (refreshError || !refreshed?.session?.access_token) { leaveDeletedAccount(); return }
+        response = await callDeleteAccount(refreshed.session.access_token)
+        if (response.status === 401) { leaveDeletedAccount(); return }
+      }
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}))
+        throw new Error(err.error || `HTTP ${response.status}`)
+      }
+      leaveDeletedAccount()
     } catch (err) {
-      alert(`Errore: ${err.message}`)
+      console.error('Delete account failed:', err)
+      setDeleteError('Non sono riuscito a eliminare l’account. Controlla la connessione e riprova.')
+      setDeleting(false)
     }
   }
 
@@ -627,6 +692,21 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* ── TUTORIAL ── Lo stesso che parte dopo la registrazione
+            (components/Onboarding/WelcomeTour.jsx), per chi l'ha saltato. */}
+        <button onClick={() => openWelcomeTour()} style={{
+          ...cardStyle, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+          cursor: 'pointer', textAlign: 'left',
+        }}>
+          <span>
+            <span style={{ display: 'block', fontSize: 14, fontWeight: 700, color: 'var(--color-ink)' }}>Rivedi il tutorial</span>
+            <span style={{ display: 'block', fontSize: 12, color: 'var(--color-ink-55)', marginTop: 2 }}>Come funzionano mappa, sconti e salvati</span>
+          </span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink-55)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+        </button>
+
         {/* ── DELETE ACCOUNT ── */}
         <button onClick={() => setShowDeleteModal(true)} style={{
           ...cardStyle, width: '100%', display: 'flex', alignItems: 'center', gap: 12,
@@ -645,7 +725,12 @@ export default function SettingsPage() {
       {/* ── DELETE MODAL ── */}
       <AnimatePresence>
         {showDeleteModal && (
-          <DeleteAccountModal onConfirm={handleDeleteAccount} onClose={() => setShowDeleteModal(false)} />
+          <DeleteAccountModal
+            onConfirm={handleDeleteAccount}
+            onClose={() => { if (!deleting) { setShowDeleteModal(false); setDeleteError('') } }}
+            busy={deleting}
+            error={deleteError}
+          />
         )}
       </AnimatePresence>
     </div>

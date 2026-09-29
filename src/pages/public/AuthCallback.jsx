@@ -2,6 +2,64 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { LogoFull } from '../../components/UI/Logo'
+import {
+  greetingName,
+  hasSeenTour,
+  isFirstSignIn,
+  openWelcomeTour,
+  shouldWelcomeAfterAuth,
+  whenTourCovers,
+  SIGNUP_TOUR_DELAY_MS,
+} from '../../lib/welcomeTour'
+import { preloadWelcomeTour } from '../../components/Onboarding/loadWelcomeTour'
+import AccountConfirmed from '../../components/Onboarding/AccountConfirmed'
+
+/**
+ * Account nuovo appena entrato (link di conferma o primo accesso con
+ * Google): come dopo il codice in LoginPage, il tutorial parte da qui
+ * allargandosi dalla spunta, e sotto si passa alla home quando il tutorial
+ * copre già tutto. Vedi `startWelcome` in LoginPage.
+ */
+function welcomeThenGo(navigate) {
+  preloadWelcomeTour()
+  setTimeout(() => {
+    const box = document.querySelector('[data-signup-check]')?.getBoundingClientRect()
+    openWelcomeTour({
+      source: 'signup',
+      origin: box ? { x: box.left + box.width / 2, y: box.top + box.height / 2, r: box.width / 2 } : null,
+    })
+  }, SIGNUP_TOUR_DELAY_MS)
+  whenTourCovers(() => navigate('/', { replace: true }))
+}
+
+/**
+ * Account entrato: cosa dire e dove andare. Una funzione sola per tutte le
+ * strade con cui si arriva qui — con `?code=` (PKCE), con la sessione
+ * nell'hash (flusso "implicit", che è quello del nostro client e quindi
+ * quello di Google e dei link della mail) o dal recupero del "Database error"
+ * di Google. Prima il controllo "account nuovo" c'era solo nella prima, e chi
+ * si registrava con Google leggeva "Accesso effettuato!", finiva sulla home e
+ * si vedeva partire il tutorial dopo, dal Gate.
+ */
+function finishSignIn({ user, type, navigate, setStatus, setMessage, setWelcome }) {
+  // Account nuovo (Google non ha il passaggio del codice, e il link della
+  // mail nemmeno): la stessa schermata "Ci sei" della registrazione con
+  // email, e da lì il tutorial — non "Accesso effettuato!" e la home.
+  if (shouldWelcomeAfterAuth({ user, type, seen: hasSeenTour(user?.id) })) {
+    setWelcome({
+      name: greetingName(user),
+      line: type === 'signup' ? 'Email confermata. Ti faccio vedere come funziona…'
+        : isFirstSignIn(user) ? 'Account creato. Ti faccio vedere come funziona…'
+          : 'Ti faccio vedere come funziona…',
+    })
+    setStatus('welcome')
+    welcomeThenGo(navigate)
+    return
+  }
+  setStatus('success')
+  setMessage(type === 'signup' ? 'Email confermata! Benvenuta su ChiamamiBi!' : 'Accesso effettuato!')
+  setTimeout(() => navigate('/', { replace: true }), 1500)
+}
 
 /**
  * Handles redirects from Supabase auth emails:
@@ -15,10 +73,12 @@ import { LogoFull } from '../../components/UI/Logo'
 export default function AuthCallback() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const [status, setStatus] = useState('loading') // loading | success | error
+  const [status, setStatus] = useState('loading') // loading | success | welcome | error
   const [message, setMessage] = useState('')
+  const [welcome, setWelcome] = useState(null) // { name, line } con status 'welcome'
 
   useEffect(() => {
+    const done = { navigate, setStatus, setMessage, setWelcome }
     const handleCallback = async () => {
       const code = searchParams.get('code')
       const type = searchParams.get('type') // signup, recovery, email_change, magiclink
@@ -33,9 +93,7 @@ export default function AuthCallback() {
           const { data: { session } } = await supabase.auth.getSession()
           if (session) {
             // Session exists! Profile will be created by useAuth.fetchProfile
-            setStatus('success')
-            setMessage('Account creato! Benvenuta su ChiamamiBi!')
-            setTimeout(() => navigate('/', { replace: true }), 1500)
+            finishSignIn({ user: session.user, type, ...done })
             return
           }
         }
@@ -47,7 +105,7 @@ export default function AuthCallback() {
       // Exchange code for session (PKCE flow)
       if (code) {
         try {
-          const { error } = await supabase.auth.exchangeCodeForSession(code)
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code)
           if (error) throw error
 
           // Route based on auth event type
@@ -66,11 +124,7 @@ export default function AuthCallback() {
           }
 
           // signup or magiclink — confirmed, redirect to home
-          setStatus('success')
-          setMessage(type === 'signup'
-            ? 'Email confermata! Benvenuta su ChiamamiBi!'
-            : 'Accesso effettuato!')
-          setTimeout(() => navigate('/', { replace: true }), 2000)
+          finishSignIn({ user: data?.user ?? data?.session?.user, type, ...done })
         } catch (err) {
           setStatus('error')
           setMessage(err.message || 'Errore durante la verifica del codice.')
@@ -78,12 +132,12 @@ export default function AuthCallback() {
         return
       }
 
-      // No code — check if session already exists from hash fragment
+      // No code — la sessione arriva nell'hash (#access_token=…): è il
+      // flusso "implicit" del nostro client, quindi Google e i link della mail
+      // passano da qui. Il client l'ha già letta all'avvio.
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
-        setStatus('success')
-        setMessage('Accesso effettuato!')
-        setTimeout(() => navigate('/', { replace: true }), 1500)
+        finishSignIn({ user: session.user, type, ...done })
       } else {
         setStatus('error')
         setMessage('Link non valido o scaduto. Riprova.')
@@ -103,6 +157,10 @@ export default function AuthCallback() {
             <div className="w-8 h-8 border-3 border-accent border-t-transparent rounded-full animate-spin" />
             <p className="text-sm text-secondary">Verifica in corso...</p>
           </>
+        )}
+
+        {status === 'welcome' && welcome && (
+          <AccountConfirmed name={welcome.name} line={welcome.line} />
         )}
 
         {status === 'success' && (

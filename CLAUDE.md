@@ -108,6 +108,12 @@ su `email_preferences` (`src/lib/emailPrefs.js`); `newsletter_subscribers` è
 la lista vecchia e non decide più niente. E se tocchi `render.js` o `blocks.js`, rilancia
 `node supabase/email-templates/build.mjs`.
 
+**Modificare uno sconto non manda email (28/09):** l'annuncio a tutti parte
+solo quando lo sconto si **crea** (casella "Manda l'email a tutti gli utenti"
+nel form). "Salva modifiche" aggiorna e basta; il server rifiuta l'annuncio
+automatico (`onCreate`) per uno sconto con più di 15 minuti. Il megafono sulla
+card chiede sempre conferma. Non rimettere un invio sul salvataggio.
+
 **Promemoria degli sconti non usati (24/09):** un cron Vercel al giorno
 (`/api/notify-subscribers?job=discount-reminders`) ricorda uno sconto preso da
 almeno 48 ore e mai usato — **un locale per email, al massimo una al giorno,
@@ -120,6 +126,60 @@ altrove. Parte a chi ha "I miei sconti" (`my_discounts`) acceso. Dettagli in
 ## Convenzioni contenuti sconti (per riferimento futuro)
 - **Offerte "paghi X prendi Y"** (es. 3 al posto di 2): scrivere sempre in formato `AxB` (es. `3x2`, `2x1`), mai per esteso ("Paghi 2 prendi 3 Veneziane"). Vale per `title` e `discount_value` del record in `discounts`.
 - **Sticker/badge sconto** (percentuale o importo fisso su foto/card): devono sempre avere il segno meno davanti al valore, es. `-20%`, `-1€`. Gestito centralmente da `formatDiscountBadge()` / `formatDiscountBadgeShort()` in `src/lib/utils/discountFormat.js` — quando si aggiunge un nuovo punto che mostra uno sticker sconto, usare sempre queste funzioni (mai `formatDiscountValue()` da solo, che non mette il segno).
+
+## Drop esaurito — sparisce, al suo posto lo sconto fisso del locale (28/09, PR #309)
+Fino al 28/09 un drop esaurito restava in vetrina (home e Bi Club) con la
+card "sold out" e il bottone spento. Deciso dal proprietario: **un drop
+esaurito non si mostra più**, né per chi l'ha preso (lo ritrova in "I miei
+vantaggi") né per gli altri. Il caso che l'ha fatto nascere: Shoro −30%
+(12 presi su 10) al posto del quale ora c'è Shoro −20%.
+- **Home** (tutte e due, `HomeFeedV4` e `HomeDesktopClassic`): lo sconto in
+  evidenza lo sceglie `pickFeaturedDeal()` in `src/lib/discounts.js` —
+  drop attivo → se il drop è esaurito, lo sconto fisso **dello stesso
+  locale** → altrimenti lo sconto fisso che scade prima. Attenzione: se il
+  drop esaurito viene *disattivato* dall'admin, la regola 2 non scatta più
+  e in vetrina va lo sconto che scade prima (non per forza lo stesso locale).
+- **Home da computer**: quando in vetrina c'è uno sconto fisso la card è
+  scura con "SCONTO BI CLUB", niente corallo/countdown/barra posti (regola
+  del colore, vedi Email).
+- **Bi Club** (`SconteRedesignPage`): la lista drop usa `filterActiveDrops`
+  (prima `filterVisibleDrops`, che teneva gli esauriti).
+- Test in `tests/discounts.test.mjs`. **Per tornare indietro** (drop
+  esauriti di nuovo visibili col "sold out"): revert della PR #309.
+
+## Tutorial di benvenuto (28/09)
+Sette schermate che partono **una volta sola** a chi ha appena creato l'account:
+benvenuto (tutto corallo, logo e cibo in orbita), Esplora, **gli sconti in quattro
+passi** (drop e convenzioni → «Sblocca sconto» e lo ritrovi in «I miei vantaggi»
+→ su cosa, in che giorni e a pranzo/cena vale → alla cassa mostri il QR o detti il
+codice e lo sconto è sullo scontrino), Salvati. In fondo un'animazione di chiusura
+e si va alla **home**; "Salta" in alto (o Esc) chiude e lascia dove si era.
+**Parte appena l'account è confermato** (codice accettato in LoginPage, link
+della mail o primo accesso Google in AuthCallback): la spunta "Ci sei" resta un
+secondo, poi il suo cerchio corallo si allarga fino a diventare la prima
+schermata (`openWelcomeTour({ source: 'signup', origin })`), e la pagina sotto
+cambia solo quando il tutorial copre tutto (`whenTourCovers`, con ripiego a
+3,5 s) — mai a tempo fisso, o su rete lenta la home lampeggia in mezzo. Il
+chunk si scarica mentre si scrive il codice (`preloadWelcomeTour`).
+Attenzione: il nostro client Supabase usa il flusso **implicit** (default,
+nessun `flowType`), quindi Google e i link della mail tornano su
+`/auth/callback` con la sessione nell'hash, **senza `?code=`**. Ogni strada di
+AuthCallback passa da `finishSignIn()`: un controllo messo solo nel ramo
+`code` non scatta mai per Google (era il bug del 28/09: "Accesso effettuato!"
+e tutorial solo dopo, sulla home).
+Regole in `src/lib/welcomeTour.js` (sotto test in `tests/welcome-tour.test.mjs`):
+account nato da meno di 24 h (`created_at`, così vale sia per email+codice sia per
+Google, e un vecchio utente che entra con Google non lo vede) e non ancora visto
+su quel browser (`localStorage`). Mai sopra login, admin, `/verify`, `/partner` e
+Chiedi a Bi. Montato da `WelcomeTourGate` in `App.jsx`; il tutorial sta in un
+chunk a parte (`src/components/Onboarding/`). Si rivede da Impostazioni →
+"Rivedi il tutorial". Eventi PostHog: `onboarding_shown`, `onboarding_completed`,
+`onboarding_skipped` (con `step`). Le illustrazioni seguono le regole del sito:
+corallo + countdown solo sul drop, convenzione crema e oro, badge verde da
+`formatDiscountBadge`. La schermata "Chiedi a Bi" compare da sola quando
+`CHAT_MAINTENANCE` torna `false`. **Se cambia una funzione dell'app raccontata
+qui (nomi dei bottoni, «I miei vantaggi», come si usa il QR), aggiorna anche il
+testo in `WelcomeTour.jsx`.**
 
 ## Sblocco sconti — QR e codice a 6 caratteri
 Ogni riscatto (`discount_redemptions`) ha due codici: il `qr_code`
@@ -171,6 +231,54 @@ Resoconto completo: `docs/security-audit-2026-09-23.md`.
 - **Profili, riscatti e storage**: un utente legge solo il proprio profilo; i
   riscatti li crea il browser ma li segna usati solo il locale (RPC `verify_*`);
   nel bucket `photos` scrive solo l'admin.
+
+## Analisi del sito — PostHog (27/09)
+`src/lib/posthog.js`, avviato da `main.jsx` a browser libero (chunk a parte).
+La chiave di progetto (pubblica) è nel file e parte solo su chiamamibi.com;
+`VITE_POSTHOG_KEY` la sostituisce e la accende anche in locale/anteprima. Gli eventi passano da
+`/ingest` (rewrite in `vercel.json` verso i server **US** di PostHog, dove sta
+il progetto; se un giorno passa a EU vanno cambiati lì e `ui_host`). Le regole
+usano `:path(.*)`, non `:path*`: con `:path*` gli indirizzi con la barra finale
+(`/ingest/i/v0/e/`, dove vanno gli eventi) cadevano sul rewrite della SPA e
+il POST prendeva 405 — config caricata, zero eventi. Senza "Accetta tutti"
+nel banner la persistenza è `memory` (niente cookie): non toglierlo, il banner
+promette "non utilizziamo cookie di profilazione". `identify` solo con l'id
+Supabase e solo con consenso; `/admin` non si conta. Eventi su misura:
+`track('nome_evento', { ... })`. Error tracking: `capture_exceptions` prende gli
+errori non gestiti; quelli che React ferma nell'ErrorBoundary passano da
+`captureError()` — un nuovo boundary deve chiamarla anche lui.
+Gli errori dei browser dentro le app ("Java object is gone",
+`webkit.messageHandlers`, "Script error.") non partono: li filtra
+`src/lib/errorNoise.js` in `before_send`. Non sono nostri e coprivano quelli veri.
+I chunk spariti dopo un deploy ("Failed to fetch dynamically imported module",
+"text/html is not a valid JavaScript MIME type", "Unable to preload CSS") non
+sono errori: l'ErrorBoundary ricarica la pagina e manda solo `chunk_reload`.
+Parte come errore solo se ricapita entro 30 s (`src/lib/chunkReload.js`).
+**Mappa nei replay (27/09):** la mappa è un canvas WebGL e PostHog di suo non
+registra i canvas — nei replay Esplora sembrava vuota per tutti. Ora
+`session_recording.captureCanvas` è acceso (2 fps, metà risoluzione) e la mappa
+ha `preserveDrawingBuffer: true`: **non toglierlo**, perché senza il
+registratore fa `clear()` sul canvas a ogni fotogramma e la mappa diventa
+bianca davvero, anche sullo schermo di chi la usa. Se la mappa non parte lo
+dicono gli eventi `map_loaded` (con `ms`), `map_error`, `map_failed` (niente
+WebGL: compare il rimando all'elenco) e `map_context_lost`.
+**Mappa pronta prima di Esplora (27/09):** la mappa Mapbox è **una sola per
+tutta la visita** (`src/components/Map/mapInstance.js`): nasce in anticipo in
+un contenitore nascosto mentre si è sulla home (`src/lib/prewarmExplore.js`, a
+browser libero; subito su /esplora; al tocco su "Esplora"; mai con risparmio
+dati o 2G) e quando si esce da Esplora non si distrugge, torna nel parcheggio.
+MapView non crea mappe: chiede `getMap()` e alla fine `parkMap()` — **mai
+`map.remove()`**. Primo ingresso da ~3 s a ~0,4 s, ritorno da ~1,9 s a ~0,25 s
+(misurati in locale). Contro: una "map load" Mapbox anche per chi Esplora non
+la apre (prima invece una a ogni ingresso), e la memoria della mappa resta
+occupata finché la scheda è aperta.
+**Liste passate alla mappa: sempre memo.** MapView rifà tutti i pin quando
+cambia l'array `restaurants` (per identità) e avvisa la pagina dei locali
+visibili; con un filtro attivo HomePage le passava un array nuovo a ogni
+render (`discountRestaurantIds` era un `new Set` nel corpo) e il giro
+pin → avviso → render girava ~300 volte al secondo, CPU al 100%. Ora
+`notifyVisible` avvisa solo se qualcosa cambia, ma una lista derivata va
+comunque in `useMemo`.
 
 ## Connettori disponibili — USALI SE ATTIVI
 - **GitHub** — PR, issues, merge (funziona via `gh` CLI, testato e operativo)

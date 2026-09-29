@@ -1,13 +1,13 @@
-import { useEffect, useRef, useImperativeHandle, forwardRef, useCallback } from 'react'
+import { useEffect, useRef, useImperativeHandle, forwardRef, useCallback, useState } from 'react'
+import { Link } from 'react-router-dom'
 import mapboxgl from 'mapbox-gl'
-import 'mapbox-gl/dist/mapbox-gl.css'
 import Supercluster from 'supercluster'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
+import { track } from '../../lib/posthog'
+import { getMap, parkMap } from './mapInstance'
 
-const TORINO_CENTER = [7.6869, 45.0703]
 const ACCENT_COLOR = '#E8453C'
 const GOLD_COLOR = '#B08954'
-const MAP_STYLE = 'mapbox://styles/mapbox/streets-v12'
 const DEBOUNCE_MS = 120
 const CROSSFADE_MS = 200
 
@@ -234,6 +234,35 @@ function PlaceholderMap({ restaurants, className }) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Map unavailable — WebGL assente o rifiutato dal dispositivo        */
+/* ------------------------------------------------------------------ */
+function MapUnavailable({ className }) {
+  return (
+    <div className={className} style={{
+      width: '100%', height: '100%', display: 'flex', alignItems: 'center',
+      justifyContent: 'center', background: '#F9FAFB', padding: 24,
+    }}>
+      <div style={{ textAlign: 'center', maxWidth: 320 }}>
+        <div style={{ fontSize: 32, marginBottom: 12 }}>🗺️</div>
+        <p style={{ fontSize: 15, fontWeight: 600, color: '#1F2937', margin: '0 0 6px' }}>
+          La mappa non si è caricata
+        </p>
+        <p style={{ fontSize: 14, color: '#6B7280', margin: '0 0 16px', lineHeight: 1.5 }}>
+          Questo dispositivo non riesce a disegnarla. I locali sono tutti nell'elenco.
+        </p>
+        <Link to="/list" style={{
+          display: 'inline-block', padding: '10px 18px', borderRadius: 999,
+          background: ACCENT_COLOR, color: '#fff', fontSize: 14, fontWeight: 600,
+          textDecoration: 'none',
+        }}>
+          Vedi l'elenco
+        </Link>
+      </div>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
 /*  MapView — supercluster + animated HTML markers                     */
 /* ------------------------------------------------------------------ */
 const MapView = forwardRef(function MapView({
@@ -249,6 +278,7 @@ const MapView = forwardRef(function MapView({
   const debounceTimer = useRef(null)
   const crossfadeTimer = useRef(null)
   const token = import.meta.env.VITE_MAPBOX_TOKEN
+  const [failed, setFailed] = useState(false)
   const onSelectRef = useRef(onSelectRestaurant)
   onSelectRef.current = onSelectRestaurant
   const onVisibleRef = useRef(onVisibleRestaurantsChange)
@@ -274,6 +304,28 @@ const MapView = forwardRef(function MapView({
       map.current.flyTo({ center: [lng, lat], zoom, duration: 1400, essential: true })
     },
   }))
+
+  /* -------------------------------------------------------------- */
+  /*  Tell the page which restaurants are in view                    */
+  /* -------------------------------------------------------------- */
+  // Solo quando cambia davvero qualcosa. La pagina risponde con uno stato
+  // nuovo, e se le passa alla mappa una lista ricreata a ogni render (come
+  // faceva HomePage con un filtro attivo) si innesca un giro senza fine:
+  // pin rifatti, avviso, render, pin rifatti — ~300 volte al secondo, CPU
+  // al 100% finché il filtro restava acceso.
+  const lastVisibleKey = useRef(null)
+  const notifyVisible = useCallback((m, rests) => {
+    if (!onVisibleRef.current) return
+    const bounds = m.getBounds()
+    const ids = rests
+      .filter((r) => isRestaurantVisible(r, bounds))
+      .map((r) => r.id)
+    const center = m.getCenter()
+    const key = `${center.lng.toFixed(6)},${center.lat.toFixed(6)}|${ids.join(',')}`
+    if (key === lastVisibleKey.current) return
+    lastVisibleKey.current = key
+    onVisibleRef.current(ids, { lng: center.lng, lat: center.lat })
+  }, [])
 
   /* -------------------------------------------------------------- */
   /*  Build supercluster index                                       */
@@ -436,7 +488,7 @@ const MapView = forwardRef(function MapView({
         }
         // Clean up transition classes from new markers
         for (const { el } of toEnter) {
-          el.classList.remove('cb-marker--fade', '  cb-marker--show')
+          el.classList.remove('cb-marker--fade', 'cb-marker--show')
           el.classList.add('cb-marker--visible')
         }
       }, CROSSFADE_MS + 20)
@@ -456,14 +508,8 @@ const MapView = forwardRef(function MapView({
     lastZoom.current = zoom
 
     // Notify parent
-    if (onVisibleRef.current) {
-      const allVisibleIds = rests
-        .filter((r) => isRestaurantVisible(r, bounds))
-        .map((r) => r.id)
-      const center = m.getCenter()
-      onVisibleRef.current(allVisibleIds, { lng: center.lng, lat: center.lat })
-    }
-  }, [])
+    notifyVisible(m, rests)
+  }, [notifyVisible])
 
   /* -------------------------------------------------------------- */
   /*  Zoom handler: just record that zoom level changed.             */
@@ -485,73 +531,88 @@ const MapView = forwardRef(function MapView({
   useEffect(() => {
     if (!token || !mapContainer.current) return
     ensureStyles()
-    mapboxgl.accessToken = token
 
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: MAP_STYLE,
-      center: TORINO_CENTER,
-      zoom: 13,
-      pitch: 15,
+    // La mappa è una sola per tutta la visita (vedi mapInstance.js): di
+    // solito esiste già, creata mentre si era sulla home, e qui la si
+    // prende in prestito invece di costruirla.
+    const mountedAt = performance.now()
+    let entry
+    try {
+      entry = getMap()
+    } catch (err) {
+      // Senza WebGL (disattivato, GPU in blacklist, contesti esauriti)
+      // Mapbox lancia qui: meglio un messaggio e l'elenco che una pagina rotta.
+      track('map_failed', { reason: String(err?.message || err).slice(0, 200) })
+      setFailed(true)
+      return
+    }
+    const m = entry.map
+    mapContainer.current.appendChild(entry.container)
+    m.resize()
+    map.current = m
+
+    // Quanto aspetta chi apre Esplora prima di vedere la mappa disegnata.
+    // `ready`: era già pronta (0 ms); `prewarmed`: nata prima di Esplora.
+    const prewarmed = entry.createdAt < mountedAt - 50
+    const onLoad = () => track('map_loaded', {
+      ms: Math.round(performance.now() - mountedAt),
+      ready: false,
+      prewarmed,
     })
+    if (entry.loaded) track('map_loaded', { ms: 0, ready: true, prewarmed: true })
+    else m.once('load', onLoad)
 
-    map.current.on('load', () => {
-      const m = map.current
-      if (!m) return
-
-      // Hide POI labels
-      m.getStyle().layers.forEach((layer) => {
-        if (layer.id.includes('poi')) m.setLayoutProperty(layer.id, 'visibility', 'none')
+    // During movement: update visible restaurant count in real-time
+    let moveRaf = null
+    const onMove = () => {
+      if (moveRaf) return
+      moveRaf = requestAnimationFrame(() => {
+        moveRaf = null
+        notifyVisible(m, restaurantsRef.current || [])
       })
+    }
 
-      // During zoom: record that zoom changed (don't sync mid-animation)
-      m.on('zoom', onZoom)
+    // After all movement settles: sync with animation if zoom changed
+    const onMoveEnd = () => {
+      clearTimeout(debounceTimer.current)
+      if (zoomChanged.current) {
+        zoomChanged.current = false
+        syncMarkers(true) // animated crossfade for cluster ↔ pin
+      } else {
+        debounceTimer.current = setTimeout(() => syncMarkers(false), DEBOUNCE_MS)
+      }
+    }
 
-      // During movement: update visible restaurant count in real-time
-      let moveRaf = null
-      m.on('move', () => {
-        if (moveRaf) return
-        moveRaf = requestAnimationFrame(() => {
-          moveRaf = null
-          if (!onVisibleRef.current) return
-          const rests = restaurantsRef.current || []
-          const bounds = m.getBounds()
-          const ids = rests
-            .filter((r) => isRestaurantVisible(r, bounds))
-            .map((r) => r.id)
-          const center = m.getCenter()
-          onVisibleRef.current(ids, { lng: center.lng, lat: center.lat })
-        })
-      })
+    // During zoom: record that zoom changed (don't sync mid-animation)
+    m.on('zoom', onZoom)
+    m.on('move', onMove)
+    m.on('moveend', onMoveEnd)
 
-      // After all movement settles: sync with animation if zoom changed
-      m.on('moveend', () => {
-        clearTimeout(debounceTimer.current)
-        if (zoomChanged.current) {
-          zoomChanged.current = false
-          syncMarkers(true) // animated crossfade for cluster ↔ pin
-        } else {
-          debounceTimer.current = setTimeout(() => syncMarkers(false), DEBOUNCE_MS)
-        }
-      })
-
-      // Initial render (instant, no animation needed)
-      buildIndex()
-      syncMarkers(false)
-    })
+    // I pin sono HTML: si mettono subito, senza aspettare le tessere, così
+    // compaiono insieme alla mappa (o prima). `syncMarkers` avvisa anche la
+    // pagina di quali locali si vedono.
+    buildIndex()
+    syncMarkers(false)
 
     return () => {
+      m.off('load', onLoad)
+      m.off('zoom', onZoom)
+      m.off('move', onMove)
+      m.off('moveend', onMoveEnd)
+      if (moveRaf) cancelAnimationFrame(moveRaf)
       clearTimeout(debounceTimer.current)
       clearTimeout(crossfadeTimer.current)
       for (const { marker } of markersMap.current.values()) marker.remove()
       markersMap.current.clear()
       userMarker.current?.remove()
       userMarker.current = null
-      map.current?.remove()
       map.current = null
       sc.current = null
+      // Non `remove()`: la mappa torna nel parcheggio, pronta per il
+      // prossimo ingresso in Esplora.
+      parkMap(entry)
     }
-  }, [token, onZoom, syncMarkers, buildIndex])
+  }, [token, onZoom, syncMarkers, buildIndex, notifyVisible])
 
   /* -------------------------------------------------------------- */
   /*  Rebuild when data changes                                      */
@@ -613,6 +674,7 @@ const MapView = forwardRef(function MapView({
   }, [userPosition])
 
   if (!token) return <PlaceholderMap restaurants={restaurants} className={className} />
+  if (failed) return <MapUnavailable className={className} />
 
   return (
     <div ref={mapContainer} className={className} style={{ width: '100%', height: '100%' }} />

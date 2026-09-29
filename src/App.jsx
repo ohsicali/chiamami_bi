@@ -8,50 +8,45 @@ import StatusBarScrim from './components/Layout/StatusBarScrim'
 import { usePageTracking } from './lib/hooks/usePageTracking'
 import AdsProvider from './components/Ads/AdsProvider'
 import { useMediaQuery } from './lib/hooks/useMediaQuery'
+import { useAuth } from './lib/hooks/useAuth'
+import { captureError, posthogConsentDenied, posthogConsentGranted, posthogIdentify, track } from './lib/posthog'
+import { claimChunkReload, isChunkLoadError } from './lib/chunkReload'
+import { prewarmExplore, scheduleExplorePrewarm } from './lib/prewarmExplore'
+import WelcomeTourGate from './components/Onboarding/WelcomeTourGate'
 
 // CookieConsent is rendered after first paint via requestIdleCallback so it
 // doesn't compete with the LCP. The library + its CSS adds ~20 kB to the
 // entry chunk if imported eagerly.
 const CookieConsent = lazy(() => import('react-cookie-consent'))
 
-// Un nuovo deploy rinomina i file delle pagine caricate con `lazy()`
-// (hash diverso nel nome). Chi ha il sito già aperto e naviga verso una
-// pagina non ancora scaricata prova a prendere il vecchio file: Vercel non
-// lo trova più e restituisce la pagina HTML del routing SPA al suo posto,
-// da cui il "text/html is not a valid JavaScript MIME type". Non è un bug
-// dell'app, è il sito vecchio in mano all'utente: un ricaricamento prende
-// l'HTML nuovo con i riferimenti giusti e risolve. `RELOAD_KEY` evita di
-// ricaricare in loop se il problema fosse un altro.
-const CHUNK_ERROR_PATTERN = /dynamically imported module|is not a valid JavaScript MIME type|Importing a module script failed|Failed to fetch dynamically imported module|Unable to preload CSS/i
-const RELOAD_KEY = 'chiamamibi-chunk-reload'
-
-function isChunkLoadError(error) {
-  return CHUNK_ERROR_PATTERN.test(error?.message || '')
-}
-
+// Chunk spariti dopo un deploy: si ricarica invece di mostrare l'errore
+// (vedi src/lib/chunkReload.js).
 class ErrorBoundary extends Component {
   state = { hasError: false, error: null }
   static getDerivedStateFromError(error) {
     return { hasError: true, error }
   }
-  componentDidCatch(error) {
-    if (!isChunkLoadError(error)) return
-    let alreadyTried = false
-    try {
-      alreadyTried = sessionStorage.getItem(RELOAD_KEY) === '1'
-      if (!alreadyTried) sessionStorage.setItem(RELOAD_KEY, '1')
-    } catch {
-      // storage non disponibile (privacy mode ecc.): mostra il fallback normale
+  componentDidCatch(error, info) {
+    // Un chunk di un deploy vecchio: si ricarica e non è un errore da
+    // segnalare (a PostHog va solo l'evento). Se ricapita subito dopo,
+    // allora è un problema vero e parte come errore.
+    if (isChunkLoadError(error) && claimChunkReload()) {
+      track('chunk_reload', { message: error.message })
+      window.location.reload()
       return
     }
-    if (!alreadyTried) window.location.reload()
+    captureError(error, { component_stack: info?.componentStack })
   }
   render() {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-6 text-center">
           <p className="text-lg font-semibold text-primary mb-2">Qualcosa è andato storto</p>
-          <p className="text-sm text-secondary mb-4">{this.state.error?.message}</p>
+          <p className="text-sm text-secondary mb-4">
+            {isChunkLoadError(this.state.error)
+              ? 'Non siamo riusciti a caricare la pagina. Controlla la connessione e riprova.'
+              : this.state.error?.message}
+          </p>
           <button
             onClick={() => window.location.reload()}
             className="px-5 py-2.5 rounded-xl bg-accent text-white text-sm font-medium"
@@ -107,21 +102,10 @@ const ResetPasswordPage = lazy(() => import('./pages/public/ResetPasswordPage'))
 const SettingsPage = lazy(() => import('./pages/public/SettingsPage'))
 
 // Preload RestaurantPage chunk so it's ready instantly when a pin is tapped
-const preloadRestaurantPage = () => import('./pages/public/RestaurantPage')
+const preloadRestaurantPage = () => import('./pages/public/RestaurantPage').catch(() => {})
 
 export default function App() {
   const location = useLocation()
-
-  // Siamo arrivati fin qui senza che l'ErrorBoundary scattasse: la pagina è
-  // sana, quindi un eventuale chunk error futuro merita un altro tentativo
-  // di ricaricamento (vedi RELOAD_KEY sopra).
-  useEffect(() => {
-    try {
-      sessionStorage.removeItem(RELOAD_KEY)
-    } catch {
-      // storage non disponibile, nessun problema: il flag semplicemente non si azzera
-    }
-  }, [])
 
   // 1024 e non 768: sotto i 1024 le due home si assomigliano (una colonna,
   // riga che scorre), e la piega a due colonne — quella che non piaceva —
@@ -131,11 +115,29 @@ export default function App() {
   // Track page views (skips /admin routes internally)
   usePageTracking()
 
+  // PostHog: lega gli eventi all'account dopo il login (solo con consenso),
+  // e torna anonimo al logout. Vedi src/lib/posthog.js.
+  const { user } = useAuth()
+  const userId = user?.id ?? null
+  useEffect(() => {
+    posthogIdentify(userId)
+  }, [userId])
+
   // Preload the restaurant page chunk after initial render
   useEffect(() => {
     const timer = setTimeout(preloadRestaurantPage, 1000)
     return () => clearTimeout(timer)
   }, [])
+
+  // Esplora pronta prima di arrivarci: la mappa si crea in anticipo e resta
+  // viva per tutta la visita (vedi src/lib/prewarmExplore.js). Su /esplora
+  // aperta direttamente parte subito; dalle pagine pubbliche a browser libero;
+  // non dalle pagine di admin e ristoratori, che la mappa non la usano.
+  useEffect(() => {
+    const p = location.pathname
+    if (p === '/esplora') prewarmExplore()
+    else if (!p.startsWith('/admin') && p !== '/verify' && p !== '/partner') scheduleExplorePrewarm()
+  }, [location.pathname])
 
   // Defer the cookie banner until the browser is idle. If the user has already
   // chosen, the lib short-circuits internally and renders nothing.
@@ -292,6 +294,10 @@ export default function App() {
     {/* Mobile Tab Bar */}
     {showTabBar && <MobileTabBar />}
     </Suspense>
+
+    {/* Tutorial di benvenuto: una volta sola, dopo la registrazione
+        (regole in src/lib/welcomeTour.js). */}
+    <WelcomeTourGate />
     </AdsProvider>
     </ErrorBoundary>
 
@@ -339,6 +345,11 @@ export default function App() {
       }}
       cookieName="chiamamibi_cookie_consent"
       expires={365}
+      onAccept={() => {
+        posthogConsentGranted()
+        posthogIdentify(userId)
+      }}
+      onDecline={posthogConsentDenied}
     >
       Questo sito utilizza cookie tecnici necessari al funzionamento. Non utilizziamo cookie di profilazione.{' '}
       <Link to="/privacy" style={{ color: '#E8453C', textDecoration: 'underline' }}>Privacy Policy</Link>

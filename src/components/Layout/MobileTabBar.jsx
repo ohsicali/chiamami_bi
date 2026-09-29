@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
+import { prewarmExplore } from '../../lib/prewarmExplore'
 
 const TAB_BAR_HEIGHT = 68
 
@@ -149,7 +150,7 @@ export default function MobileTabBar() {
   const tabs = [
     { key: 'home', label: 'Home', Icon: HomeIcon, active: isHome, onClick: () => navigate('/') },
     { key: 'explore', label: 'Esplora', Icon: ExploreIcon, active: isExplore, onClick: () => navigate('/esplora') },
-    { key: 'deals', label: 'Club', Icon: DealsIcon, active: isDeals, badge: hasActiveDrop, onClick: () => navigate('/deals') },
+    { key: 'deals', label: 'Sconti', Icon: DealsIcon, active: isDeals, badge: hasActiveDrop, onClick: () => navigate('/deals') },
     // Chi non è registrato tocca "Salvati" e finisce sul login: gli si dice
     // perché (`reason`) e da dove riprendere dopo (`returnTo`), altrimenti
     // legge "Bentornato" senza aver mai avuto un account e poi si ritrova in
@@ -275,6 +276,9 @@ export default function MobileTabBar() {
           key={tab.key}
           type="button"
           onClick={tab.onClick}
+          // Al primo contatto col dito su Esplora la mappa comincia a
+          // prepararsi, prima ancora che il tocco diventi un click.
+          onPointerDown={tab.key === 'explore' ? prewarmExplore : undefined}
           className={`nav-item${tab.active ? ' active' : ''}`}
           aria-label={tab.label}
           aria-current={tab.active ? 'page' : undefined}

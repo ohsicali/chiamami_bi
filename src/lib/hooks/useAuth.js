@@ -251,9 +251,12 @@ export function AuthProvider({ children }) {
     if (error) throw error
   }, [])
 
-  const signOut = useCallback(async () => {
+  // `{ scope: 'local' }` chiude la sessione solo su questo dispositivo, senza
+  // chiederlo al server: serve dopo la cancellazione dell'account, quando il
+  // server quella sessione non la conosce più (vedi SettingsPage).
+  const signOut = useCallback(async (options) => {
     if (!isSupabaseConfigured()) return
-    await supabase.auth.signOut()
+    await supabase.auth.signOut(options)
     setProfile(null)
   }, [])
 

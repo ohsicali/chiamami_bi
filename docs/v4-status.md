@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-25 (`api/public.js` in edge, si resta su Pro)
+Ultima modifica: 2026-09-28 (Tutorial di benvenuto dopo la registrazione)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -32,6 +32,7 @@ dove siamo. Aggiorna a ogni step importante.
 | Bi Club — chiarezza "Tutti gli sconti" / "I miei vantaggi" | #285 | ✅ Merged | Nessun SQL. Vedi sezione "22/09 — Bi Club: dove finiscono gli sconti" sotto. |
 | Promemoria sconti presi e non usati | — | 🚧 In review | Branch `claude/reminder-unused-discount-rj5sx6`. **Nessun SQL.** Cron Vercel giornaliero. Vedi sezione "24/09 — promemoria" sotto. |
 | Admin Analytics — numeri veri e più chiari | — | 🚧 In review | SQL `supabase/admin-analytics-2026-09-23.sql` **già eseguito** (connettore Supabase). Vedi sezione "23/09 — admin Analytics" sotto. |
+| Tutorial di benvenuto dopo la registrazione | #310 | ✅ Merged (cf52e71) | **Nessun SQL.** 7 schermate saltabili (4 sugli sconti), parte dalla spunta "Ci sei" appena l'account è confermato; finito si va alla home. Fix 28/09: con Google (flusso implicit, niente `?code=`) diceva "Accesso effettuato!" e partiva solo sulla home. Vedi CLAUDE.md "Tutorial di benvenuto". |
 
 ## 25/09 — `api/public.js` diventa edge: il sito sta nei limiti di Hobby
 
@@ -2571,3 +2572,36 @@ crearne una nuova) aggiunto in:
 Non toccate `/profile`, `/saved`, `/settings`, `/reset-password` — sono
 già in Disallow su robots.txt ma non erano nello scope di questa
 richiesta.
+
+## 28/09 — sconti scansionati che non comparivano (admin e /verify)
+
+Shoro ha scansionato 4 sconti (3 Torino, 1 Poirino): nel DB c'erano
+(`status = 'redeemed'`), ma né l'admin né lo storico di /verify li
+mostravano. Stessa causa nei due posti: liste che mescolano "presi" e
+"utilizzati" con un tetto di righe — il 28/09 si sono presi 241 sconti e
+usati 6 (Shoro: 185 presi, 8 usati), e le convalide finivano fuori.
+- **Admin → Sconti, pannello "In diretta"**: `deriveRedemptionStats`
+  restituisce anche `usedEvents`; il pannello si apre su **Utilizzati**
+  (accanto "Tutti"). Test in `tests/redemptions-live.test.mjs`.
+- **/verify**: `verify_activity_list` (SQL
+  `supabase/verify-activity-list-convalide-2026-09-28.sql`, **già eseguito**
+  il 28/09 via connettore) ordinava per `generated_at` con tetto 50. Ora
+  restituisce fino a N convalide (per `redeemed_at`) più fino a N sconti in
+  attesa, ordinati per la data che conta. Le anteprime della dashboard
+  ("Nessuna verifica ancora.") mostrano solo le convalide (`onlyVerified`).
+
+Resta aperto: `discount_redemptions` non registra la **sede**
+(`restaurant_locations`), quindi Torino e Poirino non si distinguono.
+
+### 28/09 — verifica di tutti i riscatti, e il contatore delle prese
+Controllo su tutti i locali (11 convalide in tutto, in 3 locali): lo
+storico /verify le restituisce tutte (Shoro 8/8, DAPPER 2/2, PapàLele
+1/1), e nessuna riga ha dati incoerenti (data mancante, usata prima di
+essere presa, codici doppi o mancanti, sconto inesistente).
+Trovato invece: `discounts.total_redeemed` (= prese) era più alto del vero
+su 8 sconti, 10 in tutto — le 10 righe cancellate da "Elimina account",
+che non lo abbassava. SQL `supabase/redemptions-counter-on-delete-2026-09-28.sql`
+(**già eseguito**): trigger `tr_redeemed_count_on_delete` e contatori
+riallineati. Corrette anche tre etichette che chiamavano "Utilizzi" /
+"Redenzioni" quel numero, che conta le prese (VerifyPage, ScontoTab,
+card del drop in AdminDashboard).

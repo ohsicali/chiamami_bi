@@ -189,12 +189,18 @@ export default function HomePage() {
     toggleSave(id)
   }, [user, openSaveGate, toggleSave])
   const { discounts: activeDiscounts } = useActiveDiscounts()
-  const discountRestaurantIds = new Set(activeDiscounts.map(d => d.restaurant_id))
+  // Memo, non ricalcolati a ogni render: da qui discendono i locali passati
+  // alla mappa, e una lista nuova a ogni render le faceva rifare tutti i pin
+  // (e con un filtro attivo girava in tondo, vedi `notifyVisible` in MapView).
+  const discountRestaurantIds = useMemo(
+    () => new Set(activeDiscounts.map(d => d.restaurant_id)),
+    [activeDiscounts],
+  )
   const discountValueMap = Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id, d.discount_value]))
   const discountTitleMap = Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id, d.title]))
-  const discountLabelMap = Object.fromEntries(
+  const discountLabelMap = useMemo(() => Object.fromEntries(
     activeDiscounts.map(d => [d.restaurant_id, formatDiscountBadge(d)])
-  )
+  ), [activeDiscounts])
 
   const {
     restaurants,

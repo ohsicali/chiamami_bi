@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useState, useRef, Fragment } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { formatDiscountBadge } from '../../lib/utils/discountFormat'
+import { dayLabel, dayKey } from '../../lib/activityFeed'
+import { useLoadMoreOnScroll } from '../../lib/hooks/useLoadMoreOnScroll'
 
 /**
  * LiveRedemptionsPanel — feed "In diretta" degli sconti presi e utilizzati.
@@ -9,7 +11,9 @@ import { formatDiscountBadge } from '../../lib/utils/discountFormat'
  * perché feed e contatori delle card stanno sulla stessa fonte).
  *
  * Props:
- *   events         → [{ key, kind: 'taken'|'used', at, row }] dal più recente
+ *   events         → [{ key, kind: 'taken'|'used', at, row }] dal più recente,
+ *                    tutta la cronologia (qui si mostra a pezzi)
+ *   usedEvents     → solo le convalide, stesso formato
  *   today          → { taken, used }
  *   status         → 'live' | 'connecting' | 'offline'
  *   loaded         → la prima fotografia è arrivata
@@ -19,6 +23,16 @@ import { formatDiscountBadge } from '../../lib/utils/discountFormat'
  */
 
 const COLLAPSED = 6
+// Aperta la cronologia, le righe si aggiungono a blocchi mentre si scende:
+// sono centinaia e ognuna è un <motion.li> con `layout`.
+const STEP = 40
+
+// Si apre sulle convalide: gli sconti presi sono decine di volte di più e,
+// mescolati, spingevano fuori dal feed i QR scansionati (28/09, Shoro).
+const VIEWS = [
+  { id: 'used', label: 'Utilizzati' },
+  { id: 'all', label: 'Tutti' },
+]
 // Alias maiuscolo: la config ESLint non conta `<motion.li>` come uso di `motion`.
 const MotionLi = motion.li
 
@@ -39,10 +53,25 @@ const STATUS = {
   offline: { label: 'Non in diretta', color: '#C0392B' },
 }
 
-export default function LiveRedemptionsPanel({ events, today, status, loaded, freshKeys, now, discountsById }) {
+export default function LiveRedemptionsPanel({ events, usedEvents = [], today, status, loaded, freshKeys, now, discountsById }) {
   const [expanded, setExpanded] = useState(false)
+  const [visible, setVisible] = useState(STEP)
+  const [view, setView] = useState('used')
+  const scrollRef = useRef(null)
   const st = STATUS[status] || STATUS.connecting
-  const shown = expanded ? events : events.slice(0, COLLAPSED)
+  const list = view === 'used' ? usedEvents : events
+  const shown = expanded ? list.slice(0, visible) : list.slice(0, COLLAPSED)
+  const hasMore = expanded && visible < list.length
+  const sentinelRef = useLoadMoreOnScroll(() => setVisible((v) => v + STEP), {
+    enabled: hasMore,
+    rootRef: scrollRef,
+    watch: shown.length,
+  })
+  const collapse = () => {
+    setExpanded(false)
+    setVisible(STEP)
+    if (scrollRef.current) scrollRef.current.scrollTop = 0
+  }
 
   return (
     <section
@@ -85,18 +114,49 @@ export default function LiveRedemptionsPanel({ events, today, status, loaded, fr
         </div>
       </div>
 
+      <div role="tablist" aria-label="Cosa mostrare" style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+        {VIEWS.map((v) => {
+          const active = view === v.id
+          return (
+            <button
+              key={v.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => { setView(v.id); collapse() }}
+              style={{
+                border: active ? 0 : '1px solid var(--color-line, #EAE3D7)',
+                background: active ? 'var(--color-ink, #22181C)' : '#fff',
+                color: active ? '#fff' : 'var(--color-ink, #22181C)',
+                borderRadius: 999,
+                padding: '5px 12px',
+                fontSize: 12,
+                fontWeight: 800,
+                cursor: 'pointer',
+                fontFamily: 'var(--font-sans)',
+              }}
+            >
+              {v.label}
+            </button>
+          )
+        })}
+      </div>
+
       {!loaded && (
         <div style={{ padding: '14px 4px', fontSize: 13, color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>Carico…</div>
       )}
 
-      {loaded && events.length === 0 && (
+      {loaded && list.length === 0 && (
         <div style={{ padding: '14px 4px', fontSize: 13, color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
-          Ancora nessuno sconto preso. Appena qualcuno ne sblocca uno, compare qui.
+          {view === 'used'
+            ? 'Ancora nessuno sconto utilizzato. Appena un locale ne convalida uno, compare qui.'
+            : 'Ancora nessuno sconto preso. Appena qualcuno ne sblocca uno, compare qui.'}
         </div>
       )}
 
-      {loaded && events.length > 0 && (
+      {loaded && list.length > 0 && (
         <ul
+          ref={scrollRef}
           style={{
             listStyle: 'none',
             margin: 0,
@@ -104,28 +164,59 @@ export default function LiveRedemptionsPanel({ events, today, status, loaded, fr
             display: 'flex',
             flexDirection: 'column',
             gap: 6,
-            maxHeight: expanded ? 460 : 'none',
+            maxHeight: expanded ? 520 : 'none',
             overflowY: expanded ? 'auto' : 'visible',
+            overscrollBehavior: 'contain',
           }}
         >
           <AnimatePresence initial={false}>
-            {shown.map((ev) => (
-              <EventRow
-                key={ev.key}
-                ev={ev}
-                fresh={freshKeys.has(ev.key)}
-                now={now}
-                discount={discountsById[ev.row.discount_id]}
-              />
+            {shown.map((ev, i) => (
+              <Fragment key={ev.key}>
+                {expanded && (i === 0 || dayKey(shown[i - 1].at) !== dayKey(ev.at)) && (
+                  <li
+                    key={`day:${ev.key}`}
+                    style={{
+                      position: 'sticky',
+                      top: 0,
+                      zIndex: 1,
+                      background: '#fff',
+                      padding: i === 0 ? '0 2px 4px' : '10px 2px 4px',
+                      fontSize: 10,
+                      fontWeight: 800,
+                      letterSpacing: '0.12em',
+                      textTransform: 'uppercase',
+                      color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+                    }}
+                  >
+                    {dayLabel(ev.at, now)}
+                  </li>
+                )}
+                <EventRow
+                  ev={ev}
+                  fresh={freshKeys.has(ev.key)}
+                  now={now}
+                  discount={discountsById[ev.row.discount_id]}
+                />
+              </Fragment>
             ))}
           </AnimatePresence>
+          {hasMore && (
+            <li ref={sentinelRef} aria-hidden style={{ padding: '8px 0', textAlign: 'center', fontSize: 12, color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
+              Carico…
+            </li>
+          )}
+          {expanded && !hasMore && (
+            <li style={{ padding: '8px 0 2px', textAlign: 'center', fontSize: 11, color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
+              Inizio della cronologia · {list.length} {view === 'used' ? 'sconti utilizzati' : 'eventi'}
+            </li>
+          )}
         </ul>
       )}
 
-      {loaded && events.length > COLLAPSED && (
+      {loaded && list.length > COLLAPSED && (
         <button
           type="button"
-          onClick={() => setExpanded((v) => !v)}
+          onClick={() => (expanded ? collapse() : setExpanded(true))}
           style={{
             marginTop: 10,
             background: 'none',
@@ -138,7 +229,7 @@ export default function LiveRedemptionsPanel({ events, today, status, loaded, fr
             fontFamily: 'var(--font-sans)',
           }}
         >
-          {expanded ? 'Mostra meno' : `Mostra gli ultimi ${events.length}`}
+          {expanded ? 'Mostra meno' : `Vedi tutta la cronologia (${list.length})`}
         </button>
       )}
     </section>
