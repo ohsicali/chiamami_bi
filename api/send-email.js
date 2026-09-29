@@ -438,6 +438,7 @@ async function handleUserWelcome(req, res) {
       .from('discounts')
       .select('id', { count: 'exact', head: true })
       .eq('is_active', true)
+      .eq('is_test', false)
       .gt('valid_until', new Date().toISOString())
     attivi = Number.isFinite(count) ? count : null
   } catch { /* il benvenuto parte comunque */ }

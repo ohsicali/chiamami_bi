@@ -256,6 +256,28 @@ l'admin vede età, età media e quanti l'hanno messa in /admin/users.
 - PostHog: `birthdate_asked`, `birthdate_saved` (`source`: signup/popup/settings),
   `birthdate_later`.
 
+## Sconti di prova — non vanno online (29/09)
+Per provare uno sconto col locale prima di pubblicarlo (primo caso: Gelateria
+Borghese con l'account beatrice.rigato@gmail.com). Nel form sconti: casella
+**"Sconto di prova"** + le email di chi lo vede. Lo sconto è vero (si
+sblocca, QR e codice, il locale lo convalida in /verify, festa e stelle) ma
+lo vedono **solo gli admin e le email invitate**; nessuna email di annuncio
+(il form non la offre, il megafono è spento, `notify-subscribers` lo rifiuta).
+- **Lo nasconde il DB**, non l'app: `discounts.is_test` + tabella
+  `discount_testers` + policy di lettura su `discounts` (SQL
+  `supabase/discount-test-mode-2026-09-29.sql`, **già eseguito**). Così la
+  cache CDN (`api/public.js`, chiave anon) non lo riceve mai, e
+  `guard_redemption_insert` rifiuta il riscatto a chi non è invitato.
+- In app lo porta `fetchMyTestDiscounts` (`useDiscounts.js`): chiede solo le
+  prove a cui è invitata **la propria email** (anche un admin non vede quelle
+  degli altri sul sito), non le scrive in localStorage, e se non ce ne sono
+  non richiede per 5 minuti. Sul foglio del QR c'è l'etichetta "Prova".
+- Le letture con **service role** vedono tutto: una nuova query sugli sconti
+  lato server (email, Chiedi a Bi, conteggi) vuole `.eq('is_test', false)`.
+- **Pubblicare** = togliere la spunta e salvare: da lì è uno sconto normale.
+  Il form propone di cancellare i riscatti fatti durante la prova (contatori
+  e posti ripartono da zero). L'email a tutti non parte: c'è il megafono.
+
 ## Sblocco sconti — QR e codice a 6 caratteri
 Ogni riscatto (`discount_redemptions`) ha due codici: il `qr_code`
 (`BiSc-…`, dentro il QR) e lo `short_code` di sei caratteri — una lettera e

@@ -322,6 +322,9 @@ export function QRPassSheet({
         <div className="qrp-sheet-titles">
           <h2 className="qrp-sheet-title">{name}</h2>
           {subtitle && <p className="qrp-sheet-sub">{subtitle}</p>}
+          {/* Sconto di prova (supabase/discount-test-mode-2026-09-29.sql):
+              chi lo prova col locale deve sapere che il pubblico non lo vede. */}
+          {deal?.is_test && <p className="qrp-test-tag">Prova · non visibile al pubblico</p>}
         </div>
         <button type="button" className="qrp-sheet-close" aria-label="Chiudi" onClick={onClose}>
           <Icon name="close" size={16} stroke={2.4} />

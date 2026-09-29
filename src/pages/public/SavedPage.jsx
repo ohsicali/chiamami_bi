@@ -99,6 +99,7 @@ export default function SavedPage() {
         .select('id, title, discount_value, discount_type, restaurant_id')
         .in('restaurant_id', ids)
         .eq('is_active', true)
+        .eq('is_test', false)
         .lte('valid_from', new Date().toISOString())
         .or(`valid_until.is.null,valid_until.gte.${new Date().toISOString()}`),
     ]).then(([resResult, discResult]) => {

@@ -286,11 +286,13 @@ async function loadPayload(admin, type, id) {
   if (type === 'discount' || type === 'drop') {
     const { data: d, error } = await admin
       .from('discounts')
-      .select('id, title, description, conditions, discount_type, discount_value, valid_until, valid_days, valid_meal_slots, valid_time_from, valid_time_to, is_drop, drop_starts_at, drop_ends_at, max_quantity, max_redemptions, claimed_count, total_redeemed, restaurant_id, is_active')
+      .select('id, title, description, conditions, discount_type, discount_value, valid_until, valid_days, valid_meal_slots, valid_time_from, valid_time_to, is_drop, drop_starts_at, drop_ends_at, max_quantity, max_redemptions, claimed_count, total_redeemed, restaurant_id, is_active, is_test')
       .eq('id', id)
       .single()
     if (error || !d) throw new Error('Discount not found')
     if (!d.is_active) throw new Error('Discount is not active')
+    // Uno sconto di prova non si annuncia a nessuno: prima "Pubblica per tutti".
+    if (d.is_test) throw new Error('Sconto di prova: pubblicalo per tutti prima di mandare l\'email')
     if (type === 'drop' && !d.is_drop) throw new Error('This discount is not a drop')
 
     // `our_review` e `tagline` non servono allo sconto in sé: servono
