@@ -6,7 +6,9 @@
  * stelle, o le dà e salta il modulo — riceve:
  *   1. un'email circa 30 minuti dopo la convalida;
  *   2. una circa un giorno dopo, se non ha ancora finito.
- * Chi ha mandato il modulo (`completed_at`) non riceve più niente. Chi ha
+ * Chi ha mandato il modulo (`completed_at`) non riceve più domande: riceve
+ * invece, una volta sola e qualche minuto dopo, il grazie di Bi con le sue
+ * stelle e le sue parole (`feedbackThanksEmail`, `planFeedbackThanks`). Chi ha
  * dato solo le stelle riceve la versione "raccontami di più", con le sue
  * stelle già accese.
  *
@@ -29,12 +31,15 @@
  *     promemoria: non è una ricevuta, è una domanda nostra.
  */
 
-import { feedbackAskEmail } from './templates.js'
+import { feedbackAskEmail, feedbackThanksEmail } from './templates.js'
+import { LIKED_OPTIONS } from '../../src/lib/redemptionFeedback.js'
 import { buildMessage, sendBatch, unsubscribeUrl, BATCH_SIZE } from './send.js'
 import { formatDiscountBadge } from './discount.js'
 import { SITE_URL } from './theme.js'
 
 export const FEEDBACK_KINDS = { first: 'feedback-ask-1', second: 'feedback-ask-2' }
+/** Il grazie a chi ha mandato la recensione. */
+export const THANKS_KIND = 'feedback-thanks'
 
 export const FEEDBACK_RULES = {
   /** La prima email, minuti dopo la convalida. */
@@ -52,6 +57,10 @@ export const FEEDBACK_RULES = {
   quietToHour: 8,
   /** Tetto di sicurezza per un giro solo. */
   maxPerRun: 300,
+  /** Il grazie parte qualche minuto dopo l'invio (chi torna a correggere fa in tempo). */
+  thanksAfterMinutes: 3,
+  /** Oltre, il grazie non parte più: arriverebbe fuori contesto. */
+  thanksMaxAgeHours: 24,
 }
 
 const MIN = 60_000
@@ -122,6 +131,51 @@ export function planFeedbackAsks({ rows = [], sent = new Map(), recipients = new
     .slice(0, rules.maxPerRun)
 }
 
+/**
+ * Il grazie: a chi ha mandato il modulo (`completed_at`), una volta sola,
+ * qualche minuto dopo, mai di notte, uno per persona a giro.
+ *
+ * @param {object} input
+ * @param {Array}  input.rows        righe finite ({ redemption_id, user_id, completed_at, rating, … })
+ * @param {Set}    input.thanked     redemption_id già ringraziati
+ * @param {Map}    input.recipients  user_id → { email, name, token }
+ */
+export function planFeedbackThanks({ rows = [], thanked = new Set(), recipients = new Map(), now = new Date(), rules = FEEDBACK_RULES }) {
+  if (isQuietHour(now, rules)) return []
+  const t = now.getTime()
+  const perUser = new Map()
+  for (const row of rows) {
+    if (!row?.completed_at || row.rating == null) continue
+    if (thanked.has(row.redemption_id)) continue
+    const recipient = recipients.get(row.user_id)
+    if (!recipient?.email) continue
+    const done = Date.parse(row.completed_at)
+    if (!Number.isFinite(done)) continue
+    const age = t - done
+    if (age < rules.thanksAfterMinutes * MIN || age > rules.thanksMaxAgeHours * H) continue
+    const cur = perUser.get(row.user_id)
+    if (!cur || Date.parse(cur.row.completed_at) < done) perUser.set(row.user_id, { row, recipient, kind: THANKS_KIND })
+  }
+  return [...perUser.values()].slice(0, rules.maxPerRun)
+}
+
+const LIKED_LABEL = Object.fromEntries(LIKED_OPTIONS.map((o) => [o.key, o.label]))
+
+/** Da una voce del piano del grazie ai campi dell'email. */
+export function feedbackThanksProps(item, { unsubUrl = null } = {}) {
+  const row = item.row
+  return {
+    name: String(item.recipient?.name || '').trim().split(/\s+/)[0] || '',
+    restaurantName: row.restaurant?.name || 'il locale',
+    rating: row.rating,
+    low: row.rating != null && row.rating <= 2,
+    liked: (row.answers?.liked || []).map((k) => LIKED_LABEL[k] || k),
+    comment: (row.comment || '').trim() || null,
+    city: row.restaurant?.city,
+    unsubscribeUrl: unsubUrl,
+  }
+}
+
 /** Il link della pagina di feedback, con le stelle già scelte o no. */
 export function feedbackUrl(token, stars = null) {
   const base = `${SITE_URL}/feedback?t=${encodeURIComponent(token)}`
@@ -146,6 +200,24 @@ export function feedbackAskProps(item, { unsubUrl = null } = {}) {
 }
 
 const ROW_FIELDS = 'redemption_id, user_id, token, redeemed_at, rating, completed_at, restaurant:restaurants(name, city), discount:discounts(discount_type, discount_value, title)'
+const DONE_FIELDS = 'redemption_id, user_id, rating, answers, comment, completed_at, restaurant:restaurants(name, city)'
+
+/** Chi ha lo switch "I miei sconti" acceso, fra questi utenti. */
+async function recipientsFor(admin, userIds) {
+  const recipients = new Map()
+  for (let i = 0; i < userIds.length; i += 150) {
+    const { data } = await admin
+      .from('email_preferences')
+      .select('user_id, unsubscribe_token, profiles!inner(email, full_name)')
+      .eq('my_discounts', true)
+      .in('user_id', userIds.slice(i, i + 150))
+    for (const p of data || []) {
+      const email = p?.profiles?.email?.trim().toLowerCase()
+      if (email) recipients.set(p.user_id, { email, name: p.profiles.full_name || '', token: p.unsubscribe_token })
+    }
+  }
+  return recipients
+}
 
 /** Legge dal DB quello che serve a `planFeedbackAsks`. */
 export async function loadFeedbackInput(admin, now = new Date()) {
@@ -163,8 +235,6 @@ export async function loadFeedbackInput(admin, now = new Date()) {
   if (!rows?.length) return { rows: [], sent: new Map(), recipients: new Map() }
 
   const ids = rows.map((r) => r.redemption_id)
-  const userIds = [...new Set(rows.map((r) => r.user_id))]
-
   const sent = new Map()
   for (let i = 0; i < ids.length; i += 150) {
     const { data } = await admin
@@ -179,21 +249,37 @@ export async function loadFeedbackInput(admin, now = new Date()) {
       sent.set(l.ref_id, cur)
     }
   }
-
-  const recipients = new Map()
-  for (let i = 0; i < userIds.length; i += 150) {
-    const { data } = await admin
-      .from('email_preferences')
-      .select('user_id, unsubscribe_token, profiles!inner(email, full_name)')
-      .eq('my_discounts', true)
-      .in('user_id', userIds.slice(i, i + 150))
-    for (const p of data || []) {
-      const email = p?.profiles?.email?.trim().toLowerCase()
-      if (email) recipients.set(p.user_id, { email, name: p.profiles.full_name || '', token: p.unsubscribe_token })
-    }
-  }
-
+  const recipients = await recipientsFor(admin, [...new Set(rows.map((r) => r.user_id))])
   return { rows, sent, recipients }
+}
+
+/** Le recensioni mandate nelle ultime 24 ore e chi è già stato ringraziato. */
+export async function loadThanksInput(admin, now = new Date()) {
+  const from = new Date(now.getTime() - FEEDBACK_RULES.thanksMaxAgeHours * H).toISOString()
+  const to = new Date(now.getTime() - FEEDBACK_RULES.thanksAfterMinutes * MIN).toISOString()
+  const { data: rows, error } = await admin
+    .from('redemption_feedback')
+    .select(DONE_FIELDS)
+    .not('completed_at', 'is', null)
+    .gte('completed_at', from)
+    .lte('completed_at', to)
+    .order('completed_at', { ascending: true })
+    .limit(2000)
+  if (error) throw new Error(`Lettura recensioni fallita: ${error.message}`)
+  if (!rows?.length) return { rows: [], thanked: new Set(), recipients: new Map() }
+  const ids = rows.map((r) => r.redemption_id)
+  const thanked = new Set()
+  for (let i = 0; i < ids.length; i += 150) {
+    const { data } = await admin
+      .from('email_sent_log')
+      .select('ref_id')
+      .eq('kind', THANKS_KIND)
+      .eq('ok', true)
+      .in('ref_id', ids.slice(i, i + 150))
+    for (const l of data || []) thanked.add(l.ref_id)
+  }
+  const recipients = await recipientsFor(admin, [...new Set(rows.map((r) => r.user_id))])
+  return { rows, thanked, recipients }
 }
 
 /**
@@ -204,10 +290,15 @@ export async function loadFeedbackInput(admin, now = new Date()) {
  */
 export async function runFeedbackAsks(admin, { dryRun = false, now = new Date(), send } = {}) {
   const input = await loadFeedbackInput(admin, now)
-  const plan = planFeedbackAsks({ ...input, now })
+  const thanksInput = await loadThanksInput(admin, now)
+  const thanks = planFeedbackThanks({ ...thanksInput, now })
+  // Chi in questo giro riceve il grazie non riceve anche una domanda.
+  const thankedUsers = new Set(thanks.map((t) => t.row.user_id))
+  const plan = planFeedbackAsks({ ...input, now }).filter((p) => !thankedUsers.has(p.row.user_id))
   const summary = {
     open: input.rows.length,
     planned: plan.length,
+    thanksPlanned: thanks.length,
     quiet: isQuietHour(now),
     sent: 0,
     skipped: 0,
@@ -221,11 +312,21 @@ export async function runFeedbackAsks(admin, { dryRun = false, now = new Date(),
       rated: p.row.rating != null,
       redeemedAt: p.row.redeemed_at,
     }))
+    summary.thanksPreview = thanks.slice(0, 20).map((t) => ({
+      restaurant: t.row.restaurant?.name,
+      rating: t.row.rating,
+      completedAt: t.row.completed_at,
+    }))
     return summary
   }
 
   const queue = []
-  for (const item of plan) {
+  const items = [
+    ...plan.map((item) => ({ item, build: () => feedbackAskEmail(feedbackAskProps(item, { unsubUrl: unsubscribeUrl(item.recipient.token) })) })),
+    ...thanks.map((item) => ({ item, build: () => feedbackThanksEmail(feedbackThanksProps(item, { unsubUrl: unsubscribeUrl(item.recipient.token) })) })),
+  ]
+  for (const { item, build } of items) {
+    // Prima si prenota la riga nel registro: due giri insieme non mandano due volte.
     const { error } = await admin.from('email_sent_log').insert({
       user_id: item.row.user_id, kind: item.kind, ref_id: item.row.redemption_id,
       to_email: item.recipient.email, ok: true,
@@ -235,8 +336,7 @@ export async function runFeedbackAsks(admin, { dryRun = false, now = new Date(),
       summary.skipped += 1
       continue
     }
-    const mail = feedbackAskEmail(feedbackAskProps(item, { unsubUrl: unsubscribeUrl(item.recipient.token) }))
-    queue.push({ item, message: buildMessage({ to: item.recipient.email, token: item.recipient.token, ...mail }) })
+    queue.push({ item, message: buildMessage({ to: item.recipient.email, token: item.recipient.token, ...build() }) })
   }
 
   const sendChunk = send || sendBatch
@@ -250,8 +350,9 @@ export async function runFeedbackAsks(admin, { dryRun = false, now = new Date(),
     }
     summary.failed += chunk.length
     summary.errors.push(...(r.errors || []))
+    // Rifiutato: la riga torna ok = false e il giro dopo ci riprova.
     const error = String((r.errors || [])[0] || 'invio fallito').slice(0, 400)
-    for (const kind of Object.values(FEEDBACK_KINDS)) {
+    for (const kind of [...Object.values(FEEDBACK_KINDS), THANKS_KIND]) {
       const refs = chunk.filter((q) => q.item.kind === kind).map((q) => q.item.row.redemption_id)
       if (!refs.length) continue
       await admin.from('email_sent_log').update({ ok: false, error })

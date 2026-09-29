@@ -27,7 +27,7 @@ import { applyCors } from './_cors.js'
 import { verifyTurnstile } from './_turnstile.js'
 import {
   welcomeEmail, newDiscountEmail, newRestaurantEmail,
-  discountClaimedEmail, discountUsedEmail, discountReminderEmail, feedbackAskEmail, partnerWelcomeEmail,
+  discountClaimedEmail, discountUsedEmail, discountReminderEmail, feedbackAskEmail, feedbackThanksEmail, partnerWelcomeEmail,
   suggestionConfirmationEmail, partnerApplicationConfirmationEmail,
   recoveryOtpEmail, internalSuggestionEmail, internalPartnerApplicationEmail, SAMPLE,
 } from './_email/templates.js'
@@ -311,6 +311,7 @@ async function handlePreview(req, res) {
     'discount-used': () => discountUsedEmail(SAMPLE.discountUsed),
     'feedback-ask': () => feedbackAskEmail({ ...SAMPLE.feedbackAsk, unsubscribeUrl: u }),
     'feedback-ask-rated': () => feedbackAskEmail({ ...SAMPLE.feedbackAskRated, unsubscribeUrl: u }),
+    'feedback-thanks': () => feedbackThanksEmail({ ...SAMPLE.feedbackThanks, unsubscribeUrl: u }),
     // Il promemoria ha due vesti come l'annuncio: crema per la convenzione,
     // corallo col countdown per il drop. Si provano tutte e due.
     'discount-reminder': () => discountReminderEmail({ ...SAMPLE.discountReminder, now: new Date(), claimedAt: new Date(Date.now() - 4 * 86_400_000).toISOString(), unsubscribeUrl: u }),

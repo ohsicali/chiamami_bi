@@ -187,8 +187,13 @@ Quando il locale convalida il codice (/verify), sul telefono di chi l'ha usato:
 **stelle da 1 a 5, che NON si saltano** (niente X, niente Salta, Esc non
 chiude: deciso dal proprietario) → **modulo per Bi**, saltabile (cosa è
 piaciuto, com'è andato lo sconto, ci torneresti, due righe) → **Bi che
-saluta coi cuori**. Chi salta riceve le email a ~30 min e ~1 giorno
-(`docs/EMAIL-FLOWS.md` §7d, regole in `FEEDBACK_RULES`, sotto test).
+saluta coi cuori**. Chi salta riceve le email a ~30 min e ~1 giorno; chi
+manda la recensione riceve, qualche minuto dopo, l'email di **grazie** con le
+sue stelle e le sue parole (`docs/EMAIL-FLOWS.md` §7d, regole in
+`FEEDBACK_RULES` e `planFeedbackThanks`, sotto test). Le illustrazioni delle
+email (`public/email-assets/bi-cartoon.png`, `bi-grazie.png`,
+`bi-grazie-basso.png`) sono scatti di `BiCharacter`: se cambia il disegno
+vanno rifatte.
 - **DB**: `redemption_feedback`, una riga per convalida creata dal trigger
   `tr_redemption_feedback_on_redeem`. Il browser non ci scrive mai: legge la
   propria riga e passa dalle RPC `feedback_get/rate/submit` col `token` della

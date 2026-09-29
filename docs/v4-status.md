@@ -74,6 +74,11 @@ stelle); chi finisce vede Bi animata che ringrazia. Bi disegnata cartoon
 - Dati di prova in bozza (29/09): locale "TEST — Prova feedback Bi"
   (non pubblicato), sconto spento, riscatto di beatrice.rigato@gmail.com e
   un device `user_agent = 'test-claude'`. **Da cancellare** a prova finita.
+- Email di **grazie** a chi manda la recensione (29/09, dopo il merge di
+  #320): stesso giro pg_cron, `feedback-thanks` in `email_sent_log`.
+  Le due prove di Beatrice hanno le righe di registro già scritte
+  (`to_email` = `anteprima-a-ale.cali@icloud.com`), così il giro non le
+  scrive: le anteprime al proprietario sono partite a mano.
 - Test `tests/feedback-asks.test.mjs`. Screenshot del flusso verificati a
   390px e 1280px (banco di prova con Supabase simulato).
 

@@ -25,7 +25,7 @@ import {
   h1, h2, p, lede, eyebrow, metaLine, divider, button, offerCard, codeBlock,
   successBox, photoMosaic, dropCard, conventionOffer, microNote,
   textLink, signature, checklist, checkRows, steps, note, dataTable, spacer,
-  starRow, biSays, esc, SIGN,
+  starRow, biSays, heroIllustration, quoteBlock, esc, SIGN,
 } from './blocks.js'
 import { isBareDiscountValue } from './discount.js'
 import { claimedWords, clipSentences, conventionValidity, countdownWords, metaFor, perkBeyondValue } from './content.js'
@@ -63,6 +63,7 @@ const MOTIVO = {
   ricevuta: `Ricevi questa email perché hai preso questo sconto dal tuo account ${BRAND.name}.`,
   promemoria: `Ricevi questa email perché hai preso questo sconto dal tuo account ${BRAND.name} e i promemoria sui tuoi sconti sono accesi.`,
   feedback: `Ricevi questa email perché hai usato uno sconto dal tuo account ${BRAND.name} e gli avvisi sui tuoi sconti sono accesi.`,
+  grazie: `Ricevi questa email perché hai lasciato una recensione dal tuo account ${BRAND.name} e gli avvisi sui tuoi sconti sono accesi.`,
   partner: `Ricevi questa email perché il tuo locale è nella Guida di Bi.`,
   sicurezza: `Ricevi questa email perché è stata chiesta una modifica al tuo account ${BRAND.name}.`,
   interna: 'Notifica automatica del sito, non serve rispondere.',
@@ -662,6 +663,60 @@ export function feedbackAskEmail({
   }
 }
 
+/**
+ * Il grazie, a chi ha mandato la recensione (il modulo, non solo le stelle).
+ * Parte una volta sola, pochi minuti dopo, dal giro in `_email/feedback.js`.
+ * Riporta quello che ha lasciato — stelle, cosa è piaciuto, le sue parole —
+ * perché "ho letto tutto" detto senza mostrarlo non ci crede nessuno.
+ * Sotto le tre stelle il tono cambia: niente festa a chi è andata male.
+ */
+export function feedbackThanksEmail({
+  name, restaurantName, rating, comment, liked = [], low = false, city,
+  clubHref = `${SITE_URL}/sconti`, unsubscribeUrl,
+}) {
+  const nome = String(name || '').trim()
+  const cosa = liked.length ? liked.join(', ').toLowerCase() : ''
+  const subject = low
+    ? `Grazie per avermi detto di ${restaurantName}`
+    : `Grazie per il racconto su ${restaurantName}`
+  const corpo = low
+    ? `Mi dispiace che non sia andata come doveva. Ho letto tutto e lo giro al locale: le recensioni come la tua sono quelle che mi fanno scegliere meglio i posti del Bi Club.`
+    : `Ho letto tutto: lo vede anche il locale, e con i vostri racconti scelgo i prossimi posti del Bi Club.`
+  return {
+    subject,
+    ...renderEmail({
+      preheader: low ? 'L’ho letto e lo giro al locale.' : 'Ho letto tutto. Grazie per il tempo che ci hai messo.',
+      reason: MOTIVO.grazie,
+      unsubscribeUrl,
+      city,
+      blocks: [
+        // Col voto basso Bi non fa festa: sorriso gentile, niente cuori.
+        heroIllustration(`${SITE_URL}/email-assets/${low ? 'bi-grazie-basso' : 'bi-grazie'}.png`, { alt: low ? 'Bi' : 'Bi che ti saluta' }),
+        eyebrow('La tua recensione', { padding: '18px 20px 0' }),
+        h1(nome ? `Grazie, ${nome}!` : 'Grazie!'),
+        p(`${esc(corpo)}${SIGN}`, { size: 15, padding: '10px 20px 0' }),
+        rating ? starRow({ rating, labels: null }) : '',
+        rating ? microNote(`${rating === 1 ? 'Una stella' : `${rating} stelle`} per ${restaurantName}${cosa ? ` · ${low ? 'da migliorare' : 'ti è piaciuto'}: ${cosa}` : ''}`, { padding: '4px 20px 0' }) : '',
+        quoteBlock(comment),
+        button('Scopri gli altri sconti →', clubHref, { align: 'center', padding: '22px 20px 0' }),
+        spacer(26),
+      ],
+      text: [
+        nome ? `Grazie, ${nome}!` : 'Grazie!',
+        '',
+        corpo,
+        '',
+        rating ? `${rating === 1 ? 'Una stella' : `${rating} stelle`} per ${restaurantName}${cosa ? ` · ${low ? 'da migliorare' : 'ti è piaciuto'}: ${cosa}` : ''}` : '',
+        comment ? `“${comment}”` : '',
+        '',
+        `Gli altri sconti: ${clubHref}`,
+        '',
+        '— Bi',
+      ].filter((l, i, a) => l !== '' || (a[i - 1] !== '' && i > 0)).join('\n'),
+    }),
+  }
+}
+
 /* ================================================================== */
 /*  6. Benvenuto ristoratore, col PIN                                  */
 /* ================================================================== */
@@ -975,6 +1030,11 @@ export const SAMPLE = {
     city: 'Torino',
     starHref: (n) => `${SITE_URL}/feedback?t=00000000-0000-0000-0000-000000000000&stelle=${n}`,
     formHref: `${SITE_URL}/feedback?t=00000000-0000-0000-0000-000000000000`,
+  },
+  feedbackThanks: {
+    name: 'Giulia', restaurantName: 'Bar Stampa', rating: 5, low: false, city: 'Torino',
+    liked: ['Il cibo', 'L’atmosfera'],
+    comment: 'Il tramezzino col tonno è il migliore di Torino, e il caffè pure. Torno sabato con le mie amiche!',
   },
   feedbackAskRated: {
     name: 'Giulia', restaurantName: 'Bar Stampa', value: '−50%', rating: 4, round: 2,

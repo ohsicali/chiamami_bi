@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import {
   welcomeEmail, newDiscountEmail, newRestaurantEmail,
-  discountClaimedEmail, discountUsedEmail, discountReminderEmail, feedbackAskEmail, partnerWelcomeEmail,
+  discountClaimedEmail, discountUsedEmail, discountReminderEmail, feedbackAskEmail, feedbackThanksEmail, partnerWelcomeEmail,
   suggestionConfirmationEmail, partnerApplicationConfirmationEmail,
   recoveryOtpEmail, internalSuggestionEmail, internalPartnerApplicationEmail,
   SAMPLE,
@@ -48,6 +48,8 @@ const EMAIL = [
   ['Promemoria — drop in scadenza', 'promemoria-drop', discountReminderEmail({ ...SAMPLE.discountReminder, photos: [FOTO], isDrop: true, endsAt: '2026-09-26T20:00:00Z', others: 0, unsubscribeUrl: UNSUB })],
   ['Com’è andata? — senza stelle', 'feedback', feedbackAskEmail({ ...SAMPLE.feedbackAsk, unsubscribeUrl: UNSUB })],
   ['Com’è andata? — stelle date', 'feedback-stelle', feedbackAskEmail({ ...SAMPLE.feedbackAskRated, unsubscribeUrl: UNSUB })],
+  ['Grazie per la recensione', 'feedback-grazie', feedbackThanksEmail({ ...SAMPLE.feedbackThanks, unsubscribeUrl: UNSUB })],
+  ['Grazie per la recensione — voto basso', 'feedback-grazie-basso', feedbackThanksEmail({ ...SAMPLE.feedbackThanks, rating: 2, low: true, liked: ['L’attesa'], comment: 'Abbiamo aspettato quaranta minuti per due piatti.', unsubscribeUrl: UNSUB })],
   ['Benvenuto ristoratore — col PIN', 'ristoratore', partnerWelcomeEmail(SAMPLE.partnerWelcome)],
   ['Conferma suggerimento', 'suggerimento', suggestionConfirmationEmail(SAMPLE.suggestionConfirmation)],
   ['Conferma candidatura partner', 'candidatura', partnerApplicationConfirmationEmail(SAMPLE.partnerApplicationConfirmation)],
@@ -69,7 +71,7 @@ mkdirSync(OUT, { recursive: true })
 // Il logo vive su chiamamibi.com: aprendo l'anteprima da file:// resterebbe
 // un riquadro rotto e si giudicherebbe male una testata che in posta si vede
 // benissimo. Le copie locali servono solo qui; l'HTML spedito punta al sito.
-for (const nome of ['guida-bi-ink.png', 'guida-bi-white.png', 'guida-bi-coral.png']) {
+for (const nome of ['guida-bi-ink.png', 'guida-bi-white.png', 'guida-bi-coral.png', 'bi-cartoon.png', 'bi-grazie.png', 'bi-grazie-basso.png']) {
   copyFileSync(join(OUT, '..', '..', 'public', 'email-assets', nome), join(OUT, nome))
 }
 // Il proxy delle foto non gira in locale: nell'anteprima gli indirizzi
