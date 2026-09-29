@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { supabase, isSupabaseConfigured } from '../supabase'
 import { applyPendingAnnouncementsOff } from '../emailPrefs'
+import { birthDateError, fromIsoDate } from '../birthDate'
 
 // Single source of truth for the auth+profile state. Previously each call
 // site of `useAuth()` ran its own getSession + fetch profile effect — so
@@ -73,6 +74,14 @@ export function AuthProvider({ children }) {
         supabase.from('profiles').update({ email: authUser.email }).eq('id', authUser.id)
         data.email = authUser.email
       }
+      // Data di nascita scritta alla registrazione ma non arrivata nel
+      // profilo (profilo creato dal browser invece che dal trigger): la si
+      // copia adesso, così il popup di BirthDateGate non la richiede.
+      const metaBirth = authUser.user_metadata?.birth_date
+      if (!data.birth_date && metaBirth && !birthDateError(fromIsoDate(metaBirth))) {
+        supabase.from('profiles').update({ birth_date: metaBirth }).eq('id', authUser.id).then(() => {}, () => {})
+        data.birth_date = metaBirth
+      }
       setProfile(data)
       // La spunta "newsletter" tolta alla registrazione, prima di avere una
       // sessione: si applica adesso (lib/emailPrefs.js).
@@ -88,6 +97,8 @@ export function AuthProvider({ children }) {
         avatar_url: authUser.user_metadata?.avatar_url || null,
         is_admin: false,
       }
+      const metaBirth = authUser.user_metadata?.birth_date
+      if (metaBirth && !birthDateError(fromIsoDate(metaBirth))) newProfile.birth_date = metaBirth
       const { data: created, error: insertError } = await supabase
         .from('profiles')
         .insert(newProfile)
@@ -197,13 +208,16 @@ export function AuthProvider({ children }) {
    * vecchia email col link, o chi ha il client di posta che lo pre-carica,
    * deve comunque atterrare da qualche parte di sensato.
    */
-  const signUp = useCallback(async (email, password, fullName) => {
+  // `birthDate` ('YYYY-MM-DD') viaggia nei metadati come il nome: il profilo
+  // non c'è ancora finché il codice non è confermato, e a crearlo è il
+  // trigger `handle_new_user`, che la copia in `profiles.birth_date`.
+  const signUp = useCallback(async (email, password, fullName, birthDate) => {
     if (!isSupabaseConfigured()) throw new Error('Supabase not configured')
     const { data, error } = await withTimeout(supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { full_name: fullName },
+        data: birthDate ? { full_name: fullName, birth_date: birthDate } : { full_name: fullName },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     }))

@@ -14,6 +14,7 @@ import { claimChunkReload, isChunkLoadError } from './lib/chunkReload'
 import { prewarmExplore, scheduleExplorePrewarm } from './lib/prewarmExplore'
 import WelcomeTourGate from './components/Onboarding/WelcomeTourGate'
 import RedemptionFeedbackGate from './components/Feedback/RedemptionFeedbackGate'
+import BirthDateGate from './components/Onboarding/BirthDateGate'
 
 // CookieConsent is rendered after first paint via requestIdleCallback so it
 // doesn't compete with the LCP. The library + its CSS adds ~20 kB to the
@@ -310,6 +311,10 @@ export default function App() {
     {/* Sconto convalidato dal locale: festa, stelle e feedback per Bi
         (regole in src/lib/redemptionFeedback.js). */}
     <RedemptionFeedbackGate />
+
+    {/* Data di nascita per chi non l'ha ancora messa: una volta per visita
+        (regole in src/lib/birthDate.js). */}
+    <BirthDateGate />
     </AdsProvider>
     </ErrorBoundary>
 

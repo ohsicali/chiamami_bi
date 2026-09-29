@@ -14,6 +14,9 @@ import MetaTags from '../../components/SEO/MetaTags'
 import { openWelcomeTour, SIGNUP_TOUR_DELAY_MS, whenTourCovers } from '../../lib/welcomeTour'
 import { preloadWelcomeTour } from '../../components/Onboarding/loadWelcomeTour'
 import AccountConfirmed from '../../components/Onboarding/AccountConfirmed'
+import BirthDateInput from '../../components/UI/BirthDateInput'
+import { birthDateError, toIsoDate } from '../../lib/birthDate'
+import { track } from '../../lib/posthog'
 
 const itemVariants = {
   hidden: { opacity: 0, y: 12 },
@@ -116,6 +119,8 @@ export default function LoginPage() {
   // che appartiene al recupero: due percorsi diversi che non devono passarsi
   // valori addosso quando si cambia schermata.
   const [registerConfirm, setRegisterConfirm] = useState('')
+  const [birthDate, setBirthDate] = useState({ day: '', month: '', year: '' })
+  const [birthInvalid, setBirthInvalid] = useState(false)
   // Codice di conferma della registrazione, separato da `recoveryOtp`: sono
   // due codici diversi, con due scadenze diverse, e mescolarli vorrebbe dire
   // mandare a verificare quello sbagliato.
@@ -240,6 +245,15 @@ export default function LoginPage() {
       return
     }
 
+    if (mode === 'register') {
+      const birthError = birthDateError(birthDate)
+      if (birthError) {
+        setBirthInvalid(true)
+        setError(birthError)
+        return
+      }
+    }
+
     if (mode === 'register' && password !== registerConfirm) {
       setError('Le due password non coincidono. Ricontrollale.')
       return
@@ -359,7 +373,8 @@ export default function LoginPage() {
         }
         redirectAfterAuth()
       } else {
-        const { needsConfirmation } = await signUp(email, password, fullName)
+        const { needsConfirmation } = await signUp(email, password, fullName, toIsoDate(birthDate))
+        track('birthdate_saved', { source: 'signup' })
         // La spunta "newsletter": chi si registra riceve gli annunci di
         // default (email_preferences, creata dal DB). Chi la toglie va
         // spento — subito se c'è già una sessione, altrimenti al primo
@@ -765,6 +780,38 @@ export default function LoginPage() {
                   style={{ ...inputStyle, marginBottom: 12 }}
                   required
                 />
+              )}
+            </AnimatePresence>
+
+            {/* Data di nascita — dal 29/09 la chiediamo a tutti quelli che si
+                registrano (chi l'account ce l'aveva già la trova chiesta dal
+                popup di BirthDateGate). Regole in src/lib/birthDate.js. */}
+            <AnimatePresence initial={false}>
+              {mode === 'register' && (
+                <motion.fieldset
+                  key="birth-date"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  style={{ border: 'none', padding: 0, margin: '0 0 12px', minWidth: 0 }}
+                  aria-describedby="register-birth-hint"
+                >
+                  <legend style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--color-ink-70)', padding: 0, margin: '0 2px 6px' }}>
+                    Data di nascita
+                  </legend>
+                  <BirthDateInput
+                    idPrefix="register-birth"
+                    value={birthDate}
+                    onChange={(v) => { setBirthDate(v); if (birthInvalid) setBirthInvalid(false) }}
+                    invalid={birthInvalid}
+                  />
+                  <div
+                    id="register-birth-hint"
+                    style={{ fontSize: 12, color: 'var(--color-ink-55)', margin: '6px 2px 0' }}
+                  >
+                    Serve a capire chi usa la guida. Non la vede nessun altro.
+                  </div>
+                </motion.fieldset>
               )}
             </AnimatePresence>
 
