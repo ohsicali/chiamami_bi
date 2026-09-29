@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-29 (Sconti di prova)
+Ultima modifica: 2026-09-29 (Uscita programmata di locali e sconti)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -34,6 +34,7 @@ dove siamo. Aggiorna a ogni step importante.
 | Admin Analytics — numeri veri e più chiari | — | 🚧 In review | SQL `supabase/admin-analytics-2026-09-23.sql` **già eseguito** (connettore Supabase). Vedi sezione "23/09 — admin Analytics" sotto. |
 | Tutorial di benvenuto dopo la registrazione | #310 | ✅ Merged (cf52e71) | **Nessun SQL.** 7 schermate saltabili (4 sugli sconti), parte dalla spunta "Ci sei" appena l'account è confermato; finito si va alla home. Fix 28/09: con Google (flusso implicit, niente `?code=`) diceva "Accesso effettuato!" e partiva solo sulla home. Vedi CLAUDE.md "Tutorial di benvenuto". |
 | Sconti di prova (visibili solo agli invitati) | — | 🚧 In review | SQL `supabase/discount-test-mode-2026-09-29.sql` **già eseguito** il 29/09 (provato in transazione annullata: anon e utente qualsiasi non lo vedono e non lo sbloccano, invitato sì). Vedi CLAUDE.md "Sconti di prova". |
+| Uscita programmata di locali e sconti (con email all'uscita) | — | 🚧 In review | SQL colonne `supabase/scheduled-publish-2026-09-29.sql` **già eseguito** il 29/09. **Dopo il deploy** eseguire `supabase/scheduled-publish-cron-2026-09-29.sql` (pg_cron ogni 5 min). Vedi CLAUDE.md "Uscita programmata" e EMAIL-FLOWS §7e. |
 | Feedback dopo la convalida (festa, stelle, Bi che ringrazia, email 30 min / 1 giorno, recensioni in /verify) | #320 | ✅ Merged (9d3cf06) | SQL `redemption-feedback-2026-09-29.sql`, `verify-feedback-list-2026-09-29.sql` e `redemption-feedback-cron-2026-09-29.sql` **tutti eseguiti** il 29/09. Giro email attivo (pg_cron `chiamamibi-feedback-asks`, ogni 10 min; prima chiamata: 200). Vedi sezione "29/09 — feedback" sotto e CLAUDE.md. |
 
 ## 29/09 — feedback dopo lo sconto convalidato

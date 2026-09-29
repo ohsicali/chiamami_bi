@@ -20,7 +20,6 @@
  * marchio voleva dire cambiarlo in sei posti sperando di non saltarne uno.
  */
 
-import { randomUUID } from 'node:crypto'
 import { createClient } from '@supabase/supabase-js'
 import { rateLimit, maybeCleanup } from './_rate-limit.js'
 import { applyCors } from './_cors.js'
@@ -38,6 +37,7 @@ import {
 import { formatDiscountBadge, pickPerk } from './_email/discount.js'
 import { formatShortCode, normalizeShortCode } from './_short-code.js'
 import { SITE_URL as PUBLIC_SITE } from './_email/theme.js'
+import { sendPartnerWelcome } from './_email/partner.js'
 
 export default async function handler(req, res) {
   if (applyCors(req, res)) return
@@ -502,28 +502,7 @@ async function handlePartnerWelcome(req, res) {
     return res.status(400).json({ error: 'Missing required fields: to, nomeLocale, pin, restaurantId' })
   }
 
-  // Il gettone usa e getta (24h) che fa entrare senza ridigitare il PIN.
-  const magicToken = randomUUID()
-  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
-
-  const { error: tokenError } = await admin
-    .from('restaurants')
-    .update({
-      magic_token: magicToken,
-      magic_token_expires_at: expiresAt.toISOString(),
-    })
-    .eq('id', restaurantId)
-
-  if (tokenError) {
-    console.error('Failed to store magic token:', tokenError)
-  }
-
-  const verifyUrl = !tokenError
-    ? `${PUBLIC_SITE}/verify?token=${magicToken}&pin=${encodeURIComponent(pin)}`
-    : `${PUBLIC_SITE}/verify?pin=${encodeURIComponent(pin)}`
-
-  const mail = partnerWelcomeEmail({ nomeLocale, pin, verifyUrl })
-  const r = await sendEmail({ to, ...mail })
+  const r = await sendPartnerWelcome(admin, { to, nomeLocale, pin, restaurantId })
   if (!r.ok) {
     console.error('[send-email partner] ', r.error)
     return res.status(502).json({ error: 'Failed to send email', detail: r.error })

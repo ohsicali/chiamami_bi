@@ -9,6 +9,7 @@ import PillTab from '../../components/admin/PillTab'
 import EmptyState from '../../components/admin/EmptyState'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import { PhotoOrEmoji } from '../../components/UI/SmartImage'
+import { formatPublishAt } from '../../lib/scheduledPublish'
 
 const PAGE_SIZE = 20
 const MONTH_MS = 30 * 24 * 60 * 60 * 1000
@@ -98,7 +99,17 @@ function DiscountTag({ value }) {
   )
 }
 
-function StatusPill({ published }) {
+function StatusPill({ published, publishAt }) {
+  // Programmato: in bozza, ma con la sua ora di uscita (vedi
+  // src/lib/scheduledPublish.js). Si legge a colpo d'occhio nella lista.
+  if (!published && publishAt) {
+    return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--color-ink, #22181C)' }}>
+        <span aria-hidden>⏰</span>
+        Esce {formatPublishAt(publishAt)}
+      </span>
+    )
+  }
   const color = published ? '#2C7A4A' : 'var(--color-ink-55, rgba(34,24,28,0.55))'
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color }}>
@@ -134,6 +145,9 @@ export default function AdminRestaurants() {
   const [page, setPage] = useState(1)
   const [deleteId, setDeleteId] = useState(null)
   const [discountsMap, setDiscountsMap] = useState({})
+  // Locali con l'uscita programmata: { [id]: publish_at }. A parte perché
+  // la lista arriva da useRestaurants, che ha le colonne del sito pubblico.
+  const [scheduledMap, setScheduledMap] = useState({})
   const [viewsMap, setViewsMap] = useState({})
   // Override locale dei `moments` per evitare il flash di rifetch:
   // quando l'admin tocca un chip salviamo il nuovo array nello state e in
@@ -260,6 +274,22 @@ export default function AdminRestaurants() {
       setDiscountsMap(map)
     }
     run()
+    return () => {
+      cancelled = true
+    }
+  }, [user])
+
+  useEffect(() => {
+    if (!isSupabaseConfigured() || !user) return
+    let cancelled = false
+    supabase
+      .from('restaurants')
+      .select('id, publish_at')
+      .not('publish_at', 'is', null)
+      .then(({ data }) => {
+        if (cancelled) return
+        setScheduledMap(Object.fromEntries((data || []).map((r) => [r.id, r.publish_at])))
+      })
     return () => {
       cancelled = true
     }
@@ -538,6 +568,7 @@ export default function AdminRestaurants() {
                     r={r}
                     idx={idx}
                     discount={discountsMap[r.id]}
+                    publishAt={scheduledMap[r.id] || null}
                     views={viewsMap[r.slug] || 0}
                     moments={momentsOverrides[r.id] ?? (Array.isArray(r.moments) ? r.moments : [])}
                     momentsSaving={momentsSaving}
@@ -711,7 +742,7 @@ function MomentQuickToggles({ moments, onToggle, saving, restaurantId }) {
 }
 
 function RestaurantRow({
-  r, idx, discount, views, moments, momentsSaving,
+  r, idx, discount, publishAt, views, moments, momentsSaving,
   categoriesValue, categorySaving, onOpenCategoryEdit,
   onToggleMoment, onDelete, onEdit,
 }) {
@@ -809,7 +840,7 @@ function RestaurantRow({
         <b style={{ fontWeight: 900 }}>{views > 0 ? views.toLocaleString('it-IT') : '—'}</b>
       </Td>
       <Td>
-        <StatusPill published={isPublished} />
+        <StatusPill published={isPublished} publishAt={publishAt} />
       </Td>
       <Td style={{ textAlign: 'right' }}>
         <div style={{ display: 'inline-flex', gap: 4, justifyContent: 'flex-end' }}>
