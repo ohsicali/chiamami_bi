@@ -207,8 +207,13 @@ Chi non arriva in fondo riceve fino a **due email**:
 - **~1 giorno** dopo (`feedback-ask-2`), fino a 3 giorni dopo, almeno 12 ore
   dopo la prima.
 
-Niente email a chi ha mandato il modulo; chi ha dato solo le stelle riceve la
-versione "raccontami di più" con le sue stelle accese. Di notte (23–8, Roma)
+Niente domande a chi ha mandato il modulo: riceve invece **il grazie**
+(`feedback-thanks`), una volta sola, 3 minuti–24 ore dopo l'invio: Bi che
+saluta (`bi-grazie.png`; col voto basso `bi-grazie-basso.png`, senza cuori),
+le sue stelle, cosa è piaciuto e le sue parole riportate. Oggetto `Grazie per
+il racconto su {Locale}` (voto 1–2: `Grazie per avermi detto di {Locale}`).
+Chi in un giro riceve il grazie non riceve anche una domanda. Chi ha dato
+solo le stelle riceve la versione "raccontami di più" con le sue stelle accese. Di notte (23–8, Roma)
 non parte niente; una persona riceve al massimo un'email a giro. Senza stelle,
 le cinque stelle si toccano **dalla posta**: ogni stella porta a
 `/feedback?t=<token>&stelle=N`, che salva il voto e apre il modulo (il token

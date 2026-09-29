@@ -23,6 +23,7 @@ const TEMPLATES = [
   { key: 'discount-reminder', label: 'Promemoria — sconto non usato', hint: 'Parte da sola alle 11: 48 ore dopo, un locale per email, al massimo ogni 3 giorni.' },
   { key: 'discount-reminder-drop', label: 'Promemoria — drop in scadenza', hint: 'Lo stesso promemoria per un drop: card corallo e countdown.' },
   { key: 'feedback-ask', label: 'Com’è andata? — senza stelle', hint: 'Dopo la convalida, a chi non ha dato le stelle nell’app: ~30 minuti e ~1 giorno dopo. Le stelle si toccano dalla posta.' },
+  { key: 'feedback-thanks', label: 'Grazie per la recensione', hint: 'A chi ha mandato la recensione, qualche minuto dopo: Bi che saluta, le sue stelle e le sue parole.' },
   { key: 'feedback-ask-rated', label: 'Com’è andata? — stelle date', hint: 'A chi ha dato le stelle ma ha saltato il modulo: le sue stelle accese e “raccontami di più”.' },
   { key: 'partner', label: 'Benvenuto ristoratore (col PIN)', hint: 'Quando aggiungi un locale e generi il PIN.' },
   { key: 'suggestion', label: 'Conferma suggerimento', hint: 'A chi ti segnala un locale dal sito.' },

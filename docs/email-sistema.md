@@ -381,6 +381,7 @@ questi numeri, non serve.
 | 6 | QR scansionato | chi l'ha usato | `Sconto usato da {Locale}` | no (ricevuta) |
 | 6-bis | Sconto preso da ≥48h e mai usato (cron, 1 al giorno, ogni ≥3 giorni) | chi l'ha preso | `Il tuo sconto da {Locale} ti aspetta` · drop: `Il tuo drop da {Locale} scade tra {X}` | sì (`my_discounts`) |
 | 6-ter | Sconto convalidato, feedback non finito (~30 min e ~1 giorno dopo) | chi l'ha usato | `Com’è andata da {Locale}?` · `Ieri da {Locale}: com’è andata?` | sì (`my_discounts`) |
+| 6-quater | Recensione mandata (3 min–24 h dopo) | chi l'ha scritta | `Grazie per il racconto su {Locale}` · voto basso: `Grazie per avermi detto di {Locale}` | sì (`my_discounts`) |
 | 7 | Locale aggiunto in admin | ristoratore | `{Locale} è nella Guida di Bi: ecco il tuo PIN` | no (accesso) |
 | 8 | Form "suggerisci un locale" | chi segnala | `Ho preso nota di {Locale}` | mailto |
 | 9 | Form `/partner` | candidato | `Ho ricevuto la candidatura di {Locale}` | mailto |

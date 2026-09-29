@@ -667,3 +667,26 @@ export function biSays(html, { padding = '16px 20px 0' } = {}) {
     </table>
   </td></tr>`
 }
+
+/**
+ * Un'illustrazione tonda al centro (Bi che ringrazia). PNG già tondo con il
+ * fondo trasparente: niente border-radius, che Outlook ignora.
+ */
+export function heroIllustration(src, { alt = '', size = 150, padding = '26px 20px 0' } = {}) {
+  return `<tr><td align="center" style="padding:${padding};font-size:0;line-height:0;">
+    <img src="${esc(src)}" width="${size}" height="${size}" alt="${esc(alt)}" style="display:block;margin:0 auto;width:${size}px;height:${size}px;border:0;" />
+  </td></tr>`
+}
+
+/**
+ * Le parole di chi scrive, riportate: crema col filetto d'oro a sinistra.
+ * Il testo arriva dall'utente: passa sempre da esc().
+ */
+export function quoteBlock(text, { padding = '16px 20px 0' } = {}) {
+  if (!text) return ''
+  return `<tr><td style="padding:${padding};">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${COLORS.cream};border-left:3px solid ${COLORS.oro};">
+      <tr><td style="padding:14px 18px;font-family:${FONT_BODY};font-size:15px;line-height:1.6;font-style:italic;color:${COLORS.ink};">“${esc(text).replace(/\n/g, '<br />')}”</td></tr>
+    </table>
+  </td></tr>`
+}

@@ -10,9 +10,10 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  FEEDBACK_KINDS, FEEDBACK_RULES, feedbackAskProps, feedbackUrl, isQuietHour, planFeedbackAsks, romeHour,
+  FEEDBACK_KINDS, FEEDBACK_RULES, THANKS_KIND, feedbackAskProps, feedbackThanksProps, feedbackUrl, isQuietHour,
+  planFeedbackAsks, planFeedbackThanks, romeHour,
 } from '../api/_email/feedback.js'
-import { feedbackAskEmail, SAMPLE } from '../api/_email/templates.js'
+import { feedbackAskEmail, feedbackThanksEmail, SAMPLE } from '../api/_email/templates.js'
 import {
   CELEBRATE_WINDOW_MS, IN_APP_WINDOW_MS, buildAnswers, hasFeedbackContent, isFeedbackAllowedOnPath,
   likedQuestion, parseFeedbackToken, parseStars, ratingCopy, shouldCelebrate, shouldOpenFeedback,
@@ -189,4 +190,54 @@ test('email con le stelle già date: niente link alle stelle, bottone al modulo,
 test('senza nome la frase comincia con la maiuscola', () => {
   const mail = feedbackAskEmail({ ...SAMPLE.feedbackAsk, name: '' })
   assert.match(mail.text, /^Poco fa hai usato/)
+})
+
+/* ── Il grazie ────────────────────────────────────────────────────────── */
+
+const done = ({ user = 'u1', minsAgo = 10, rating = 5, ...rest } = {}) => ({
+  redemption_id: `d${++seq}`, user_id: user, rating,
+  completed_at: new Date(NOW.getTime() - minsAgo * MIN).toISOString(),
+  answers: { liked: ['cibo'] }, comment: 'Buonissimo', restaurant: { name: 'Shoro' }, ...rest,
+})
+
+test('il grazie parte qualche minuto dopo la recensione, una volta sola', () => {
+  assert.equal(planFeedbackThanks({ rows: [done({ minsAgo: 1 })], recipients: who('u1'), now: NOW }).length, 0, 'troppo presto')
+  const r = done({ minsAgo: 5 })
+  assert.equal(planFeedbackThanks({ rows: [r], recipients: who('u1'), now: NOW }).length, 1)
+  assert.equal(planFeedbackThanks({ rows: [r], thanked: new Set([r.redemption_id]), recipients: who('u1'), now: NOW }).length, 0, 'già ringraziato')
+  assert.equal(planFeedbackThanks({ rows: [done({ minsAgo: 25 * 60 })], recipients: who('u1'), now: NOW }).length, 0, 'oltre le 24 ore')
+})
+
+test('niente grazie di notte, senza "I miei sconti" o senza recensione', () => {
+  const night = new Date('2026-09-29T22:30:00Z')
+  const r = { ...done(), completed_at: new Date(night.getTime() - 10 * MIN).toISOString() }
+  assert.equal(planFeedbackThanks({ rows: [r], recipients: who('u1'), now: night }).length, 0)
+  assert.equal(planFeedbackThanks({ rows: [done()], recipients: new Map(), now: NOW }).length, 0)
+  assert.equal(planFeedbackThanks({ rows: [done({ completed_at: null })], recipients: who('u1'), now: NOW }).length, 0)
+})
+
+test('due recensioni della stessa persona: un grazie a giro, per la più recente', () => {
+  const a = done({ minsAgo: 40 })
+  const b = done({ minsAgo: 8 })
+  const plan = planFeedbackThanks({ rows: [a, b], recipients: who('u1'), now: NOW })
+  assert.equal(plan.length, 1)
+  assert.equal(plan[0].row.redemption_id, b.redemption_id)
+  assert.equal(plan[0].kind, THANKS_KIND)
+})
+
+test('email del grazie: le sue stelle, le sue parole (senza HTML), tono giusto col voto basso', () => {
+  const props = feedbackThanksProps({ row: done({ comment: '<b>Top</b> & basta', answers: { liked: ['cibo', 'atmosfera'] } }), recipient: { name: 'Giulia Rossi', token: 't' } })
+  assert.equal(props.name, 'Giulia')
+  assert.deepEqual(props.liked, ['Il cibo', "L'atmosfera"])
+  const mail = feedbackThanksEmail({ ...props, unsubscribeUrl: 'https://chiamamibi.com/preferenze-email?t=x' })
+  assert.equal(mail.subject, 'Grazie per il racconto su Shoro')
+  assert.ok(mail.subject.length < 50)
+  assert.ok(mail.html.includes('&lt;b&gt;Top&lt;/b&gt; &amp; basta'), 'il testo dell’utente è escapato')
+  assert.ok(mail.html.includes('bi-grazie.png'))
+  assert.ok(mail.html.includes('Scegli cosa ricevere'))
+  assert.ok(!/rgba\(/.test(mail.html))
+  for (const m of mail.html.matchAll(/<img [^>]*>/g)) assert.match(m[0], /alt="[^"]+"/)
+  const low = feedbackThanksEmail({ ...props, rating: 1, low: true, unsubscribeUrl: 'x' })
+  assert.equal(low.subject, 'Grazie per avermi detto di Shoro')
+  assert.match(low.text, /Mi dispiace/)
 })
