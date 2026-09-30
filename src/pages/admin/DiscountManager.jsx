@@ -8,7 +8,7 @@ import AdminLayout from '../../components/Layout/AdminLayout'
 import PillTab from '../../components/admin/PillTab'
 import EmptyState from '../../components/admin/EmptyState'
 import DiscountEditor from '../../components/admin/DiscountEditor'
-import { isExpired as isDiscountExpired, discountEndsAt, maxQuantity } from '../../lib/discounts'
+import { isExpired as isDiscountExpired, discountEndsAt, maxQuantity, chooseFeaturedDeal, canFeatureInHome } from '../../lib/discounts'
 import { useAdminRedemptions } from '../../lib/hooks/useAdminRedemptions'
 import LiveRedemptionsPanel from '../../components/admin/LiveRedemptionsPanel'
 import { toLocalInput, fromLocalInput, publishAtError, formatPublishAt } from '../../lib/scheduledPublish'
@@ -107,7 +107,7 @@ function countdown(target) {
   return { label: 'Al termine', value: `${h}h ${m}m` }
 }
 
-function DropCard({ d, testers, selected, notifyLog, notifying, active, partnerTotal, flash, onSelect, onEdit, onNotify, onToggleActive, onDelete }) {
+function DropCard({ d, testers, selected, notifyLog, notifying, active, partnerTotal, flash, home, onSelect, onEdit, onNotify, onToggleActive, onHome, onDelete }) {
   const isDrop = d.is_drop
   const isFeatured = d.is_featured && !d.is_drop
   const ttl = countdown(discountEndsAt(d))
@@ -251,6 +251,23 @@ function DropCard({ d, testers, selected, notifyLog, notifying, active, partnerT
               Pausa
             </span>
           )}
+          {home?.inHome && (
+            <span
+              title={home.pinned ? 'L\'hai messo tu in vetrina in home' : 'In vetrina in home: è l\'ultimo drop uscito'}
+              style={{
+                fontSize: 10,
+                fontWeight: 800,
+                padding: '2px 8px',
+                borderRadius: 999,
+                background: 'var(--color-oro, #B08954)',
+                color: '#fff',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+              }}
+            >
+              🏠 In home{home.pinned ? ' · scelto da te' : ''}
+            </span>
+          )}
           {d.is_test && (
             <span
               style={{
@@ -382,6 +399,21 @@ function DropCard({ d, testers, selected, notifyLog, notifying, active, partnerT
             <path d="M11.6 16.8A3 3 0 0 1 8 20" />
           </svg>
         </ActionIcon>
+        <ActionIcon
+          onClick={onHome}
+          disabled={home?.inHome ? !home.pinned : !home?.canPin}
+          title={
+            home?.pinned ? 'Togli dalla home: torna l\'ultimo drop'
+              : home?.inHome ? 'È già in vetrina in home (ultimo drop uscito)'
+                : home?.canPin ? 'Metti in vetrina in home al posto del drop'
+                  : 'Non si può mettere in home: deve essere online (non in prova, in pausa, scaduto o esaurito)'
+          }
+          color={home?.inHome ? 'var(--color-oro, #B08954)' : 'var(--color-ink)'}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill={home?.inHome ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" />
+          </svg>
+        </ActionIcon>
         <ActionIcon onClick={onToggleActive} title={d.is_active ? 'Metti in pausa' : 'Riattiva'}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             {d.is_active ? (
@@ -433,6 +465,41 @@ function Counter({ label, value, tone, flashKey }) {
       {label}
       <b style={{ fontSize: 14, fontWeight: 900, color: green ? '#2C7A4A' : 'var(--color-ink, #22181C)' }}>{value}</b>
     </span>
+  )
+}
+
+/* La card grande della home: quale sconto c'è adesso e perché. Per
+   cambiarlo si usa 🏠 sulla card dello sconto. */
+function HomeShowcase({ choice, saving, onUnpin }) {
+  const d = choice?.deal
+  const why = choice?.reason === 'pinned'
+    ? `L'hai scelto tu${d?.home_featured_at ? ` il ${formatPublishAt(d.home_featured_at)}` : ''}. Resta finché non esce un drop nuovo o non lo togli.`
+    : choice?.reason === 'drop'
+      ? 'È l\'ultimo drop uscito. Per mettere un altro sconto al suo posto tocca 🏠 sulla sua card.'
+      : choice?.reason === 'auto'
+        ? 'Nessun drop: c\'è lo sconto che scade prima. Per sceglierne un altro tocca 🏠 sulla sua card.'
+        : 'In home non c\'è nessuno sconto in evidenza.'
+  return (
+    <div
+      className="adm-card adm-card--cream"
+      style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginBottom: 16, padding: '14px 16px' }}
+    >
+      <span aria-hidden style={{ fontSize: 22 }}>🏠</span>
+      <div style={{ flex: 1, minWidth: 200 }}>
+        <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--adm-muted)' }}>
+          In vetrina in home adesso
+        </div>
+        <div style={{ fontSize: 15, fontWeight: 900, color: 'var(--adm-ink)', marginTop: 2 }}>
+          {d ? <>{d.restaurant?.name || '—'} · <span style={{ color: d.is_drop ? 'var(--adm-coral)' : 'var(--color-oro, #B08954)' }}>{d.discount_value || d.title}</span>{d.is_drop ? ' (drop)' : ''}</> : '—'}
+        </div>
+        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--adm-muted)', marginTop: 2 }}>{why}</div>
+      </div>
+      {choice?.reason === 'pinned' && (
+        <button type="button" className="adm-btn adm-btn--sm" onClick={onUnpin} disabled={saving}>
+          Torna all'ultimo drop
+        </button>
+      )}
+    </div>
   )
 }
 
@@ -1194,6 +1261,40 @@ export default function DiscountManager() {
     if (data) setDiscounts((p) => p.map((d) => (d.id === id ? data : d)))
   }
 
+  // Vetrina della home (30/09). Lo sconto in evidenza lo sceglie
+  // `chooseFeaturedDeal` (lib/discounts): l'ultimo drop uscito, oppure lo
+  // sconto messo qui a mano con 🏠 — finché non esce un drop più nuovo o non
+  // lo si toglie. Tocca solo la card grande della home, non il Bi Club.
+  const homeChoice = useMemo(() => chooseFeaturedDeal(discounts), [discounts])
+  const [homeSaving, setHomeSaving] = useState(false)
+
+  const handleHomePin = async (d, pin) => {
+    if (homeSaving) return
+    const name = d.restaurant?.name || 'questo locale'
+    const ok = pin
+      ? window.confirm(`Mettere in vetrina in home "${name} · ${d.discount_value || d.title}"?\n\nPrende il posto del drop nella card grande della home. Il Bi Club non cambia. Quando esce un drop nuovo, torna il drop.`)
+      : window.confirm(`Togliere "${name}" dalla vetrina della home?\n\nTorna l'ultimo drop uscito.`)
+    if (!ok) return
+    setHomeSaving(true)
+    const at = pin ? new Date().toISOString() : null
+    // Uno solo alla volta: la scelta nuova spegne le vecchie.
+    const { error: clearErr } = await supabase
+      .from('discounts')
+      .update({ home_featured_at: null })
+      .not('home_featured_at', 'is', null)
+      .neq('id', d.id)
+    const { error } = clearErr ? { error: clearErr } : await supabase
+      .from('discounts')
+      .update({ home_featured_at: at })
+      .eq('id', d.id)
+    setHomeSaving(false)
+    if (error) {
+      window.alert(`Non sono riuscito a salvare: ${error.message}`)
+      return
+    }
+    setDiscounts((p) => p.map((x) => (x.id === d.id ? { ...x, home_featured_at: at } : { ...x, home_featured_at: null })))
+  }
+
   // I contatori non stanno in `discounts`: arrivano dal realtime e si
   // uniscono qui, così una modifica allo sconto non li azzera e un riscatto
   // non costringe a ricaricare la lista.
@@ -1319,6 +1420,15 @@ export default function DiscountManager() {
           now={live.now}
           discountsById={discountsById}
         />
+
+        {/* ── Vetrina della home: cosa c'è adesso e perché ── */}
+        {!loading && (
+          <HomeShowcase
+            choice={homeChoice}
+            saving={homeSaving}
+            onUnpin={() => homeChoice.deal && handleHomePin(homeChoice.deal, false)}
+          />
+        )}
 
         {/* ── Filter pills (v4 mockup) ── */}
         <div
@@ -1464,6 +1574,12 @@ export default function DiscountManager() {
                 onEdit={() => handleEdit(d)}
                 onNotify={() => handleNotify(d)}
                 onToggleActive={() => handleToggleActive(d.id, d.is_active, d.publish_at)}
+                home={{
+                  inHome: homeChoice.deal?.id === d.id,
+                  pinned: homeChoice.deal?.id === d.id && homeChoice.reason === 'pinned',
+                  canPin: !homeSaving && canFeatureInHome(d),
+                }}
+                onHome={() => handleHomePin(d, !(homeChoice.deal?.id === d.id && homeChoice.reason === 'pinned'))}
                 onDelete={() => setDeleteConfirm(d)}
               />
             ))}

@@ -715,9 +715,9 @@ export default function HomeDesktopClassic() {
     [restaurants]
   )
 
-  // Stessa scelta della home del telefono (`pickFeaturedDeal`): il drop
-  // attivo, se non c'è il drop esaurito (resta col "sold out"), poi la
-  // convenzione più vicina a scadere.
+  // Stessa scelta della home del telefono (`pickFeaturedDeal`): l'ultimo
+  // drop uscito (anche esaurito, col "sold out") o lo sconto scelto a mano
+  // dal pannello; se non c'è nessuno dei due, la convenzione che scade prima.
   const featuredDrop = useMemo(() => {
     const drop = pickFeaturedDeal(discounts)
     if (!drop) return null

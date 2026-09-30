@@ -115,10 +115,28 @@ export function filterVisibleDrops(list, now = new Date()) {
   return (list || []).filter((d) => isVisibleDrop(d, now))
 }
 
+function ms(iso) {
+  const t = iso ? new Date(iso).getTime() : 0
+  return Number.isFinite(t) ? t : 0
+}
+
 /** Quando è uscito il drop (inizio del drop, o creazione), in ms. */
 function dropStartMs(d) {
-  const t = new Date(d?.drop_starts_at || d?.created_at || 0).getTime()
-  return Number.isFinite(t) ? t : 0
+  return ms(d?.drop_starts_at || d?.created_at)
+}
+
+/**
+ * Quando il drop è arrivato sul sito, in ms: il più tardi fra l'inizio del
+ * drop e la creazione della riga. Un drop creato oggi con l'inizio messo a
+ * ieri è comunque "nuovo" rispetto a una scelta fatta stamattina.
+ */
+function dropOutMs(d) {
+  return Math.max(ms(d?.drop_starts_at), ms(d?.created_at))
+}
+
+/** Il drop è già iniziato (o non ha un inizio)? */
+function dropStarted(d, now) {
+  return !d?.drop_starts_at || ms(d.drop_starts_at) <= now.getTime()
 }
 
 /**
@@ -170,20 +188,52 @@ export function sortByExpiry(list) {
 }
 
 /**
- * Lo sconto in evidenza in home (la card grande).
+ * Uno sconto scelto a mano per la vetrina può andarci? Deve essere online
+ * (non in prova, non in pausa, non scaduto) e ancora prendibile — tranne un
+ * drop esaurito, che in vetrina ci sta col suo "sold out".
+ */
+export function canFeatureInHome(d, now = new Date()) {
+  if (!d || d.is_test) return false
+  return isActiveDiscount(d, now) || isVisibleDrop(d, now)
+}
+
+/**
+ * Lo sconto in evidenza in home (la card grande). Deciso dal proprietario
+ * il 30/09: "vince l'ultima cosa successa".
  *
- * 1. Il drop attivo più vicino a scadere: è quello che ha davvero fretta.
- * 2. Se non ce ne sono, il drop esaurito più recente (`filterShownDrops`):
- *    resta in vetrina con la scritta "sold out" e il bottone spento (30/09 —
- *    dal 28/09 al suo posto andava lo sconto fisso del locale).
- * 3. Altrimenti la convenzione attiva più vicina a scadere.
+ * - L'ultimo drop uscito (attivo o esaurito col "sold out"): quando ne esce
+ *   uno nuovo prende il posto del precedente. Il precedente resta valido
+ *   per chi l'ha preso ("I miei vantaggi") e, se ha ancora posti, resta
+ *   tra gli altri sconti e nel Bi Club.
+ * - Lo sconto scelto a mano dal pannello (`home_featured_at`, bottone 🏠
+ *   sulla card): va in vetrina al posto del drop, finché non esce un drop
+ *   più nuovo della scelta o non lo si toglie. Se ce ne sono più d'uno vale
+ *   l'ultimo scelto. Solo la vetrina della home: il Bi Club non cambia.
+ * - Se non c'è nessuno dei due, la convenzione attiva più vicina a scadere.
  */
 export function pickFeaturedDeal(list, now = new Date()) {
-  const liveDrop = sortByExpiry(filterActiveDrops(list, now))[0]
-  if (liveDrop) return liveDrop
-  const soldOutDrop = filterShownDrops(list, now).find((d) => isSoldOut(d))
-  if (soldOutDrop) return soldOutDrop
-  return sortByExpiry(filterActiveConventions(list, now))[0] || null
+  return chooseFeaturedDeal(list, now).deal
+}
+
+/**
+ * Come `pickFeaturedDeal`, più il perché — lo dice il pannello sconti:
+ * 'pinned' (scelto a mano), 'drop' (l'ultimo drop uscito), 'auto' (né drop
+ * né scelta: la convenzione che scade prima), null se non c'è niente.
+ */
+export function chooseFeaturedDeal(list, now = new Date()) {
+  const items = (list || []).filter((d) => d && !d.is_test)
+  const latestDrop = filterShownDrops(items, now)
+    .filter((d) => dropStarted(d, now))
+    .reduce((best, d) => (!best || dropOutMs(d) > dropOutMs(best) ? d : best), null)
+  const pinned = items
+    .filter((d) => d.home_featured_at && canFeatureInHome(d, now))
+    .reduce((best, d) => (!best || ms(d.home_featured_at) > ms(best.home_featured_at) ? d : best), null)
+  if (pinned && (!latestDrop || ms(pinned.home_featured_at) >= dropOutMs(latestDrop))) {
+    return { deal: pinned, reason: 'pinned' }
+  }
+  if (latestDrop) return { deal: latestDrop, reason: 'drop' }
+  const conv = sortByExpiry(filterActiveConventions(items, now))[0] || null
+  return { deal: conv, reason: conv ? 'auto' : null }
 }
 
 /** Millisecondi mancanti alla fine, o null. */

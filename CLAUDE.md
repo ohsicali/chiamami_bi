@@ -208,11 +208,25 @@ Shoro −30% (esaurito dal 22/09) no — deciso dal proprietario. Quando va
 esaurito un drop più nuovo prende lui il posto. Sparisce anche se scade o
 viene disattivato.
 - **Home** (tutte e due, `HomeFeedV4` e `HomeDesktopClassic`): lo sconto in
-  evidenza lo sceglie `pickFeaturedDeal()` in `src/lib/discounts.js` —
-  drop attivo più vicino a scadere → se non ce ne sono, l'ultimo drop esaurito →
-  altrimenti lo sconto fisso che scade prima. Sul telefono il "sold out" lo
-  disegna `DropCard`; da computer `HeroPromo` (chip "SOLD OUT · SCONTO
-  ESAURITO" senza pallino, timbro sulla foto, posti fermi al totale).
+  evidenza lo sceglie `pickFeaturedDeal()` / `chooseFeaturedDeal()` in
+  `src/lib/discounts.js`. **Vince l'ultima cosa successa** (deciso il 30/09):
+  l'**ultimo drop uscito** (attivo o esaurito; quando ne esce uno nuovo prende
+  il posto del precedente, che resta valido per chi l'ha preso e, se ha
+  ancora posti, resta tra gli altri sconti e nel Bi Club) **oppure lo sconto
+  scelto a mano** dal pannello, se la scelta è più recente dell'uscita
+  dell'ultimo drop. Senza nessuno dei due, lo sconto fisso che scade prima.
+  Sul telefono il "sold out" lo disegna `DropCard`; da computer `HeroPromo`
+  (chip "SOLD OUT · SCONTO ESAURITO" senza pallino, timbro sulla foto, posti
+  fermi al totale).
+- **Scelta a mano della vetrina** (30/09): nel pannello sconti il bottone 🏠
+  sulla card mette lo sconto nella card grande della home al posto del drop
+  (colonna `discounts.home_featured_at` = quando è stato scelto, SQL
+  `supabase/home-featured-2026-09-30.sql`, **già eseguito**). Uno solo alla
+  volta; il riquadro "In vetrina in home adesso" in cima al pannello dice
+  cosa c'è e perché, con "Torna all'ultimo drop". Solo la home: il Bi Club
+  non la guarda. Si può scegliere solo uno sconto online (non in prova, in
+  pausa, scaduto; esaurito solo se è un drop). Un drop programmato conta dal
+  suo `drop_starts_at` (o dalla creazione, se più tarda).
 - **Home da computer**: quando in vetrina c'è uno sconto fisso la card è
   scura con "SCONTO BI CLUB", niente corallo/countdown/barra posti (regola
   del colore, vedi Email).
