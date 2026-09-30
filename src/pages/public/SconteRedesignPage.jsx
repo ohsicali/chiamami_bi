@@ -17,7 +17,7 @@ import ValidityPill from '../../components/Discount/ValidityPill'
 import QRBlockedView from '../../components/Discount/QRBlockedView'
 import DiscountDetailPopup from '../../components/Discount/DiscountDetailPopup'
 import { checkValidity, formatShortPill, formatDays } from '../../lib/validity'
-import { filterActiveDrops, filterActiveConventions, sortByExpiry, msUntilEnd, isSoldOut, claimRefusal } from '../../lib/discounts'
+import { filterActiveDrops, filterShownDrops, filterActiveConventions, sortByExpiry, msUntilEnd, isSoldOut, claimRefusal } from '../../lib/discounts'
 import DropCard from '../../components/Discount/DropCard'
 import AdSlot from '../../components/Ads/AdBanner'
 import { LIST_AD_AFTER } from '../../lib/adSlots'
@@ -97,10 +97,11 @@ function SconteRedesignPageInner() {
   // selezionata: nascondeva Shoro (Poirino) e Birrificio (Anzola) a chi aveva
   // Torino selezionata — 6 sconti attivi in admin, 4 visibili qui.
   // La selezione è corretta solo in home (unica vetrina curata).
-  // I drop esauriti escono dalla lista (28/09): prima restavano con lo stato
-  // "sold out", ma un drop che non si può più prendere occupava il posto
-  // degli sconti veri. Chi l'aveva preso lo ritrova in "I miei vantaggi".
-  const drops = useMemo(() => sortByExpiry(filterActiveDrops(allRaw)), [allRaw])
+  // Il drop esaurito più recente resta in lista con lo stato "sold out"
+  // nella card (30/09: dal 28/09 sparivano); gli esauriti più vecchi no
+  // (vedi `filterShownDrops`). Il conteggio nel tab e "N attivi" restano
+  // sulla definizione stretta di "attivo".
+  const drops = useMemo(() => sortByExpiry(filterShownDrops(allRaw)), [allRaw])
   const conv = useMemo(() => filterActiveConventions(allRaw), [allRaw])
   // Backward-compat per auto-claim post login
   void allActiveDrops; void allFeatured; void allRegular
@@ -1000,9 +1001,9 @@ function DropSection({ drops, claiming, redemptionByDealId, onClaim, onOpenQR, o
  * "3 attivi · il primo scade tra 2 giorni" — il quadro prima di scorrere,
  * così chi arriva sa quanti sono e quanto tempo ha senza contare le card.
  *
- * Dal 28/09 i drop esauriti non arrivano più qui (vedi `drops` sopra); il
- * filtro resta come rete di sicurezza, così "N attivi" non conta mai un
- * drop che non si può più prendere.
+ * `drops` qui dentro contiene anche i drop esauriti (restano in lista col
+ * "sold out", vedi `drops` sopra): "N attivi" li esclude, altrimenti
+ * direbbe "attivo" un drop che non si può più prendere.
  */
 function dropSectionSummary(drops) {
   const active = drops.filter((d) => !isSoldOut(d))
