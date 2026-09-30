@@ -23,7 +23,9 @@ import './BiCharacter.css'
  *   love  — 5 stelle e il grazie finale: occhi che sorridono, come nella foto
  * `wave` alza il braccio libero e saluta; `hearts` fa salire i cuori
  * (`heartColor` bianco quando Bi sta sul corallo); `food` la forchetta
- * con gli spaghetti.
+ * con gli spaghetti; `clap` le mani davanti al petto che applaudono (tre
+ * battute e una pausa — per chi prende un drop, 30/09). Con `clap` la
+ * forchetta non c'è: le mani servono tutte e due.
  *
  * Le animazioni sono CSS (BiCharacter.css), non Framer: girano sul
  * compositor anche mentre il resto della schermata si muove, e con "riduci
@@ -44,6 +46,7 @@ export default function BiCharacter({
   wave = false,
   hearts = false,
   food = true,
+  clap = false,
   heartColor = '#E8453C',
   className = '',
   style,
@@ -60,7 +63,7 @@ export default function BiCharacter({
   return (
     <svg
       viewBox="0 0 200 220"
-      className={`bi-char bi-mood-${mood} ${wave ? 'is-waving' : ''} ${className}`}
+      className={`bi-char bi-mood-${mood} ${wave ? 'is-waving' : ''} ${clap ? 'is-clapping' : ''} ${className}`}
       style={style}
       role="img"
       aria-label={title}
@@ -140,6 +143,30 @@ export default function BiCharacter({
               </g>
             </g>
           </g>
+
+          {/* Le mani che applaudono: gomiti in giù, mani che si toccano
+              davanti al petto. Ogni braccio ruota attorno alla sua spalla. */}
+          {clap && (
+            <g className="bi-clap">
+              <g className="bi-clap-arm bi-clap-l">
+                <path d="M34 238 C38 214 58 196 84 184" stroke={INK} strokeWidth="17" strokeLinecap="round" fill="none" />
+                <path d="M80.5 178.5 L86.5 190.5" stroke={BLAZER_EDGE} strokeWidth="4" strokeLinecap="round" />
+                <ellipse cx="93" cy="175" rx="7.6" ry="11.5" fill="#F3C4A6" transform="rotate(-18 93 175)" />
+                <ellipse cx="96.6" cy="165.4" rx="2" ry="2.5" fill={NAIL} transform="rotate(-18 96.6 165.4)" />
+              </g>
+              <g className="bi-clap-arm bi-clap-r">
+                <path d="M166 238 C162 214 142 196 116 184" stroke={INK} strokeWidth="17" strokeLinecap="round" fill="none" />
+                <path d="M119.5 178.5 L113.5 190.5" stroke={BLAZER_EDGE} strokeWidth="4" strokeLinecap="round" />
+                <ellipse cx="107" cy="175" rx="7.6" ry="11.5" fill={SKIN_SHADE} transform="rotate(18 107 175)" />
+                <ellipse cx="103.4" cy="165.4" rx="2" ry="2.5" fill={NAIL} transform="rotate(18 103.4 165.4)" />
+              </g>
+              <g className="bi-clap-spark" stroke="#F2C14E" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
+                <path d="M100 157 L100 149" />
+                <path d="M90.5 159.5 L85.5 154" />
+                <path d="M109.5 159.5 L114.5 154" />
+              </g>
+            </g>
+          )}
 
           {/* Orecchie e orecchini d'oro a goccia */}
           <ellipse cx="63" cy="98" rx="6" ry="9" fill="#F3C4A6" />
@@ -236,7 +263,7 @@ export default function BiCharacter({
           </g>
 
           {/* La forchetta con gli spaghetti, come nelle foto al tavolo */}
-          {food && (
+          {food && !clap && (
             <g className="bi-food">
               <path d="M150 226 C152 208 156 196 161 186" stroke={INK} strokeWidth="18" strokeLinecap="round" fill="none" />
               <path d="M153 188.5 L169 191.5" stroke={BLAZER_EDGE} strokeWidth="4" strokeLinecap="round" />

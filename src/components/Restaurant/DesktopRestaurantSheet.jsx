@@ -111,7 +111,7 @@ export default function DesktopRestaurantSheet({
   }, [restaurant?.id])
   const discount = restaurantDiscounts.find(d => d.id === activeDealId) || restaurantDiscounts[0] || null
   const otherDiscounts = restaurantDiscounts.filter(d => d.id !== discount?.id)
-  const { redemption, loading: redemptionLoading, generateRedemption } = useUserRedemption(discount?.id, user?.id)
+  const { redemption, loading: redemptionLoading, generateRedemption } = useUserRedemption(discount?.id, user?.id, discount)
 
   if (!restaurant) return null
   const videos = restaurantVideos(restaurant)

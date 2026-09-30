@@ -307,6 +307,25 @@ vanno rifatte.
 - Il giro delle email parte da **pg_cron** (`supabase/redemption-feedback-cron-2026-09-29.sql`),
   non da `vercel.json`: sul piano Hobby i cron Vercel sono uno al giorno.
 
+## Drop preso — "Ce l'hai fatta, sei il numero X su 20" (30/09)
+Chi sblocca un **drop** (primo sblocco, mai quando riapre il QR) vede prima del
+QR una schermata corallo a tutto schermo: **Bi che applaude** (`clap` in
+`BiCharacter`), coriandoli, il numero che sale fino al proprio posto, un
+pallino per posto col proprio che si accende in oro, "Goditelo!", poi
+**"Vedi il tuo QR"**. Primo e ultimo posto hanno la loro frase; mai "21 su 20".
+- Lo lancia `celebrateClaim()` (`src/lib/dropWin.js`, test in
+  `tests/drop-win.test.mjs`) da tutti i punti che creano un riscatto (Bi Club
+  `claimDeal`/`claimFromPopup`, `useUserRedemption`): la promessa si risolve
+  quando la festa si chiude, così il QR si apre dopo. La mostra `DropWinGate`
+  in `App.jsx` (chunk a parte `DropWin.jsx`). Un punto nuovo che sblocca uno
+  sconto deve chiamarla anche lui.
+- Il posto lo dice il DB: RPC `my_claim_rank(redemption_id)` (solo il proprio
+  riscatto). Nello stesso SQL (`supabase/drop-claim-rank-2026-09-30.sql`,
+  **già eseguito** il 30/09) `guard_redemption_insert` prende un lucchetto
+  **per sconto**: prima due sblocchi nello stesso istante sull'ultimo posto
+  passavano tutti e due. Se il DB non risponde in 2,5 s la festa parte senza
+  numero. PostHog: `drop_win_shown` (`rank`, `total`, `rank_failed`).
+
 ## Data di nascita (29/09)
 Dal 29/09 la registrazione con email chiede la **data di nascita** (obbligatoria,
 tre tendine giorno/mese/anno — `BirthDateInput`, non il calendario nativo). Viaggia

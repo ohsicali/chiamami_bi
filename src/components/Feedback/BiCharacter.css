@@ -102,6 +102,23 @@
 .bi-char .bi-strand-2 { animation-delay: -0.7s; }
 .bi-char .bi-strand-3 { animation-delay: -1.4s; }
 
+/* Applauso: tre battute e una pausa. Ogni braccio ruota attorno alla sua
+   spalla, così la mano fa l'arco giusto; le scintille si accendono quando
+   le mani si toccano. */
+.bi-char .bi-clap-arm {
+  transform-box: view-box;
+  animation: bi-clap-l 1.8s ease-in-out infinite;
+}
+.bi-char .bi-clap-l { transform-origin: 34px 238px; }
+.bi-char .bi-clap-r {
+  transform-origin: 166px 238px;
+  animation-name: bi-clap-r;
+}
+.bi-char .bi-clap-spark {
+  opacity: 0;
+  animation: bi-clap-spark 1.8s ease-out infinite;
+}
+
 /* Cuori che salgono e spariscono, sfasati. */
 .bi-char .bi-heart {
   transform-box: fill-box;
@@ -141,6 +158,18 @@
   0%, 100% { transform: rotate(0deg); }
   50% { transform: rotate(-2.5deg); }
 }
+@keyframes bi-clap-l {
+  0%, 16%, 32%, 50%, 100% { transform: rotate(-6deg); }
+  8%, 24%, 40% { transform: rotate(0deg); }
+}
+@keyframes bi-clap-r {
+  0%, 16%, 32%, 50%, 100% { transform: rotate(6deg); }
+  8%, 24%, 40% { transform: rotate(0deg); }
+}
+@keyframes bi-clap-spark {
+  0%, 6%, 14%, 22%, 30%, 38%, 48%, 100% { opacity: 0; }
+  9%, 25%, 41% { opacity: 1; }
+}
 @keyframes bi-heart {
   0% { opacity: 0; transform: translateY(6px) scale(0.4); }
   18% { opacity: 1; transform: translateY(0) scale(1.1); }
@@ -156,7 +185,9 @@
   .bi-char .bi-eyes,
   .bi-char .bi-food,
   .bi-char .bi-strand,
-  .bi-char .bi-forearm {
+  .bi-char .bi-forearm,
+  .bi-char .bi-clap-arm,
+  .bi-char .bi-clap-spark {
     animation: none !important;
     transition: none !important;
   }

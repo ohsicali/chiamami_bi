@@ -10,6 +10,7 @@ import Footer from '../../components/Layout/Footer'
 import MobileLogoHeader from '../../components/Layout/MobileLogoHeader'
 import SconteAuthGate from '../../components/Discount/SconteAuthGate'
 import { readAndClearPendingDiscountId } from '../../lib/utils/pendingDiscount'
+import { celebrateClaim } from '../../lib/dropWin'
 import MetaTags from '../../components/SEO/MetaTags'
 import SconteSchemaOrg from '../../components/Discount/SconteSchemaOrg'
 import ValidityPill from '../../components/Discount/ValidityPill'
@@ -350,6 +351,7 @@ function SconteRedesignPageInner() {
           .maybeSingle()
         if (!recovered) throw error
         justSavedRef.current = true
+        await celebrateClaim({ redemptionId: recovered.id, deal })
         showClaimedQR(deal, recovered)
         return
       }
@@ -361,6 +363,8 @@ function SconteRedesignPageInner() {
       // registro e non manda due volte la stessa ricevuta.
       sendClaimReceipt(data.id)
 
+      // Drop: prima "Ce l'hai fatta, sei il numero X su 20", poi il QR.
+      await celebrateClaim({ redemptionId: data.id, deal })
       showClaimedQR(deal, data)
     } catch (e) {
       // Esaurito/scaduto nel frattempo: "Riprova" non serve, si dice cosa è
@@ -450,10 +454,15 @@ function SconteRedesignPageInner() {
           .order('generated_at', { ascending: false })
           .limit(1)
           .maybeSingle()
-        if (recovered) { justSavedRef.current = true; return recovered }
+        if (recovered) {
+          justSavedRef.current = true
+          await celebrateClaim({ redemptionId: recovered.id, deal })
+          return recovered
+        }
         throw error
       }
       justSavedRef.current = true
+      await celebrateClaim({ redemptionId: data.id, deal })
       return data
     } catch (e) {
       const refusal = claimRefusal(e)

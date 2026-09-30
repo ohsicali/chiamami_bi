@@ -126,7 +126,7 @@ function FloatingDiscountBar({ discounts: discountsFromParent, restaurantId, res
   const discount = usableDiscounts.find((d) => d.id === activeDealId) || primary
   const otherDiscounts = usableDiscounts.filter((d) => d.id !== discount?.id)
 
-  const { redemption, loading: redemptionLoading, generateRedemption } = useUserRedemption(discount?.id, user?.id)
+  const { redemption, loading: redemptionLoading, generateRedemption } = useUserRedemption(discount?.id, user?.id, discount)
 
   if (!discount && discountLoading) return null
   if (!discount || dismissed) return null
