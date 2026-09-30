@@ -17,6 +17,7 @@ import { useCity } from '../../lib/CityContext'
 import { CityBadge, sortByActiveCity } from '../../components/UI/CityBadge'
 import MobileFilterBar from '../../components/Layout/MobileFilterBar'
 import { formatDiscountBadge } from '../../lib/utils/discountFormat'
+import { discountByRestaurant } from '../../lib/discounts'
 import { formatPrice } from '../../lib/utils/price'
 import { slugify } from '../../lib/utils/slug'
 import AdSlot from '../../components/Ads/AdBanner'
@@ -246,14 +247,15 @@ export default function DesktopExplorePage() {
 
   // Memo: da qui discende la lista passata alla mappa, che a ogni lista nuova
   // rifà tutti i pin (vedi HomePage).
+  // Solo sconti attivi: un drop esaurito non mette "-30%" sul pin.
+  const discountByRest = useMemo(() => discountByRestaurant(activeDiscounts), [activeDiscounts])
   const discountRestaurantIds = useMemo(
-    () => new Set(activeDiscounts.map(d => d.restaurant_id)),
-    [activeDiscounts],
+    () => new Set(Object.keys(discountByRest)),
+    [discountByRest],
   )
   const discountLabelMap = useMemo(() => Object.fromEntries(
-    activeDiscounts.map(d => [d.restaurant_id, formatDiscountBadge(d)])
-  ), [activeDiscounts])
-  const discountMap = Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id, d]))
+    Object.values(discountByRest).map(d => [d.restaurant_id, formatDiscountBadge(d)])
+  ), [discountByRest])
 
   const {
     restaurants,

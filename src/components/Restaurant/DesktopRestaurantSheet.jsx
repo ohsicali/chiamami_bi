@@ -4,7 +4,7 @@ import { AnimatePresence } from 'framer-motion'
 import { getCategoryInfo, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
 import { getPublicCategoryNames, getDietCategoryNames } from '../../lib/hooks/useCategories'
 import { useActiveDiscounts, useUserRedemption } from '../../lib/hooks/useDiscounts'
-import { claimRefusal } from '../../lib/discounts'
+import { claimRefusal, activeDiscountsFor } from '../../lib/discounts'
 import { captureError } from '../../lib/posthog'
 import { useOrariStatus } from '../../lib/hooks/useOrariStatus'
 import HoursPill from '../HoursPill'
@@ -103,7 +103,8 @@ export default function DesktopRestaurantSheet({
   // Un locale può avere più sconti attivi insieme: qui in primo piano ne
   // va uno solo (banner inline sopra la piega), il resto è raggiungibile
   // dal tag "+N altri" — stesso pattern di `RestaurantSheet` (mobile).
-  const restaurantDiscounts = activeDiscounts.filter(d => d.restaurant_id === restaurant?.id)
+  // Solo gli attivi: il drop esaurito non va in primo piano sulla scheda.
+  const restaurantDiscounts = activeDiscountsFor(activeDiscounts, restaurant?.id)
   const [activeDealId, setActiveDealId] = useState(restaurantDiscounts[0]?.id || null)
   useEffect(() => {
     setActiveDealId(restaurantDiscounts[0]?.id || null)

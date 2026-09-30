@@ -164,6 +164,32 @@ export function filterActive(list, now = new Date()) {
   return (list || []).filter((d) => isActiveDiscount(d, now))
 }
 
+/**
+ * Gli sconti di UN locale da mostrare sulla sua scheda: solo gli attivi,
+ * nell'ordine della lista (il più recente prima).
+ *
+ * Il drop esaurito resta in vetrina in home e Bi Club, non qui: sulla scheda
+ * la pillola sulla foto e la barra in fondo dicono cosa prendi OGGI. Il 30/09
+ * Shoro mostrava "30% di sconto" sulla foto (drop esaurito, il più recente)
+ * e "20% di sconto" nella barra (la convenzione ancora valida).
+ */
+export function activeDiscountsFor(list, restaurantId, now = new Date()) {
+  if (!restaurantId) return []
+  return filterActive(list, now).filter((d) => d.restaurant_id === restaurantId)
+}
+
+/**
+ * Locale → lo sconto da raccontare su pin e card: il primo attivo, lo stesso
+ * che la scheda mette in primo piano (`activeDiscountsFor(...)[0]`).
+ */
+export function discountByRestaurant(list, now = new Date()) {
+  const map = {}
+  for (const d of filterActive(list, now)) {
+    if (d.restaurant_id && !(d.restaurant_id in map)) map[d.restaurant_id] = d
+  }
+  return map
+}
+
 export function filterActiveDrops(list, now = new Date()) {
   return (list || []).filter((d) => isActiveDrop(d, now))
 }

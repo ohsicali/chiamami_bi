@@ -27,7 +27,7 @@ import Reveal from '../../components/UI/Reveal'
 import { STAGGER, staggerDelay } from '../../lib/motion'
 import { formatDiscountBadge } from '../../lib/utils/discountFormat'
 import DropCard from '../../components/Discount/DropCard'
-import { isExpired, isSoldOut, sortByExpiry, pickFeaturedDeal } from '../../lib/discounts'
+import { isExpired, isSoldOut, sortByExpiry, pickFeaturedDeal, discountByRestaurant as byRestaurant } from '../../lib/discounts'
 import { formatPrice } from '../../lib/utils/price'
 
 
@@ -515,10 +515,8 @@ export default function HomeFeedV4() {
   const { active: autoActive, next: autoNext } = getCurrentMoment()
   const [activeMoment, setActiveMoment] = useState(autoActive || autoNext || 'aperitivo')
 
-  const discountByRestaurant = useMemo(
-    () => Object.fromEntries((discounts || []).map((d) => [d.restaurant_id, d])),
-    [discounts]
-  )
+  // Solo sconti attivi: una card non dice "-30%" per un drop esaurito.
+  const discountByRestaurant = useMemo(() => byRestaurant(discounts), [discounts])
   // Hook default-sorts by name; section is "Ultimi aggiunti" so sort
   // explicitly by created_at desc.
   // Nove e non otto: su desktop la griglia è a tre colonne e con otto card

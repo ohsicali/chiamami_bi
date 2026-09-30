@@ -49,7 +49,7 @@ import BiLogoMark from '../../components/UI/BiLogoMark'
 import Reveal from '../../components/UI/Reveal'
 import { STAGGER, staggerDelay } from '../../lib/motion'
 import { formatDiscountBadge } from '../../lib/utils/discountFormat'
-import { pickFeaturedDeal, isSoldOut } from '../../lib/discounts'
+import { pickFeaturedDeal, isSoldOut, discountByRestaurant as byRestaurant } from '../../lib/discounts'
 import { formatPrice } from '../../lib/utils/price'
 
 function formatCountdown(endsAt) {
@@ -703,10 +703,8 @@ export default function HomeDesktopClassic() {
   const { active: autoActive, next: autoNext } = getCurrentMoment()
   const [activeMoment, setActiveMoment] = useState(autoActive || autoNext || 'aperitivo')
 
-  const discountByRestaurant = useMemo(
-    () => Object.fromEntries((discounts || []).map((d) => [d.restaurant_id, d])),
-    [discounts]
-  )
+  // Solo sconti attivi: una card non dice "-30%" per un drop esaurito.
+  const discountByRestaurant = useMemo(() => byRestaurant(discounts), [discounts])
   // Hook default-sorts by name; section is "Ultimi aggiunti" so sort
   // explicitly by created_at desc.
   const recent = useMemo(
