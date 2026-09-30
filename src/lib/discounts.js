@@ -115,6 +115,27 @@ export function filterVisibleDrops(list, now = new Date()) {
   return (list || []).filter((d) => isVisibleDrop(d, now))
 }
 
+/** Quando è uscito il drop (inizio del drop, o creazione), in ms. */
+function dropStartMs(d) {
+  const t = new Date(d?.drop_starts_at || d?.created_at || 0).getTime()
+  return Number.isFinite(t) ? t : 0
+}
+
+/**
+ * I drop da MOSTRARE (home e Bi Club): tutti quelli attivi più UN SOLO drop
+ * esaurito, l'ultimo uscito. Deciso dal proprietario il 30/09: il drop
+ * appena finito resta col "sold out" (Gelateria Borghese), quelli esauriti
+ * prima no (Shoro −30%, esaurito dal 22/09) — altrimenti la vetrina si
+ * riempirebbe di drop che non si possono più prendere. Quando un nuovo drop
+ * va esaurito prende lui il posto, senza toccare niente a mano.
+ */
+export function filterShownDrops(list, now = new Date()) {
+  const visible = filterVisibleDrops(list, now)
+  const soldOut = visible.filter((d) => isSoldOut(d))
+  const latest = soldOut.reduce((best, d) => (!best || dropStartMs(d) > dropStartMs(best) ? d : best), null)
+  return visible.filter((d) => !isSoldOut(d) || d === latest)
+}
+
 /** Convenzione attiva. */
 export function isActiveConvention(d, now = new Date()) {
   return isConvention(d) && isActiveDiscount(d, now)
@@ -152,15 +173,15 @@ export function sortByExpiry(list) {
  * Lo sconto in evidenza in home (la card grande).
  *
  * 1. Il drop attivo più vicino a scadere: è quello che ha davvero fretta.
- * 2. Se non ce ne sono, il drop esaurito (non scaduto né disattivato): resta
- *    in vetrina con la scritta "sold out" e il bottone spento (30/09 —
+ * 2. Se non ce ne sono, il drop esaurito più recente (`filterShownDrops`):
+ *    resta in vetrina con la scritta "sold out" e il bottone spento (30/09 —
  *    dal 28/09 al suo posto andava lo sconto fisso del locale).
  * 3. Altrimenti la convenzione attiva più vicina a scadere.
  */
 export function pickFeaturedDeal(list, now = new Date()) {
   const liveDrop = sortByExpiry(filterActiveDrops(list, now))[0]
   if (liveDrop) return liveDrop
-  const soldOutDrop = sortByExpiry(filterVisibleDrops(list, now))[0]
+  const soldOutDrop = filterShownDrops(list, now).find((d) => isSoldOut(d))
   if (soldOutDrop) return soldOutDrop
   return sortByExpiry(filterActiveConventions(list, now))[0] || null
 }

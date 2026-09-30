@@ -17,7 +17,7 @@ import ValidityPill from '../../components/Discount/ValidityPill'
 import QRBlockedView from '../../components/Discount/QRBlockedView'
 import DiscountDetailPopup from '../../components/Discount/DiscountDetailPopup'
 import { checkValidity, formatShortPill, formatDays } from '../../lib/validity'
-import { filterActiveDrops, filterVisibleDrops, filterActiveConventions, sortByExpiry, msUntilEnd, isSoldOut, claimRefusal } from '../../lib/discounts'
+import { filterActiveDrops, filterShownDrops, filterActiveConventions, sortByExpiry, msUntilEnd, isSoldOut, claimRefusal } from '../../lib/discounts'
 import DropCard from '../../components/Discount/DropCard'
 import AdSlot from '../../components/Ads/AdBanner'
 import { LIST_AD_AFTER } from '../../lib/adSlots'
@@ -97,10 +97,11 @@ function SconteRedesignPageInner() {
   // selezionata: nascondeva Shoro (Poirino) e Birrificio (Anzola) a chi aveva
   // Torino selezionata — 6 sconti attivi in admin, 4 visibili qui.
   // La selezione è corretta solo in home (unica vetrina curata).
-  // I drop esauriti restano in lista con lo stato "sold out" nella card
-  // (30/09: dal 28/09 sparivano). Solo il conteggio nel tab e "N attivi"
-  // restano sulla definizione stretta di "attivo".
-  const drops = useMemo(() => sortByExpiry(filterVisibleDrops(allRaw)), [allRaw])
+  // Il drop esaurito più recente resta in lista con lo stato "sold out"
+  // nella card (30/09: dal 28/09 sparivano); gli esauriti più vecchi no
+  // (vedi `filterShownDrops`). Il conteggio nel tab e "N attivi" restano
+  // sulla definizione stretta di "attivo".
+  const drops = useMemo(() => sortByExpiry(filterShownDrops(allRaw)), [allRaw])
   const conv = useMemo(() => filterActiveConventions(allRaw), [allRaw])
   // Backward-compat per auto-claim post login
   void allActiveDrops; void allFeatured; void allRegular

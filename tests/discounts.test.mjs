@@ -19,7 +19,7 @@ import {
   isActiveDiscount, isActiveDrop, isConvention, isSoldOut, isExpired,
   isVisibleDrop, filterActive, filterActiveDrops, filterActiveConventions,
   filterVisibleDrops, sortByExpiry, remainingCount, formatCountdown,
-  findUnreachableDiscounts, pickFeaturedDeal,
+  findUnreachableDiscounts, pickFeaturedDeal, filterShownDrops,
 } from '../src/lib/discounts.js'
 
 const NOW = new Date('2026-09-08T12:00:00Z')
@@ -169,6 +169,17 @@ test('pickFeaturedDeal: drop esaurito → resta in vetrina (sold out)', () => {
     d({ id: 'shoro-20', restaurant_id: 'shoro', valid_until: '2026-11-30T00:00:00Z' }),
   ]
   assert.equal(pickFeaturedDeal(list, NOW).id, 'shoro-drop')
+})
+
+test('filterShownDrops: dei drop esauriti resta solo l\'ultimo uscito (Borghese sì, Shoro no)', () => {
+  const list = [
+    d({ id: 'shoro', is_drop: true, valid_until: null, drop_starts_at: '2026-09-22T17:00:00Z', max_quantity: 10, total_redeemed: 12 }),
+    d({ id: 'borghese', is_drop: true, valid_until: null, drop_starts_at: '2026-09-30T17:00:00Z', max_quantity: 20, total_redeemed: 20 }),
+    d({ id: 'live', is_drop: true, drop_starts_at: '2026-09-01T00:00:00Z', max_quantity: 10, claimed_count: 2 }),
+    d({ id: 'conv' }),
+  ]
+  assert.deepEqual(filterShownDrops(list, NOW).map((x) => x.id).sort(), ['borghese', 'live'])
+  assert.equal(pickFeaturedDeal(list.filter((x) => x.id !== 'live'), NOW).id, 'borghese')
 })
 
 test('pickFeaturedDeal: un drop attivo passa davanti a quello esaurito', () => {

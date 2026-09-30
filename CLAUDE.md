@@ -202,19 +202,23 @@ scheda leggeva solo `instagram_reel` e i reel messi dal pannello nuovo non si ve
 Dal 28/09 (PR #309) un drop esaurito spariva da home e Bi Club e al suo posto
 andava lo sconto fisso del locale. **Il 30/09 il proprietario l'ha voluto di
 nuovo visibile**: un drop esaurito resta con la scritta "sold out" e il
-bottone "Esaurito" spento. Sparisce solo se scade o viene disattivato.
+bottone "Esaurito" spento. **Ne resta uno solo, l'ultimo uscito**
+(`filterShownDrops`, per `drop_starts_at`): il 30/09 Gelateria Borghese sì,
+Shoro −30% (esaurito dal 22/09) no — deciso dal proprietario. Quando va
+esaurito un drop più nuovo prende lui il posto. Sparisce anche se scade o
+viene disattivato.
 - **Home** (tutte e due, `HomeFeedV4` e `HomeDesktopClassic`): lo sconto in
   evidenza lo sceglie `pickFeaturedDeal()` in `src/lib/discounts.js` —
-  drop attivo più vicino a scadere → se non ce ne sono, il drop esaurito →
+  drop attivo più vicino a scadere → se non ce ne sono, l'ultimo drop esaurito →
   altrimenti lo sconto fisso che scade prima. Sul telefono il "sold out" lo
   disegna `DropCard`; da computer `HeroPromo` (chip "SOLD OUT · SCONTO
   ESAURITO" senza pallino, timbro sulla foto, posti fermi al totale).
 - **Home da computer**: quando in vetrina c'è uno sconto fisso la card è
   scura con "SCONTO BI CLUB", niente corallo/countdown/barra posti (regola
   del colore, vedi Email).
-- **Bi Club** (`SconteRedesignPage`): la lista drop usa `filterVisibleDrops`
-  (esauriti compresi); il conteggio "N attivi" e il badge del tab restano
-  sugli attivi.
+- **Bi Club** (`SconteRedesignPage`): la lista drop usa `filterShownDrops`
+  (gli attivi più l'ultimo esaurito); il conteggio "N attivi" e il badge del
+  tab restano sugli attivi.
 - Test in `tests/discounts.test.mjs`.
 
 ## Tutorial di benvenuto (28/09)
