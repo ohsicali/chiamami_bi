@@ -18,7 +18,7 @@ import { checkValidity, computeNextValidWindow } from '../../lib/validity'
 import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { getPublicCategoryNames, getDietCategoryNames } from '../../lib/hooks/useCategories'
 import { useActiveDiscounts, useRestaurantDiscount, useUserRedemption } from '../../lib/hooks/useDiscounts'
-import { claimRefusal } from '../../lib/discounts'
+import { claimRefusal, activeDiscountsFor, isActiveDiscount } from '../../lib/discounts'
 import { captureError } from '../../lib/posthog'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
@@ -100,12 +100,7 @@ function FloatingDiscountBar({ discounts: discountsFromParent, restaurantId, res
   // Filtro di sicurezza locale (gli sconti arrivano già attivi da
   // `useActiveDiscounts`, ma `fetchedDiscount` — il fallback — passa da
   // `useRestaurantDiscount`, che non applica lo stesso filtro lato client).
-  const usableDiscounts = discounts.filter((d) => {
-    if (!d) return false
-    const expired = !!d.valid_until && new Date(d.valid_until) < new Date()
-    const maxed = d.max_redemptions && d.total_redeemed >= d.max_redemptions
-    return !expired && !maxed
-  })
+  const usableDiscounts = discounts.filter((d) => isActiveDiscount(d))
   const primary = usableDiscounts[0] || null
 
   const [activeDealId, setActiveDealId] = useState(primary?.id || null)
@@ -435,8 +430,9 @@ export default function RestaurantSheet({
   // `FloatingDiscountBar` sceglie da sola quale mettere in primo piano e
   // offre un "+N altri" per il resto. `discount` resta il primo per la
   // pillola sulla foto e l'header sticky, che sono teaser non interattivi
-  // e non hanno spazio per elencarli tutti.
-  const restaurantDiscounts = activeDiscounts.filter(d => d.restaurant_id === restaurant.id)
+  // e non hanno spazio per elencarli tutti. Solo gli attivi: un drop
+  // esaurito resta in vetrina in home, non sulla foto (vedi `activeDiscountsFor`).
+  const restaurantDiscounts = activeDiscountsFor(activeDiscounts, restaurant.id)
   const discount = restaurantDiscounts[0] || null
   const discountTitle = discount?.title || discount?.discount_value
   const distance = position && restaurant.latitude && restaurant.longitude

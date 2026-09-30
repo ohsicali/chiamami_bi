@@ -24,6 +24,7 @@ import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import { proxyImg, proxyImgSrcSet } from '../../lib/supabase'
 import SuggestRestaurantSheet from '../../components/Restaurant/SuggestRestaurantSheet'
 import { formatDiscountBadge } from '../../lib/utils/discountFormat'
+import { discountByRestaurant } from '../../lib/discounts'
 import { formatPrice } from '../../lib/utils/price'
 import { slugify } from '../../lib/utils/slug'
 import SaveAuthGate from '../../components/Restaurant/SaveAuthGate'
@@ -192,15 +193,18 @@ export default function HomePage() {
   // Memo, non ricalcolati a ogni render: da qui discendono i locali passati
   // alla mappa, e una lista nuova a ogni render le faceva rifare tutti i pin
   // (e con un filtro attivo girava in tondo, vedi `notifyVisible` in MapView).
+  // Un locale per sconto attivo: un drop esaurito non mette "-30%" sul pin.
+  const discountByRest = useMemo(() => discountByRestaurant(activeDiscounts), [activeDiscounts])
   const discountRestaurantIds = useMemo(
-    () => new Set(activeDiscounts.map(d => d.restaurant_id)),
-    [activeDiscounts],
+    () => new Set(Object.keys(discountByRest)),
+    [discountByRest],
   )
-  const discountValueMap = Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id, d.discount_value]))
-  const discountTitleMap = Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id, d.title]))
+  const discountTitleMap = useMemo(() => Object.fromEntries(
+    Object.values(discountByRest).map(d => [d.restaurant_id, d.title])
+  ), [discountByRest])
   const discountLabelMap = useMemo(() => Object.fromEntries(
-    activeDiscounts.map(d => [d.restaurant_id, formatDiscountBadge(d)])
-  ), [activeDiscounts])
+    Object.values(discountByRest).map(d => [d.restaurant_id, formatDiscountBadge(d)])
+  ), [discountByRest])
 
   const {
     restaurants,

@@ -233,6 +233,11 @@ viene disattivato.
 - **Bi Club** (`SconteRedesignPage`): la lista drop usa `filterShownDrops`
   (gli attivi più l'ultimo esaurito); il conteggio "N attivi" e il badge del
   tab restano sugli attivi.
+- **Scheda del locale, pin e card: il drop esaurito no** (30/09). Lì si dice
+  cosa prendi oggi: la pillola sulla foto, la barra in fondo, i pin della mappa
+  e le card dei locali usano solo sconti attivi (`activeDiscountsFor`,
+  `discountByRestaurant` in `src/lib/discounts.js`). Shoro mostrava "30%"
+  sulla foto (drop esaurito) e "20%" nella barra (la convenzione).
 - Test in `tests/discounts.test.mjs`.
 
 ## Avvisi agli admin su Telegram (30/09)

@@ -20,7 +20,7 @@ import {
   isVisibleDrop, filterActive, filterActiveDrops, filterActiveConventions,
   filterVisibleDrops, sortByExpiry, remainingCount, formatCountdown,
   findUnreachableDiscounts, pickFeaturedDeal, filterShownDrops,
-  chooseFeaturedDeal, canFeatureInHome,
+  chooseFeaturedDeal, canFeatureInHome, activeDiscountsFor, discountByRestaurant,
 } from '../src/lib/discounts.js'
 
 const NOW = new Date('2026-09-08T12:00:00Z')
@@ -324,4 +324,28 @@ test('claimRefusal: i rifiuti del trigger diventano un messaggio, il resto no', 
   assert.equal(claimRefusal({ message: 'discount_not_available' }).title, 'Sconto non disponibile')
   assert.equal(claimRefusal({ message: 'Failed to fetch' }), null)
   assert.equal(claimRefusal(null), null)
+})
+
+/* ── Scheda del locale: il drop esaurito non va sulla foto (30/09) ── */
+// Dati DB di Shoro del 30/09: drop -30% (10 posti, 12 presi) più recente
+// della convenzione -20%. La foto diceva 30%, la barra in fondo 20%.
+const SHORO_30_09 = [
+  d({ id: 'shoro-drop', restaurant_id: 'shoro', title: '30% di sconto', is_drop: true,
+      valid_until: null, max_quantity: 10, max_redemptions: 10, claimed_count: 0, total_redeemed: 12 }),
+  d({ id: 'shoro-conv', restaurant_id: 'shoro', title: '20% di sconto', total_redeemed: 248 }),
+  d({ id: 'altro', restaurant_id: 'altro', title: '10%' }),
+]
+
+test('activeDiscountsFor: sulla scheda il drop esaurito non c\'è, resta la convenzione', () => {
+  const list = activeDiscountsFor(SHORO_30_09, 'shoro', NOW)
+  assert.deepEqual(list.map((x) => x.id), ['shoro-conv'])
+  assert.deepEqual(activeDiscountsFor(SHORO_30_09, null, NOW), [])
+})
+
+test('discountByRestaurant: pin e card raccontano lo stesso sconto della scheda', () => {
+  const map = discountByRestaurant(SHORO_30_09, NOW)
+  assert.equal(map.shoro.id, activeDiscountsFor(SHORO_30_09, 'shoro', NOW)[0].id)
+  assert.equal(map.altro.id, 'altro')
+  // Con solo il drop esaurito il locale non ha sconto da raccontare.
+  assert.equal(discountByRestaurant([SHORO_30_09[0]], NOW).shoro, undefined)
 })
