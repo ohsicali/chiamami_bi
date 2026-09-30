@@ -235,6 +235,33 @@ viene disattivato.
   tab restano sugli attivi.
 - Test in `tests/discounts.test.mjs`.
 
+## Avvisi agli admin su Telegram (30/09)
+Nel gruppo Telegram degli admin arriva un messaggio quando: ✅ un locale
+**convalida uno sconto** (locale, sconto, drop "usati X su N" o convenzione,
+nome di battesimo, ora, quanti oggi), ⭐ arriva una **recensione** (quando il
+modulo è mandato, `completed_at`: stelle, cosa è piaciuto, commento — non al
+solo tocco sulle stelle, così è un messaggio per recensione), 💡 un
+**suggerimento** di locale, 🤝 una **candidatura**. Sconti di prova col
+prefisso "🧪 PROVA".
+- **Tutto nel DB**: trigger `tr_telegram_*` → `private.telegram_admin_send()`
+  → `pg_net` verso l'API di Telegram. Nessun endpoint Vercel. SQL
+  `supabase/admin-telegram-2026-09-30.sql` (**già eseguito** il 30/09).
+- Token del bot e id del gruppo nel **Vault** (`telegram_bot_token`,
+  `telegram_admin_chat_id`); senza, non parte niente. Per spegnere: cancellare
+  `telegram_admin_chat_id` dal Vault. Istruzioni in testa al file SQL.
+  Configurato il 30/09: bot **@LaGuidaDiBi_bot**, gruppo **"La Guida di Bi"**.
+  Se il gruppo diventa supergruppo (Telegram lo fa da solo, per esempio quando
+  si rende visibile la cronologia) l'id cambia in `-100…` e gli avvisi si
+  fermano: rifare `getUpdates` e aggiornare `telegram_admin_chat_id`.
+- **Un avviso non fa mai fallire quello che lo ha fatto partire**: ogni trigger
+  ha il suo `EXCEPTION WHEN OTHERS` → solo un WARNING (provato: con l'invio in
+  errore la convalida passa lo stesso). Non toglierlo.
+- I suggerimenti li può mandare anche chi non ha un account: oltre 20 in
+  un'ora gli avvisi si fermano. Email e telefono dei candidati non vanno su
+  Telegram (restano nell'email a info@ e nel pannello).
+- Le etichette della recensione ricopiano `src/lib/redemptionFeedback.js`: se
+  cambiano lì, aggiornale nel trigger.
+
 ## Tutorial di benvenuto (28/09)
 Sette schermate che partono **una volta sola** a chi ha appena creato l'account:
 benvenuto (tutto corallo, logo e cibo in orbita), Esplora, **gli sconti in quattro
