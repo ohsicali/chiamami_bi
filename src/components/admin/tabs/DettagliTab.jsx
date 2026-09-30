@@ -636,13 +636,22 @@ export default function DettagliTab({ form, onChange, restaurantId, isNew, canSc
           </FField>
         </FRow>
         <FRow>
-          <FField label="Instagram">
+          <FField label="Video Instagram" hint="Il reel di Bea sul locale: in scheda diventa «Guarda il video su Instagram»">
             <FInput
               value={form.instagram_url}
               onChange={(v) => onChange({ instagram_url: v })}
-              placeholder="https://instagram.com/consorzio"
+              placeholder="https://www.instagram.com/reel/…"
             />
           </FField>
+          <FField label="Video TikTok" hint="In scheda diventa «Guarda il video su TikTok»">
+            <FInput
+              value={form.tiktok_url}
+              onChange={(v) => onChange({ tiktok_url: v })}
+              placeholder="https://www.tiktok.com/@chiamamibi/video/…"
+            />
+          </FField>
+        </FRow>
+        <FRow>
           <FField label="Link Google Maps (opzionale)">
             <FInput
               value={form.google_maps_url}

@@ -22,7 +22,7 @@ export const RESTAURANT_COLUMNS = [
   'latitude', 'longitude', 'phone', 'website', 'google_maps_url',
   'category', 'cuisine_type', 'price_range', 'our_rating',
   'our_review', 'our_tip', 'recommended_for', 'tagline',
-  'tiktok_url', 'instagram_reel', 'moments',
+  'tiktok_url', 'instagram_reel', 'instagram_url', 'moments',
   'place_id', 'place_id_verified_at', 'opening_hours',
   'is_published', 'created_at', 'updated_at',
 ].join(', ')

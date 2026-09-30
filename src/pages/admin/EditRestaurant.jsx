@@ -763,7 +763,10 @@ function toFormState(r) {
     google_maps_url: r.google_maps_url || '',
     menu_url: r.menu_url || '',
     reservation_url: r.reservation_url || '',
-    instagram_url: r.instagram_url || '',
+    // "Video Instagram": i reel vecchi stanno in `instagram_reel`, quelli
+    // messi da qui in `instagram_url` (vedi lib/restaurantVideos.js).
+    instagram_url: r.instagram_url || r.instagram_reel || '',
+    tiktok_url: r.tiktok_url || '',
     services: r.services || {},
     category: Array.isArray(r.category) ? r.category : [],
     cuisine_type: r.cuisine_type || '',
@@ -834,6 +837,10 @@ function toDbPayload(form, alsoPublish) {
     menu_url: form.menu_url || null,
     reservation_url: form.reservation_url || null,
     instagram_url: form.instagram_url || null,
+    // Svuotato il campo, sparisce anche il reel vecchio: sennò la scheda
+    // continuerebbe a mostrarlo.
+    ...(form.instagram_url ? {} : { instagram_reel: null }),
+    tiktok_url: form.tiktok_url || null,
     services: form.services || {},
     category: form.category,
     cuisine_type: form.cuisine_type || (form.category?.[0] ?? null),
