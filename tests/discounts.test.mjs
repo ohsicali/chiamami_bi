@@ -146,15 +146,15 @@ test('claimed_count fermo a 0 non nasconde i riscatti reali', () => {
   assert.equal(isActiveDiscount(d({ max_quantity: 10, claimed_count: 0, total_redeemed: 10 }), NOW), false)
 })
 
-/* ── Drop esaurito: non è attivo, ma `isVisibleDrop` lo riconosce ── */
+/* ── Drop esaurito: non è attivo, ma resta visibile col "sold out" ── */
 
 test('un drop esaurito non è più "attivo" ma resta "visibile"', () => {
   const esaurito = d({ is_drop: true, drop_ends_at: '2026-12-01T00:00:00Z', max_quantity: 10, claimed_count: 10 })
-  assert.equal(isActiveDrop(esaurito, NOW), false, 'esaurito non conta più come attivo (conteggi, home, Bi Club)')
-  assert.equal(isVisibleDrop(esaurito, NOW), true, 'serve a pickFeaturedDeal per trovare il locale del drop finito')
+  assert.equal(isActiveDrop(esaurito, NOW), false, 'esaurito non conta più come attivo (conteggi)')
+  assert.equal(isVisibleDrop(esaurito, NOW), true, 'ma resta in home e Bi Club con lo stato sold out')
 })
 
-/* ── La vetrina in home: drop attivo, o lo sconto fisso del locale del drop esaurito ── */
+/* ── La vetrina in home: drop attivo, poi il drop esaurito (sold out), poi la convenzione ── */
 
 test('pickFeaturedDeal: il drop attivo va in vetrina', () => {
   const drop = d({ id: 'drop', is_drop: true, restaurant_id: 'a', valid_until: '2026-12-01T00:00:00Z', max_quantity: 10 })
@@ -162,14 +162,28 @@ test('pickFeaturedDeal: il drop attivo va in vetrina', () => {
   assert.equal(pickFeaturedDeal([conv, drop], NOW).id, 'drop')
 })
 
-test('pickFeaturedDeal: drop esaurito → lo sconto fisso dello stesso locale', () => {
+test('pickFeaturedDeal: drop esaurito → resta in vetrina (sold out)', () => {
   const list = [
     d({ id: 'shoro-drop', is_drop: true, restaurant_id: 'shoro', valid_until: null, max_quantity: 10, total_redeemed: 12 }),
     d({ id: 'papalele', restaurant_id: 'papalele', valid_until: '2026-10-30T00:00:00Z' }),
-    d({ id: 'wokoza-20', restaurant_id: 'wokoza', valid_until: '2026-11-30T00:00:00Z' }),
     d({ id: 'shoro-20', restaurant_id: 'shoro', valid_until: '2026-11-30T00:00:00Z' }),
   ]
-  assert.equal(pickFeaturedDeal(list, NOW).id, 'shoro-20')
+  assert.equal(pickFeaturedDeal(list, NOW).id, 'shoro-drop')
+})
+
+test('pickFeaturedDeal: un drop attivo passa davanti a quello esaurito', () => {
+  const list = [
+    d({ id: 'esaurito', is_drop: true, restaurant_id: 'a', valid_until: '2026-10-01T00:00:00Z', max_quantity: 10, claimed_count: 10 }),
+    d({ id: 'live', is_drop: true, restaurant_id: 'b', valid_until: '2026-12-01T00:00:00Z', max_quantity: 10, claimed_count: 3 }),
+  ]
+  assert.equal(pickFeaturedDeal(list, NOW).id, 'live')
+})
+
+test('pickFeaturedDeal: drop esaurito ma disattivato o scaduto → non va in vetrina', () => {
+  const conv = d({ id: 'conv', restaurant_id: 'b', valid_until: '2026-10-30T00:00:00Z' })
+  const spento = d({ id: 'spento', is_drop: true, restaurant_id: 'a', is_active: false, max_quantity: 10, claimed_count: 10 })
+  const scaduto = d({ id: 'scaduto', is_drop: true, restaurant_id: 'a', valid_until: '2026-09-01T00:00:00Z', max_quantity: 10, claimed_count: 10 })
+  assert.equal(pickFeaturedDeal([spento, scaduto, conv], NOW).id, 'conv')
 })
 
 test('pickFeaturedDeal: nessun drop → la convenzione più vicina a scadere', () => {

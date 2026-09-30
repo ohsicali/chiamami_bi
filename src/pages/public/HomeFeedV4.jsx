@@ -545,9 +545,9 @@ export default function HomeFeedV4() {
       return true
     }))
   }, [discounts])
-  // In evidenza il drop attivo; se il drop è esaurito, al suo posto lo
-  // sconto fisso dello stesso locale (vedi `pickFeaturedDeal`). Un drop
-  // esaurito non resta più in vetrina (28/09).
+  // In evidenza il drop attivo; se non ce n'è, il drop esaurito resta in
+  // vetrina con la scritta "sold out" e il bottone spento (vedi
+  // `pickFeaturedDeal` e `dealCta`).
   const featuredDrop = useMemo(
     () => pickFeaturedDeal(discounts) || activeDeals[0] || null,
     [discounts, activeDeals]
@@ -622,8 +622,8 @@ export default function HomeFeedV4() {
     const status = redemption?.status
     if (status === 'redeemed') return { ctaLabel: 'Già usato', ctaDisabled: true }
     if (status === 'generated') return { ctaLabel: 'Apri il QR', ctaDisabled: false }
-    // Rete di sicurezza: un drop esaurito non va più in vetrina (vedi
-    // featuredDrop), ma se ci arrivasse non deve dire "Sblocca sconto".
+    // Il drop esaurito resta in vetrina (vedi featuredDrop) ma non si sblocca
+    // più: il bottone dice "Esaurito" ed è spento.
     if (isSoldOut(deal)) return { ctaLabel: 'Esaurito', ctaDisabled: true }
     return { ctaLabel: undefined, ctaDisabled: false }
   }

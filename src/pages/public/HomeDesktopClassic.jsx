@@ -48,7 +48,7 @@ import BiLogoMark from '../../components/UI/BiLogoMark'
 import Reveal from '../../components/UI/Reveal'
 import { STAGGER, staggerDelay } from '../../lib/motion'
 import { formatDiscountBadge } from '../../lib/utils/discountFormat'
-import { pickFeaturedDeal } from '../../lib/discounts'
+import { pickFeaturedDeal, isSoldOut } from '../../lib/discounts'
 import { formatPrice } from '../../lib/utils/price'
 
 function formatCountdown(endsAt) {
@@ -295,20 +295,26 @@ function HeroPromo({ featured, onUnlock, ctaLabel, ctaDisabled }) {
 
   // Il corallo e il "DROP LIVE" che pulsa sono solo dei drop: uno sconto
   // fisso vestito da drop brucia l'urgenza anche sui drop veri. Se in
-  // vetrina c'è una convenzione (drop esaurito, vedi `pickFeaturedDeal`) la
+  // vetrina c'è una convenzione (nessun drop, vedi `pickFeaturedDeal`) la
   // card è scura e il bottone corallo, il colore dell'azione.
+  // Un drop esaurito resta in vetrina (30/09) ma smette di fingersi live:
+  // niente pallino né countdown, timbro "Sold out" sulla foto (come DropCard).
   const isDropDeal = featured.isDrop !== false
+  const soldOut = isDropDeal && !!featured.soldOut
   const chipLabel = !isDropDeal
     ? 'SCONTO BI CLUB'
-    : (countdown ? `DROP LIVE · ${countdown}` : 'DROP LIVE')
-  const claimedCount = featured.claimedCount || 0
+    : soldOut
+      ? 'SOLD OUT · SCONTO ESAURITO'
+      : (countdown ? `DROP LIVE · ${countdown}` : 'DROP LIVE')
   const maxQuantity = featured.maxQuantity || null
-  const expiresLabel = featured.expiresLabel || null
+  // Esaurito: mai "12 / 10" — i posti presi si fermano al totale.
+  const claimedCount = soldOut && maxQuantity ? maxQuantity : (featured.claimedCount || 0)
+  const expiresLabel = soldOut ? null : (featured.expiresLabel || null)
   const progressPct = maxQuantity ? Math.min(100, Math.round(claimedCount / maxQuantity * 100)) : null
-  const showProgress = progressPct != null || !!countdown || !!expiresLabel
+  const showProgress = progressPct != null || (!soldOut && (!!countdown || !!expiresLabel))
   const mobCountdown = [
     maxQuantity != null ? `${claimedCount} / ${maxQuantity}` : null,
-    countdown || expiresLabel,
+    soldOut ? null : (countdown || expiresLabel),
   ].filter(Boolean).join(' · ')
 
   return (
@@ -338,7 +344,7 @@ function HeroPromo({ featured, onUnlock, ctaLabel, ctaDisabled }) {
         {/* Body: col sinistra desktop, sotto la foto su mobile */}
         <div className="hfv4-hero-body">
           <span
-            className={`hfv4-hero-chip${isDropDeal ? '' : ' hfv4-hero-chip--fixed'}`}
+            className={`hfv4-hero-chip${isDropDeal && !soldOut ? '' : ' hfv4-hero-chip--fixed'}`}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
               padding: '5px 10px', background: 'rgba(255,255,255,.18)',
@@ -347,7 +353,7 @@ function HeroPromo({ featured, onUnlock, ctaLabel, ctaDisabled }) {
               marginBottom: 10, width: 'fit-content',
             }}
           >
-            {isDropDeal && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'hero-pulse 1.4s infinite' }} />}
+            {isDropDeal && !soldOut && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'hero-pulse 1.4s infinite' }} />}
             {chipLabel}
           </span>
           {/* Desktop: titolo pre-line 30→72px */}
@@ -442,6 +448,13 @@ function HeroPromo({ featured, onUnlock, ctaLabel, ctaDisabled }) {
             />
           )}
           <span aria-hidden style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(34,24,28,.75) 100%)' }} />
+          {soldOut && (
+            <span aria-hidden style={{ position: 'absolute', inset: 0, zIndex: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+              <span style={{ transform: 'rotate(-8deg)', textTransform: 'uppercase', fontWeight: 900, fontSize: 22, letterSpacing: 3, color: '#fff', border: '3px solid rgba(255,255,255,.9)', borderRadius: 10, padding: '8px 22px', background: 'rgba(20,14,16,.72)', boxShadow: '0 10px 24px rgba(0,0,0,.4)', whiteSpace: 'nowrap' }}>
+                Sold out
+              </span>
+            </span>
+          )}
 
           {/* Variante B — la percentuale come badge menta sulla foto: regge
               anche numeri piccoli ("2%") che come titolone si perderebbero. */}
@@ -501,7 +514,7 @@ function HeroPromo({ featured, onUnlock, ctaLabel, ctaDisabled }) {
                 </div>
               )}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 700, letterSpacing: '.04em' }}>
-                <span>{maxQuantity ? `${claimedCount} / ${maxQuantity} sbloccati` : (countdown ? `Scade tra ${countdown}` : '')}</span>
+                <span>{maxQuantity ? `${claimedCount} / ${maxQuantity} ${soldOut ? 'presi · esaurito' : 'sbloccati'}` : (!soldOut && countdown ? `Scade tra ${countdown}` : '')}</span>
                 {expiresLabel && <span>{expiresLabel}</span>}
               </div>
             </div>
@@ -703,7 +716,8 @@ export default function HomeDesktopClassic() {
   )
 
   // Stessa scelta della home del telefono (`pickFeaturedDeal`): il drop
-  // attivo, e se è esaurito lo sconto fisso dello stesso locale al suo posto.
+  // attivo, se non c'è il drop esaurito (resta col "sold out"), poi la
+  // convenzione più vicina a scadere.
   const featuredDrop = useMemo(() => {
     const drop = pickFeaturedDeal(discounts)
     if (!drop) return null
@@ -753,6 +767,7 @@ export default function HomeDesktopClassic() {
       photo,
       photoSrcSet,
       isDrop: isDropDeal,
+      soldOut: isDropDeal && isSoldOut(drop),
       endsAt: isDropDeal ? (drop.drop_ends_at || drop.ends_at || null) : null,
       claimedCount,
       maxQuantity,
@@ -798,6 +813,8 @@ export default function HomeDesktopClassic() {
     const status = redemption?.status
     if (status === 'redeemed') return { ctaLabel: 'Già usato', ctaDisabled: true }
     if (status === 'generated') return { ctaLabel: 'Apri il QR', ctaDisabled: false }
+    // Drop esaurito in vetrina: non si sblocca più, il bottone lo dice.
+    if (deal?.soldOut) return { ctaLabel: 'Esaurito', ctaDisabled: true }
     return { ctaLabel: undefined, ctaDisabled: false }
   }
 

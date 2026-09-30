@@ -98,11 +98,11 @@ export function isActiveDrop(d, now = new Date()) {
  * Drop non scaduti né disattivati, esaurito o no.
  *
  * Non è un sinonimo di `isActiveDrop`: quello resta la definizione di
- * "attivo" (esaurito escluso). Fino al 28/09 serviva a tenere i drop
- * esauriti in vetrina (home e Bi Club) con lo stato "sold out"; da allora
- * un drop esaurito non si mostra più — al suo posto in home va lo sconto
- * fisso dello stesso locale (`pickFeaturedDeal`), che è l'unico uso
- * rimasto di questa funzione.
+ * "attivo" (esaurito escluso, usato per i conteggi). Questo serve a ciò che
+ * si MOSTRA (home e Bi Club): un drop esaurito resta in vetrina con lo
+ * stato "sold out" — chi arriva tardi vede che c'era ed è stato preso, e
+ * aspetta il prossimo. Un drop scaduto o disattivato invece sparisce.
+ * (Dal 28 al 30/09 gli esauriti erano nascosti, PR #309: tolto il 30/09.)
  */
 export function isVisibleDrop(d, now = new Date()) {
   if (!d || !isDrop(d)) return false
@@ -152,20 +152,17 @@ export function sortByExpiry(list) {
  * Lo sconto in evidenza in home (la card grande).
  *
  * 1. Il drop attivo più vicino a scadere: è quello che ha davvero fretta.
- * 2. Se l'unico drop è esaurito, al suo posto lo sconto fisso dello stesso
- *    locale: il locale resta in vetrina con qualcosa che si può ancora
- *    prendere, invece di una card "sold out" col bottone spento.
+ * 2. Se non ce ne sono, il drop esaurito (non scaduto né disattivato): resta
+ *    in vetrina con la scritta "sold out" e il bottone spento (30/09 —
+ *    dal 28/09 al suo posto andava lo sconto fisso del locale).
  * 3. Altrimenti la convenzione attiva più vicina a scadere.
  */
 export function pickFeaturedDeal(list, now = new Date()) {
   const liveDrop = sortByExpiry(filterActiveDrops(list, now))[0]
   if (liveDrop) return liveDrop
-  const conv = sortByExpiry(filterActiveConventions(list, now))
   const soldOutDrop = sortByExpiry(filterVisibleDrops(list, now))[0]
-  const sameRestaurant = soldOutDrop
-    ? conv.find((d) => d.restaurant_id && d.restaurant_id === soldOutDrop.restaurant_id)
-    : null
-  return sameRestaurant || conv[0] || null
+  if (soldOutDrop) return soldOutDrop
+  return sortByExpiry(filterActiveConventions(list, now))[0] || null
 }
 
 /** Millisecondi mancanti alla fine, o null. */
