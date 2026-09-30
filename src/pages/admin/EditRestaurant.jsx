@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
-import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import { RESTAURANT_READABLE_COLUMNS, fetchRestaurantSecrets } from '../../lib/restaurantColumns'
 import AdminLayout from '../../components/Layout/AdminLayout'
 import DettagliTab from '../../components/admin/tabs/DettagliTab'
@@ -11,22 +10,35 @@ import CosaTiConsiglioTab from '../../components/admin/tabs/CosaTiConsiglioTab'
 import ScontoTab from '../../components/admin/tabs/ScontoTab'
 import CredenzialiTab from '../../components/admin/tabs/CredenzialiTab'
 import SeoTab from '../../components/admin/tabs/SeoTab'
-import { checkSeoReady, SeoLockedPlaceholder } from '../../components/admin/tabs/_SeoLockCheck'
-import TabsShell from '../../components/admin/drawer/TabsShell'
+import { checkSeoReady, SeoLockedPlaceholder, SEO_MIN_REVIEW_CHARS } from '../../components/admin/tabs/_SeoLockCheck'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 import { toLocalInput, fromLocalInput, publishAtError, formatPublishAt } from '../../lib/scheduledPublish'
 import PublishSchedule from '../../components/admin/PublishSchedule'
+import { Ring, Sheet, Toast } from '../../components/admin/ui'
 
 const SECTIONS = [
   { key: 'dettagli', num: '01', label: 'Dettagli' },
   { key: 'foto', num: '02', label: 'Foto' },
   { key: 'consiglio', num: '03', label: 'Cosa consigli' },
-  { key: 'sconto', num: '04', label: 'Sconto' },
+  { key: 'sconto', num: '04', label: 'Sconti' },
   { key: 'credenziali', num: '05', label: 'Credenziali' },
   { key: 'seo', num: '06', label: 'SEO' },
 ]
 
 /**
+ * EditRestaurant — la scheda del locale, tutta in una pagina.
+ *
+ * Rifatta il 30/09 (kit grafico in components/admin/admin-ui.css):
+ *   - in cima chi è e a che punto è: copertina, stato, e la lista di quello
+ *     che manca per uscire (tocchi una voce e vai alla sezione);
+ *   - "Quando esce?" subito sotto, finché è in bozza;
+ *   - le sezioni una dopo l'altra, con l'indice a sinistra da computer e in
+ *     alto da telefono (prima il computer aveva le schede e il telefono lo
+ *     scorrimento: due pagine diverse per la stessa cosa);
+ *   - una sola barra per salvare, in fondo. Sul telefono prima c'erano i
+ *     bottoni in cima (che uscivano dallo schermo: "Salva · pubblic…") più
+ *     una barra scura sopra la barra di navigazione.
+ *
  * EditRestaurant — full-page edit (replaces drawer 720px).
  *
  * User preference (Augusto 24/04): "meglio tutto in pagina, più comodo
@@ -43,7 +55,8 @@ export default function EditRestaurant() {
   const isNew = searchParams.get('new') === '1'
 
   const isDesktop = useIsDesktop()
-  const [activeTab, setActiveTab] = useState('dettagli')
+  const [activeSection, setActiveSection] = useState('dettagli')
+  const [moreOpen, setMoreOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [restaurant, setRestaurant] = useState(null)
   const [form, setForm] = useState(null)
@@ -53,6 +66,7 @@ export default function EditRestaurant() {
   const [loadError, setLoadError] = useState(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const clearToast = useCallback(() => setToast(null), [])
 
   useEffect(() => {
     if (!restaurantId || !isSupabaseConfigured()) return
@@ -242,379 +256,229 @@ export default function EditRestaurant() {
     [form]
   )
 
+  // Cosa manca per uscire. Le prime voci servono davvero (senza, la scheda
+  // pubblica è vuota o il pin non c'è); il PIN solo se il locale avrà sconti.
+  const checklist = useMemo(() => {
+    if (!form) return { required: [], optional: [], ready: false }
+    const named = form.name.trim() && !/^nuovo ristorante$/i.test(form.name.trim())
+    const required = [
+      { key: 'name', label: 'Nome e indirizzo', section: 'dettagli', done: !!(named && form.address.trim()) },
+      { key: 'map', label: 'Posizione sulla mappa', section: 'dettagli', done: !!(form.latitude && form.longitude) },
+      { key: 'photo', label: 'Foto', section: 'foto', done: (form.photos?.length || 0) > 0 },
+      { key: 'cat', label: 'Categoria', section: 'dettagli', done: (form.category?.length || 0) > 0 },
+      { key: 'story', label: 'Racconto di Bi', section: 'dettagli', done: (form.our_review || '').trim().length >= SEO_MIN_REVIEW_CHARS },
+    ]
+    const optional = [
+      { key: 'pin', label: 'PIN per gli sconti', section: 'credenziali', done: !!form.verify_pin },
+    ]
+    return { required, optional, ready: required.every((c) => c.done) }
+  }, [form])
+
+  const sectionDone = useMemo(() => {
+    const r = Object.fromEntries(checklist.required.concat(checklist.optional).map((c) => [c.key, c.done]))
+    return {
+      dettagli: r.name && r.map && r.cat && r.story,
+      foto: r.photo,
+      credenziali: r.pin,
+      seo: !!(form?.seo_title && form?.seo_description),
+    }
+  }, [checklist, form?.seo_title, form?.seo_description])
+
+  // Indice delle sezioni: si accende quella che si sta leggendo.
+  useEffect(() => {
+    if (loading || !form || typeof IntersectionObserver === 'undefined') return undefined
+    const els = SECTIONS.map((s) => document.getElementById(`sec-${s.key}`)).filter(Boolean)
+    const io = new IntersectionObserver(
+      (entries) => {
+        const top = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0]
+        if (top) setActiveSection(top.target.dataset.section)
+      },
+      { rootMargin: '-30% 0px -60% 0px' }
+    )
+    els.forEach((el) => io.observe(el))
+    return () => io.disconnect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, !!form])
+
   if (authLoading || loading) return <LoadingScreen />
   if (!user || !isAdmin) return <Navigate to="/admin/login" replace />
   if (loadError || !form) {
     return (
-      <AdminLayout title="Ristorante">
-        <div style={{ padding: '60px 32px', textAlign: 'center' }}>
-          <div style={{ fontSize: 32, marginBottom: 14 }}>🔎</div>
-          <h2 style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 22, margin: 0, color: 'var(--color-ink)' }}>
-            Ristorante non trovato
-          </h2>
-          <p style={{ fontSize: 13, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', margin: '10px 0 18px' }}>
+      <AdminLayout title="Ristorante" focus back={{ to: '/admin/restaurants', label: 'Ristoranti' }}>
+        <div className="adm adm-page adm-page--narrow" style={{ textAlign: 'center', paddingTop: 60 }}>
+          <div style={{ fontSize: 36, marginBottom: 14 }} aria-hidden>🔎</div>
+          <h2 className="adm-title" style={{ fontSize: 22 }}>Ristorante non trovato</h2>
+          <p className="adm-sub" style={{ margin: '10px 0 20px' }}>
             {loadError || 'L\'ID nella URL non corrisponde a nessun ristorante.'}
           </p>
-          <Link
-            to="/admin/restaurants"
-            style={{
-              background: 'var(--color-ink, #22181C)',
-              color: '#fff',
-              padding: '10px 20px',
-              borderRadius: 999,
-              textDecoration: 'none',
-              fontSize: 13,
-              fontWeight: 800,
-              fontFamily: 'var(--font-sans)',
-            }}
-          >
-            ← Torna alla lista
-          </Link>
+          <Link to="/admin/restaurants" className="adm-btn adm-btn--dark">← Torna alla lista</Link>
         </div>
       </AdminLayout>
     )
   }
 
+  const cover = form.photos?.[0]?.thumb_url || form.photos?.[0]?.url || null
+  const status = form.is_disabled
+    ? { cls: 'adm-pill--danger', label: 'Accesso bloccato' }
+    : form.is_published
+      ? { cls: 'adm-pill--live', label: 'In guida', dot: true }
+      : restaurant?.publish_at
+        ? { cls: 'adm-pill--scheduled', label: `⏰ Esce ${formatPublishAt(restaurant.publish_at)}` }
+        : { cls: 'adm-pill--draft', label: 'Bozza', dot: true }
+  const saveLabel = form.is_published ? 'Aggiorna' : 'Salva'
+  const publishLabel = form.schedule_on ? 'Programma' : 'Pubblica'
+  // Gli stessi bottoni nella barra in fondo (telefono) e sotto l'indice
+  // (computer). Già pubblicato: un solo "Aggiorna", che sovrascrive i dati
+  // senza far partire le email della prima pubblicazione.
+  const saveButtons = form.is_published ? (
+    <button type="button" className="adm-btn adm-btn--primary" disabled={saving || !dirty} onClick={() => handleSave(true)}>
+      {saving ? 'Aggiorno…' : saveLabel}
+    </button>
+  ) : (
+    <>
+      {/* Salva — bozza, non pubblica ancora */}
+      <button type="button" className="adm-btn adm-btn--soft" disabled={saving || !dirty} onClick={() => handleSave(false)}>
+        {saveLabel}
+      </button>
+      {/* Pubblica — prima pubblicazione, parte la mail (o la programma) */}
+      <button type="button" className="adm-btn adm-btn--primary" disabled={saving} onClick={() => handleSave(form.schedule_on ? false : true)}>
+        {saving ? 'Salvo…' : publishLabel}
+      </button>
+    </>
+  )
+
+  const goTo = (key) => {
+    if (key === 'seo' && !seoReady) key = 'dettagli'
+    document.getElementById(`sec-${key}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   return (
-    <AdminLayout title={`Modifica ${form.name}`}>
-      <div
-        style={{ padding: '28px 32px', maxWidth: 1100, margin: '0 auto' }}
-        className="max-md:!p-[18px] max-md:!pb-[180px]"
-      >
-        {/* ── Header ── */}
-        <div style={{ marginBottom: 24 }}>
-          <div
-            style={{
-              fontSize: 12,
-              fontWeight: 600,
-              color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
-              letterSpacing: '0.04em',
-              marginBottom: 8,
-            }}
-          >
-            Gestione ›{' '}
-            <Link to="/admin/restaurants" style={{ color: 'inherit', textDecoration: 'none' }}>
-              Ristoranti
-            </Link>{' '}
-            ›{' '}
-            <b style={{ color: 'var(--color-ink)', fontWeight: 800 }}>
-              {form.name || 'Modifica'}
-            </b>
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              justifyContent: 'space-between',
-              gap: 16,
-              flexWrap: 'wrap',
-            }}
-          >
-            <div style={{ flex: 1, minWidth: 240 }}>
-              <h1
-                style={{
-                  fontFamily: 'var(--font-sans)',
-                  fontWeight: 900,
-                  fontSize: 32,
-                  letterSpacing: '-0.025em',
-                  margin: 0,
-                  color: 'var(--color-ink, #22181C)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  flexWrap: 'wrap',
-                }}
-              >
-                {form.name || 'Ristorante'}
-                {!form.is_published && (
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 800,
-                      padding: '4px 10px',
-                      borderRadius: 999,
-                      background: restaurant?.publish_at ? 'var(--color-ink, #22181C)' : 'var(--color-cream-deep, #F1EBE0)',
-                      color: restaurant?.publish_at ? '#fff' : 'var(--color-ink-55, rgba(34,24,28,0.55))',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.06em',
-                    }}
-                  >
-                    {restaurant?.publish_at ? `Esce ${formatPublishAt(restaurant.publish_at)}` : 'Bozza'}
-                  </span>
-                )}
-                {form.is_disabled && (
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 800,
-                      padding: '4px 10px',
-                      borderRadius: 999,
-                      background: 'var(--color-danger-wash, #FCE8E4)',
-                      color: 'var(--color-danger, #C0392B)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.06em',
-                    }}
-                  >
-                    Accesso bloccato
-                  </span>
-                )}
-              </h1>
-              <div
-                style={{
-                  marginTop: 6,
-                  color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
-                  fontSize: 14,
-                  fontWeight: 500,
-                }}
-              >
-                {dirty ? 'Modifiche non salvate · ricordati di salvare.' : 'Tutto salvato.'}
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: 10, flexShrink: 0, flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                onClick={() => setDeleteOpen(true)}
-                title="Elimina ristorante"
-                style={{
-                  background: 'transparent',
-                  border: '1px solid var(--color-line, #EAE3D7)',
-                  color: 'var(--color-danger, #C0392B)',
-                  padding: '9px 14px',
-                  borderRadius: 999,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  fontFamily: 'var(--font-sans)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                }}
-              >
-                <span style={{ display: 'inline-flex', width: 14, height: 14 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 6h18M19 6l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 6m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3" />
-                  </svg>
-                </span>
-                Elimina
-              </button>
-              <a
-                href={form.slug ? `/r/${form.slug}` : '#'}
-                target="_blank"
-                rel="noreferrer"
-                style={{
-                  background: 'transparent',
-                  border: '1px solid var(--color-line, #EAE3D7)',
-                  color: 'var(--color-ink, #22181C)',
-                  padding: '9px 16px',
-                  borderRadius: 999,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  textDecoration: 'none',
-                  fontFamily: 'var(--font-sans)',
-                  pointerEvents: form.slug ? 'auto' : 'none',
-                  opacity: form.slug ? 1 : 0.5,
-                }}
-              >
-                Anteprima
-              </a>
-              {form.is_published ? (
-                <button
-                  type="button"
-                  disabled={saving}
-                  onClick={() => handleSave(true)}
-                  style={{
-                    background: 'var(--color-corallo, #E8453C)',
-                    color: '#fff',
-                    border: 0,
-                    padding: '10px 18px',
-                    borderRadius: 999,
-                    fontSize: 13,
-                    fontWeight: 800,
-                    cursor: saving ? 'wait' : 'pointer',
-                    boxShadow: '0 6px 14px rgba(232,69,60,0.28)',
-                    fontFamily: 'var(--font-sans)',
-                  }}
-                >
-                  {saving ? 'Aggiorno…' : 'Aggiorna'}
-                </button>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    disabled={saving}
-                    onClick={() => handleSave(false)}
-                    style={{
-                      background: 'transparent',
-                      border: '1px solid var(--color-line, #EAE3D7)',
-                      color: 'var(--color-ink, #22181C)',
-                      padding: '9px 16px',
-                      borderRadius: 999,
-                      fontSize: 13,
-                      fontWeight: 700,
-                      cursor: saving ? 'wait' : 'pointer',
-                      fontFamily: 'var(--font-sans)',
-                    }}
-                  >
-                    Salva
-                  </button>
-                  <button
-                    type="button"
-                    disabled={saving}
-                    onClick={() => handleSave(form.schedule_on ? false : true)}
-                    style={{
-                      background: 'var(--color-corallo, #E8453C)',
-                      color: '#fff',
-                      border: 0,
-                      padding: '10px 18px',
-                      borderRadius: 999,
-                      fontSize: 13,
-                      fontWeight: 800,
-                      cursor: saving ? 'wait' : 'pointer',
-                      boxShadow: '0 6px 14px rgba(232,69,60,0.28)',
-                      fontFamily: 'var(--font-sans)',
-                    }}
-                  >
-                    {saving ? 'Salvo…' : form.schedule_on ? 'Salva · programma' : 'Salva · pubblica'}
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Quando esce e se parte l'email — solo finché il locale è in bozza */}
-          {!form.is_published && (
-            <PublishSchedule form={form} onChange={updateField} />
-          )}
+    <AdminLayout title={form.name || 'Ristorante'} focus back={{ to: '/admin/restaurants', label: 'Ristoranti' }}>
+      <div className="adm adm-page">
+        {/* ── Intestazione: chi è, a che punto è ── */}
+        <div className="adm-crumbs adm-crumbs--focus">
+          <Link to="/admin/restaurants">Ristoranti</Link> › <b>{form.name || 'Modifica'}</b>
         </div>
 
-        {isDesktop ? (
-          /* ── Desktop: tab switcher (pre-PR15h design) ── */
-          <TabsShell
-            tabs={SECTIONS.map((s) => ({
-              key: s.key,
-              label: s.label,
-              locked: s.key === 'seo' && !seoReady,
-              lockedReason: 'Completa prima nome, città e racconto nei Dettagli.',
-            }))}
-            activeKey={activeTab}
-            onChange={setActiveTab}
-          >
-            {activeTab === 'dettagli' && (
-              <DettagliTab form={form} onChange={updateField} restaurantId={restaurantId} isNew={isNew} canSchedule={!restaurant?.is_published} />
-            )}
-            {activeTab === 'foto' && (
-              <FotoGalleriaTab form={form} onChange={updateField} restaurantId={restaurantId} />
-            )}
-            {activeTab === 'consiglio' && (
-              <CosaTiConsiglioTab form={form} onChange={updateField} restaurantId={restaurantId} />
-            )}
-            {activeTab === 'sconto' && (
-              <ScontoTab form={form} restaurantId={restaurantId} />
-            )}
-            {activeTab === 'credenziali' && (
-              <CredenzialiTab
-                form={form}
-                onChange={updateField}
-                restaurantId={restaurantId}
-                onPinRotated={(pin, at) => {
-                  setForm((prev) => ({ ...prev, verify_pin: pin, last_pin_rotation_at: at }))
-                  setRestaurant((prev) => ({ ...prev, verify_pin: pin, last_pin_rotation_at: at }))
-                }}
-                onDisableToggled={(flag) => {
-                  setForm((prev) => ({ ...prev, is_disabled: flag }))
-                  setRestaurant((prev) => ({ ...prev, is_disabled: flag }))
-                }}
-              />
-            )}
-            {activeTab === 'seo' && (
-              seoReady ? (
-                <SeoTab form={form} onChange={updateField} restaurantId={restaurantId} />
-              ) : (
-                <SeoLockedPlaceholder
-                  missing={seoMissing}
-                  onGoToDettagli={() => setActiveTab('dettagli')}
-                />
-              )
-            )}
-          </TabsShell>
-        ) : (
-          /* ── Mobile: quick-nav pill + scroll unico ── */
-          <>
-            <nav
-              style={{
-                position: 'sticky',
-                top: 0,
-                zIndex: 5,
-                background: 'var(--color-page, #FAF7F2)',
-                padding: '8px 0 12px',
-                marginBottom: 8,
-                borderBottom: '1px solid var(--color-line, #EAE3D7)',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  gap: 4,
-                  background: '#fff',
-                  border: '1px solid var(--color-line, #EAE3D7)',
-                  borderRadius: 999,
-                  padding: 4,
-                  width: 'fit-content',
-                  maxWidth: '100%',
-                  overflowX: 'auto',
-                  scrollbarWidth: 'none',
-                }}
-              >
-                {SECTIONS.map((s) => {
-                  const locked = s.key === 'seo' && !seoReady
-                  return (
-                    <a
-                      key={s.key}
-                      href={`#sec-${s.key}`}
-                      onClick={(e) => {
-                        e.preventDefault()
-                        document.getElementById(`sec-${s.key}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                      }}
-                      style={{
-                        padding: '7px 14px',
-                        borderRadius: 999,
-                        fontSize: 12,
-                        fontWeight: 700,
-                        color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
-                        background: 'transparent',
-                        textDecoration: 'none',
-                        whiteSpace: 'nowrap',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        fontFamily: 'var(--font-sans)',
-                      }}
-                    >
-                      <span style={{ fontFamily: 'var(--font-wordmark, "Alfa Slab One")', color: 'var(--color-corallo, #E8453C)', fontSize: 10 }}>
-                        {s.num}
-                      </span>
-                      {locked && <span aria-hidden style={{ fontSize: 10 }}>🔒</span>}
-                      {s.label}
-                    </a>
-                  )
-                })}
-              </div>
-            </nav>
+        {isNew && (
+          <div className="adm-note adm-note--ok" style={{ marginBottom: 14 }}>
+            <span aria-hidden>🎉</span>
+            <span>Bozza creata. Ora mancano foto, categoria e il racconto di Bi: la lista qui sotto ti dice cosa.</span>
+          </div>
+        )}
 
-            <Section id="sec-dettagli" num="01" title="Dettagli">
-              <DettagliTab form={form} onChange={updateField} restaurantId={restaurantId} isNew={isNew} canSchedule={!restaurant?.is_published} />
+        <section className="adm-card adm-rest-hero">
+          <div className="adm-rest-hero__top">
+            <div className="adm-rest-hero__cover" aria-hidden>
+              {cover ? <img src={proxyImg(cover, { w: 240 })} alt="" /> : <span>🍽️</span>}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 6 }}>
+                <span className={`adm-pill ${status.cls}`}>{status.dot && <i />}{status.label}</span>
+                {dirty && <span className="adm-pill adm-pill--warn">Da salvare</span>}
+              </div>
+              <h1 className="adm-title adm-rest-hero__name">{form.name || 'Senza nome'}</h1>
+              <p className="adm-sub" style={{ marginTop: 4 }}>
+                {[String(form.address || '').split(',')[0], form.neighborhood, form.city].filter(Boolean).join(' · ') || 'Indirizzo da compilare'}
+              </p>
+            </div>
+            {isDesktop && (
+              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                <a
+                  href={form.slug ? `/r/${form.slug}` : '#'}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="adm-btn"
+                  style={{ pointerEvents: form.slug ? 'auto' : 'none', opacity: form.slug ? 1 : 0.5 }}
+                >
+                  Anteprima ↗
+                </a>
+                <button type="button" className="adm-btn adm-btn--danger adm-btn--icon" onClick={() => setDeleteOpen(true)} title="Elimina ristorante" aria-label="Elimina ristorante">
+                  <TrashIcon />
+                </button>
+                {/* Da computer si salva anche da qui, senza scendere all'indice. */}
+                <div className="adm-savecard adm-savecard--inline">{saveButtons}</div>
+              </div>
+            )}
+          </div>
+
+          <div className="adm-rest-hero__progress">
+            <Ring done={checklist.required.filter((c) => c.done).length} total={checklist.required.length} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 8 }}>
+                {checklist.ready
+                  ? (form.is_published ? 'Scheda completa ✓' : 'Pronto per uscire ✓')
+                  : (() => {
+                      const n = checklist.required.filter((c) => !c.done).length
+                      return n === 1 ? 'Per uscire manca una cosa' : `Per uscire mancano ${n} cose`
+                    })()}
+              </div>
+              <ul className="adm-checklist">
+                {[...checklist.required, ...checklist.optional].map((c) => (
+                  <li key={c.key} className={c.done ? 'is-done' : ''}>
+                    <button type="button" onClick={() => goTo(c.section)}>
+                      <i aria-hidden>✓</i>
+                      {c.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        {/* Quando esce e se parte l'email — solo finché il locale è in bozza.
+            Resta in cima: la prima versione, più in basso, non la trovava
+            nessuno (CLAUDE.md → Uscita programmata). */}
+        {!form.is_published && (
+          <PublishSchedule form={form} onChange={updateField} />
+        )}
+
+        {/* ── Sezioni: indice a sinistra (computer) o in alto (telefono) ── */}
+        <div className="adm-rest-layout">
+          <nav className="adm-rest-nav" aria-label="Sezioni della scheda">
+            {SECTIONS.map((s) => {
+              const locked = s.key === 'seo' && !seoReady
+              const done = sectionDone[s.key]
+              return (
+                <a
+                  key={s.key}
+                  href={`#sec-${s.key}`}
+                  className={activeSection === s.key ? 'is-active' : ''}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    document.getElementById(`sec-${s.key}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                  }}
+                >
+                  <span className="adm-num">{s.num}</span>
+                  <span className="adm-rest-nav__label">{s.label}</span>
+                  {locked ? <span aria-label="bloccato">🔒</span> : done ? <span className="adm-rest-nav__done" aria-label="completo">✓</span> : null}
+                </a>
+              )
+            })}
+            <div className="adm-savecard" role="region" aria-label="Salvataggio">
+              <span className="adm-actionbar__status">
+                <span className={`adm-actionbar__dot${dirty ? ' is-dirty' : ''}`} aria-hidden />
+                {saving ? 'Salvo…' : dirty ? 'Da salvare' : 'Tutto salvato'}
+              </span>
+              <div className="adm-savecard__btns">{saveButtons}</div>
+            </div>
+          </nav>
+
+          <div className="adm-rest-sections">
+            <Section id="sec-dettagli" num="01" title="Dettagli" hint="Nome, indirizzo, categorie, racconto e contatti.">
+              <DettagliTab form={form} onChange={updateField} restaurantId={restaurantId} isNew={isNew && !form.google_maps_url} canSchedule={!restaurant?.is_published} />
             </Section>
-            <Section id="sec-foto" num="02" title="Foto & galleria">
+            <Section id="sec-foto" num="02" title="Foto & galleria" hint="La prima è la copertina su mappa, card e scheda.">
               <FotoGalleriaTab form={form} onChange={updateField} restaurantId={restaurantId} />
             </Section>
-            <Section id="sec-consiglio" num="03" title="Cosa ti consiglio">
+            <Section id="sec-consiglio" num="03" title="Cosa ti consiglio" hint="I piatti da non perdere, con le foto.">
               <CosaTiConsiglioTab form={form} onChange={updateField} restaurantId={restaurantId} />
             </Section>
-            <Section id="sec-sconto" num="04" title="Sconto">
+            <Section id="sec-sconto" num="04" title="Sconti" hint="Convenzioni e drop di questo locale.">
               <ScontoTab form={form} restaurantId={restaurantId} />
             </Section>
-            <Section id="sec-credenziali" num="05" title="Credenziali PIN">
+            <Section id="sec-credenziali" num="05" title="Credenziali PIN" hint="Il PIN con cui il locale convalida gli sconti in /verify.">
               <CredenzialiTab
                 form={form}
                 onChange={updateField}
@@ -629,191 +493,68 @@ export default function EditRestaurant() {
                 }}
               />
             </Section>
-            <Section id="sec-seo" num="06" title="SEO" locked={!seoReady}>
+            <Section id="sec-seo" num="06" title="SEO" locked={!seoReady} hint="Titolo e descrizione per Google e per le condivisioni.">
               {seoReady ? (
                 <SeoTab form={form} onChange={updateField} restaurantId={restaurantId} />
               ) : (
                 <SeoLockedPlaceholder
                   missing={seoMissing}
-                  onGoToDettagli={() =>
-                    document.getElementById('sec-dettagli')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                  }
+                  onGoToDettagli={() => goTo('dettagli')}
                 />
               )}
             </Section>
-          </>
-        )}
+            <div className="adm-actionbar-spacer" />
+          </div>
+        </div>
       </div>
 
-      {/* ── Floating mobile action bar — stile nav admin, staccata sopra ── */}
-      {!isDesktop && (
-        <div
-          style={{
-            position: 'fixed',
-            left: 12,
-            right: 12,
-            bottom: 'calc(96px + env(safe-area-inset-bottom, 0px))',
-            background: 'rgba(34,24,28,0.92)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            borderRadius: 24,
-            padding: '8px 8px 8px 14px',
-            display: 'flex',
-            gap: 6,
-            alignItems: 'center',
-            zIndex: 25,
-            boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
-            fontFamily: 'var(--font-sans)',
-          }}
-        >
-          {/* Status dot + label */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 7,
-              minWidth: 0,
-              flexShrink: 1,
-            }}
-          >
-            <span
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                background: dirty ? 'var(--color-corallo, #E8453C)' : '#86E5A8',
-                flexShrink: 0,
-                boxShadow: dirty
-                  ? '0 0 0 4px rgba(232,69,60,0.18)'
-                  : '0 0 0 4px rgba(134,229,168,0.18)',
-              }}
-            />
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 800,
-                color: 'rgba(255,255,255,0.85)',
-                letterSpacing: '0.04em',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              {dirty ? 'Da salvare' : 'Salvato'}
-            </span>
-          </div>
-
-          <div style={{ flex: 1 }} />
-
-          {form.is_published ? (
-            // Già pubblicato: un solo bottone "Aggiorna" — sovrascrive i
-            // dati senza far partire le mail di prima-pubblicazione.
-            <button
-              type="button"
-              disabled={saving || !dirty}
-              onClick={() => handleSave(true)}
-              style={{
-                background: 'var(--color-corallo, #E8453C)',
-                color: '#fff',
-                border: 0,
-                padding: '9px 16px',
-                borderRadius: 18,
-                fontSize: 11,
-                fontWeight: 800,
-                letterSpacing: '0.04em',
-                cursor: saving || !dirty ? 'not-allowed' : 'pointer',
-                opacity: saving || !dirty ? 0.4 : 1,
-                boxShadow: '0 6px 14px rgba(232,69,60,0.45)',
-                fontFamily: 'inherit',
-              }}
-            >
-              {saving ? 'Aggiorno…' : 'Aggiorna'}
-            </button>
-          ) : (
-            <>
-              {/* Salva (ghost chiaro) — bozza, non pubblica ancora */}
-              <button
-                type="button"
-                disabled={saving || !dirty}
-                onClick={() => handleSave(false)}
-                style={{
-                  background: 'rgba(255,255,255,0.12)',
-                  border: 0,
-                  color: '#fff',
-                  padding: '9px 14px',
-                  borderRadius: 18,
-                  fontSize: 11,
-                  fontWeight: 800,
-                  letterSpacing: '0.04em',
-                  cursor: saving || !dirty ? 'not-allowed' : 'pointer',
-                  opacity: saving || !dirty ? 0.4 : 1,
-                  fontFamily: 'inherit',
-                }}
-              >
-                Salva
-              </button>
-
-              {/* Pubblica (corallo) — prima pubblicazione, parte la mail */}
-              <button
-                type="button"
-                disabled={saving}
-                onClick={() => handleSave(form.schedule_on ? false : true)}
-                style={{
-                  background: 'var(--color-corallo, #E8453C)',
-                  color: '#fff',
-                  border: 0,
-                  padding: '9px 16px',
-                  borderRadius: 18,
-                  fontSize: 11,
-                  fontWeight: 800,
-                  letterSpacing: '0.04em',
-                  cursor: saving ? 'wait' : 'pointer',
-                  boxShadow: '0 6px 14px rgba(232,69,60,0.45)',
-                  fontFamily: 'inherit',
-                }}
-              >
-                {saving ? 'Salvo…' : form.schedule_on ? 'Programma' : 'Pubblica'}
-              </button>
-            </>
-          )}
-
-          {/* Divider */}
-          <div
-            style={{
-              width: 1,
-              height: 22,
-              background: 'rgba(255,255,255,0.15)',
-              margin: '0 2px',
-              flexShrink: 0,
-            }}
-            aria-hidden
-          />
-
-          {/* Elimina */}
+      {/* ── Barra azioni in fondo: telefono e tablet (da computer i bottoni
+          stanno sotto l'indice delle sezioni, dove non coprono niente) ── */}
+      <div className="adm adm-actionbar adm-actionbar--edit" role="region" aria-label="Salvataggio">
+        <span className="adm-actionbar__status">
+          <span className={`adm-actionbar__dot${dirty ? ' is-dirty' : ''}`} aria-hidden />
+          {saving ? 'Salvo…' : dirty ? 'Modifiche da salvare' : 'Tutto salvato'}
+        </span>
+        {!isDesktop && (
           <button
             type="button"
-            onClick={() => setDeleteOpen(true)}
-            title="Elimina ristorante"
-            aria-label="Elimina ristorante"
-            style={{
-              background: 'transparent',
-              border: 0,
-              color: '#FF8A82',
-              width: 36,
-              height: 36,
-              borderRadius: 14,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontFamily: 'inherit',
-              flexShrink: 0,
-            }}
+            className="adm-btn adm-btn--soft adm-btn--icon"
+            onClick={() => setMoreOpen(true)}
+            aria-label="Altre azioni"
           >
-            <TrashIcon />
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg>
+          </button>
+        )}
+        {saveButtons}
+      </div>
+
+      {/* ── Altre azioni (telefono): anteprima ed elimina ── */}
+      <Sheet open={moreOpen} onClose={() => setMoreOpen(false)} title={form.name || 'Ristorante'}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
+          <a
+            href={form.slug ? `/r/${form.slug}` : '#'}
+            target="_blank"
+            rel="noreferrer"
+            className="adm-bigpick"
+            onClick={() => setMoreOpen(false)}
+          >
+            <span className="adm-bigpick__icon" style={{ background: 'var(--adm-cream)' }} aria-hidden>👀</span>
+            <span><b>Anteprima</b><small>Apre la scheda pubblica in una nuova scheda.</small></span>
+          </a>
+          <Link to={`/admin/discounts?new=1&restaurant=${restaurantId}`} className="adm-bigpick" onClick={() => setMoreOpen(false)}>
+            <span className="adm-bigpick__icon" style={{ background: 'linear-gradient(135deg, #A3E635, #4ADE80)' }} aria-hidden>🎟️</span>
+            <span><b>Nuovo sconto per questo locale</b><small>Si apre l'editor con il locale già scelto.</small></span>
+          </Link>
+          <button
+            type="button"
+            className="adm-bigpick"
+            onClick={() => { setMoreOpen(false); setDeleteOpen(true) }}
+          >
+            <span className="adm-bigpick__icon" style={{ background: 'var(--adm-danger-bg)', color: 'var(--adm-danger)' }} aria-hidden><TrashIcon /></span>
+            <span><b style={{ color: 'var(--adm-danger)' }}>Elimina ristorante</b><small>Con foto, sconti e dati partner. Chiede conferma.</small></span>
           </button>
         </div>
-      )}
+      </Sheet>
 
       {/* ── Modale conferma eliminazione ── */}
       {deleteOpen && (
@@ -825,33 +566,7 @@ export default function EditRestaurant() {
         />
       )}
 
-      {/* Save toast */}
-      <AnimatePresence>
-        {toast && (
-          <motion.div
-            initial={{ y: 40, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 40, opacity: 0 }}
-            style={{
-              position: 'fixed',
-              bottom: 24,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              background: toast.kind === 'err' ? 'var(--color-danger, #C0392B)' : 'var(--color-ink, #22181C)',
-              color: '#fff',
-              padding: '12px 20px',
-              borderRadius: 999,
-              fontSize: 13,
-              fontWeight: 700,
-              boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
-              fontFamily: 'var(--font-sans)',
-              zIndex: 100,
-            }}
-          >
-            {toast.text}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <Toast toast={toast} onDone={clearToast} />
     </AdminLayout>
   )
 }
@@ -859,63 +574,19 @@ export default function EditRestaurant() {
 /* ------------------------------------------------------------------ */
 /*  Section — big numbered heading + content wrapper                   */
 /* ------------------------------------------------------------------ */
-function Section({ id, num, title, locked, children }) {
+function Section({ id, num, title, hint, locked, children }) {
   return (
-    <section id={id} style={{ paddingTop: 28, scrollMarginTop: 72 }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'baseline',
-          gap: 14,
-          marginBottom: 16,
-          paddingBottom: 10,
-          borderBottom: '1px solid var(--color-line, #EAE3D7)',
-        }}
-      >
-        <div
-          style={{
-            fontFamily: 'var(--font-wordmark, "Alfa Slab One")',
-            color: 'var(--color-corallo, #E8453C)',
-            fontSize: 20,
-            letterSpacing: '0.04em',
-            lineHeight: 1,
-          }}
-        >
-          {num}
+    <section id={id} className="adm-rest-section" data-section={id.replace('sec-', '')}>
+      <header className="adm-rest-section__head">
+        <span className="adm-num" style={{ fontSize: 22 }}>{num}</span>
+        <div style={{ minWidth: 0 }}>
+          <h2>
+            {title}
+            {locked && <span className="adm-pill" style={{ marginLeft: 10, verticalAlign: 'middle' }}>🔒 bloccato</span>}
+          </h2>
+          {hint && <p>{hint}</p>}
         </div>
-        <h2
-          style={{
-            fontFamily: 'var(--font-sans)',
-            fontWeight: 900,
-            fontSize: 22,
-            letterSpacing: '-0.02em',
-            margin: 0,
-            color: 'var(--color-ink, #22181C)',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 10,
-          }}
-        >
-          {title}
-          {locked && (
-            <span
-              aria-hidden
-              style={{
-                fontSize: 11,
-                fontWeight: 800,
-                padding: '3px 10px',
-                borderRadius: 999,
-                background: 'var(--color-cream-deep, #F1EBE0)',
-                color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-              }}
-            >
-              🔒 bloccato
-            </span>
-          )}
-        </h2>
-      </div>
+      </header>
       {children}
     </section>
   )

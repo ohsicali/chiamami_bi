@@ -153,6 +153,38 @@ pieno; all'ora giusta la mette online il giro
   29/09; per spegnere il giro: `SELECT cron.unschedule('chiamamibi-scheduled-publish');`). La data si mostra con `formatPublishAt()` (`src/lib/scheduledPublish.js`),
   sempre all'ora di Roma.
 
+## Pannello admin rifatto — locali e sconti (30/09)
+Kit grafico unico in `src/components/admin/admin-ui.css` (classi `adm-*`,
+variabili `--adm-*`) e pezzi in `src/components/admin/ui.jsx` (`Card`,
+`Field`, `ToggleRow`, `Choices`, `Ring`, `Steps`, `Sheet`, `Toast`). Una pagina
+nuova o rifatta del pannello usa questi, non stili in linea.
+- **Aggiungi un locale** (`NewRestaurant.jsx`): tre passi (Trova → Controlla →
+  Crea). La riga in `restaurants` nasce **solo** a "Crea la bozza", con i dati di
+  Google Maps (`GoogleMapsImportBlock variant="hero"`, link o nome). Prima la
+  pagina creava una bozza vuota appena aperta: in elenco restavano righe
+  "Nuovo ristorante —". L'elenco locali le segnala e le elimina ("Eliminale").
+- **Scheda locale** (`EditRestaurant.jsx`): intestazione con copertina, stato e
+  la lista di cosa manca per uscire (nome e indirizzo, mappa, foto, categoria,
+  racconto ≥ 80 caratteri; PIN a parte). "Quando esce?" resta subito sotto.
+  Sezioni in una pagina sola con l'indice (a sinistra da computer, chip in alto
+  da telefono). **Un solo posto per salvare**: barra in fondo sul telefono,
+  bottoni in testa e sotto l'indice da computer. Le pagine di modifica passano
+  `focus` ad `AdminLayout`: sul telefono niente barra di navigazione, in alto la
+  freccia per tornare.
+- **Editor sconti** (`DiscountEditor.jsx`, montato da `DiscountManager`): a tutto
+  schermo, sei blocchi (locale, tipo, offerta, regole, durata e posti, come esce)
+  con l'**anteprima dal vivo** (`DiscountPreview.jsx`): drop corallo con
+  countdown e posti, convenzione crema e oro col chip di `conventionValidity`
+  (`api/_email/content.js`, la stessa frase delle email). "Come esce" è una scelta
+  sola (subito / programmato / solo prova / in pausa) al posto di tre
+  interruttori. Tutta la logica di salvataggio e delle email è ancora
+  `handleSave` in `DiscountManager`: modificare non manda email.
+- Link diretti: `/admin/discounts?new=1` (bottone **Crea**),
+  `?new=1&restaurant=ID` (dalla scheda del locale), `?edit=ID` (dalla lista
+  sconti del locale, sezione 04).
+- Anteprime per controllare il disegno senza Supabase: vedi la PR (Playwright con
+  le chiamate intercettate).
+
 ## Convenzioni contenuti sconti (per riferimento futuro)
 - **Offerte "paghi X prendi Y"** (es. 3 al posto di 2): scrivere sempre in formato `AxB` (es. `3x2`, `2x1`), mai per esteso ("Paghi 2 prendi 3 Veneziane"). Vale per `title` e `discount_value` del record in `discounts`.
 - **Sticker/badge sconto** (percentuale o importo fisso su foto/card): devono sempre avere il segno meno davanti al valore, es. `-20%`, `-1€`. Gestito centralmente da `formatDiscountBadge()` / `formatDiscountBadgeShort()` in `src/lib/utils/discountFormat.js` — quando si aggiunge un nuovo punto che mostra uno sticker sconto, usare sempre queste funzioni (mai `formatDiscountValue()` da solo, che non mette il segno).

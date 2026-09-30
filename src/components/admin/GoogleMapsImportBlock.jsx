@@ -296,6 +296,87 @@ export default function GoogleMapsImportBlock({
     )
   }
 
+  // ── Hero variant (percorso "Aggiungi un locale", 30/09): due strade
+  // alla pari, il link o il nome. Stessa logica delle altre varianti,
+  // cambia solo il disegno (classi del kit, admin-ui.css). Quando Google
+  // chiede il captcha `handleImportFromUrl` accende da sé la ricerca per
+  // nome, e qui vuol dire passare alla seconda scheda.
+  if (variant === 'hero') {
+    const byName = showNameSearch
+    return (
+      <div>
+        <div className="adm-chips" style={{ marginBottom: 14 }}>
+          <button
+            type="button"
+            className="adm-chip"
+            aria-pressed={!byName}
+            onClick={() => { setShowNameSearch(false); setError(null) }}
+          >
+            🔗 Link di Maps
+          </button>
+          <button
+            type="button"
+            className="adm-chip"
+            aria-pressed={byName}
+            onClick={() => { setShowNameSearch(true); setError(null); if (!nameQuery && url && !/^https?:/i.test(url)) setNameQuery(url) }}
+          >
+            🔎 Per nome
+          </button>
+        </div>
+        <form
+          onSubmit={(e) => { e.preventDefault(); if (byName) handleNameSearch(); else handleImportFromUrl() }}
+          style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
+        >
+          {byName ? (
+            <input
+              key="name"
+              className="adm-input adm-input--big"
+              type="text"
+              value={nameQuery}
+              onChange={(e) => setNameQuery(e.target.value)}
+              placeholder="Nome e zona, es. Consorzio Torino"
+              autoComplete="off"
+              autoFocus
+            />
+          ) : (
+            <input
+              key="url"
+              className="adm-input adm-input--big"
+              type="url"
+              inputMode="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://maps.app.goo.gl/…"
+              autoComplete="off"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+            />
+          )}
+          <button
+            type="submit"
+            className="adm-btn adm-btn--primary adm-btn--lg adm-btn--block"
+            disabled={byName ? (nameSearching || !nameQuery.trim()) : (filling || !url.trim())}
+          >
+            {byName
+              ? (nameSearching ? 'Cerco su Google…' : 'Cerca su Google')
+              : (filling ? 'Leggo il link…' : 'Compila da Google Maps')}
+          </button>
+        </form>
+        {error && (
+          <div className="adm-note adm-note--err" style={{ marginTop: 12 }} role="alert">
+            {error}
+          </div>
+        )}
+        {!byName && (
+          <p className="adm-help" style={{ marginTop: 10 }}>
+            Dall'app Maps: apri il locale → <b>Condividi</b> → <b>Copia link</b>. Prendo nome, indirizzo, telefono, sito e posizione sulla mappa.
+          </p>
+        )}
+      </div>
+    )
+  }
+
   // ── Banner variant (new page): big gradient card ──
   return (
     <div
