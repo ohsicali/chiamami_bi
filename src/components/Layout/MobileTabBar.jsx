@@ -59,22 +59,22 @@ export default function MobileTabBar() {
 
   const isHome = path === '/'
   const isExplore = path === '/esplora' || path === '/list' || path.startsWith('/restaurant/')
-  const isDeals = path === '/deals'
+  const isDeals = path === '/sconti' || path === '/deals'
   const isSaved = path === '/saved'
   const isProfile = path === '/profile' || path === '/settings'
 
   const hasActiveDrop = Array.isArray(discounts) && discounts.length > 0
 
   const tabs = [
-    { key: 'home', label: 'Home', Icon: HomeIcon, active: isHome, onClick: () => navigate('/') },
-    { key: 'explore', label: 'Esplora', Icon: ExploreIcon, active: isExplore, onClick: () => navigate('/esplora') },
-    { key: 'deals', label: 'Sconti', Icon: DealsIcon, active: isDeals, badge: hasActiveDrop, onClick: () => navigate('/deals') },
+    { key: 'home', label: 'Home', href: '/', Icon: HomeIcon, active: isHome, onClick: () => navigate('/') },
+    { key: 'explore', label: 'Esplora', href: '/esplora', Icon: ExploreIcon, active: isExplore, onClick: () => navigate('/esplora') },
+    { key: 'deals', label: 'Sconti', href: '/sconti', Icon: DealsIcon, active: isDeals, badge: hasActiveDrop, onClick: () => navigate('/sconti') },
     // Chi non è registrato tocca "Salvati" e finisce sul login: gli si dice
     // perché (`reason`) e da dove riprendere dopo (`returnTo`), altrimenti
     // legge "Bentornato" senza aver mai avuto un account e poi si ritrova in
     // home invece che nella sezione che voleva aprire.
-    { key: 'saved', label: 'Salvati', Icon: SavedIcon, active: isSaved, onClick: () => (user ? navigate('/saved') : navigate('/login', { state: { returnTo: '/saved', reason: 'saved', mode: 'register' } })) },
-    { key: 'profile', label: 'Profilo', Icon: ProfileIcon, active: isProfile, onClick: () => (user ? navigate('/profile') : navigate('/login', { state: { returnTo: '/profile', reason: 'profile', mode: 'register' } })) },
+    { key: 'saved', label: 'Salvati', href: '/saved', Icon: SavedIcon, active: isSaved, onClick: () => (user ? navigate('/saved') : navigate('/login', { state: { returnTo: '/saved', reason: 'saved', mode: 'register' } })) },
+    { key: 'profile', label: 'Profilo', href: '/profile', Icon: ProfileIcon, active: isProfile, onClick: () => (user ? navigate('/profile') : navigate('/login', { state: { returnTo: '/profile', reason: 'profile', mode: 'register' } })) },
   ]
 
   return (
@@ -82,11 +82,20 @@ export default function MobileTabBar() {
       className="bottom-nav md:hidden"
       aria-label="Navigazione principale"
     >
+      {/* Link veri (<a href>) e non bottoni: Google guarda il sito da
+          telefono e segue solo i link, e questa barra è l'unico posto della
+          home mobile che porta a Esplora e Sconti — senza, non le trovava
+          come sezioni del sito. Il clic resta nostro (navigate, login per
+          Salvati e Profilo); Cmd/Ctrl-clic apre in un'altra scheda. */}
       {tabs.map((tab) => (
-        <button
+        <a
           key={tab.key}
-          type="button"
-          onClick={tab.onClick}
+          href={tab.href}
+          onClick={(e) => {
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
+            e.preventDefault()
+            tab.onClick()
+          }}
           // Al primo contatto col dito su Esplora la mappa comincia a
           // prepararsi, prima ancora che il tocco diventi un click.
           onPointerDown={tab.key === 'explore' ? prewarmExplore : undefined}
@@ -100,7 +109,7 @@ export default function MobileTabBar() {
             {tab.badge && <span className="nav-badge" aria-hidden="true" />}
           </span>
           <span className="nav-label">{tab.label}</span>
-        </button>
+        </a>
       ))}
     </nav>
   )

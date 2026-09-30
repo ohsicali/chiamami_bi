@@ -158,7 +158,7 @@ export default function ProfilePage() {
         <div style={{ margin: '14px 16px 0', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
           {[
             { num: stats.savedCount, lbl: 'Salvati', onClick: () => navigate('/saved') },
-            { num: stats.redemptionsCount, lbl: 'Sconti usati', accent: true, onClick: () => navigate('/deals', { state: { tab: 'mine' } }) },
+            { num: stats.redemptionsCount, lbl: 'Sconti usati', accent: true, onClick: () => navigate('/sconti', { state: { tab: 'mine' } }) },
             { num: stats.visitedCount, lbl: 'Visitati', onClick: null },
           ].map((s, i) => (
             <button
@@ -414,7 +414,7 @@ export default function ProfilePage() {
       }}>
         {[
           { value: stats.savedCount, label: 'Salvati', onClick: () => navigate('/saved') },
-          { value: stats.redemptionsCount, label: 'Sconti usati', onClick: () => navigate('/deals', { state: { tab: 'mine' } }) },
+          { value: stats.redemptionsCount, label: 'Sconti usati', onClick: () => navigate('/sconti', { state: { tab: 'mine' } }) },
         ].map((stat, i) => (
           <button key={i} onClick={stat.onClick} style={{
             flex: isDesktop ? undefined : 1,

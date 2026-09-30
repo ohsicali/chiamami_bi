@@ -16,6 +16,7 @@ import { getDistance } from '../../lib/utils/distance'
 import { sortByActiveCity } from '../../components/UI/CityBadge'
 import { useCity } from '../../lib/CityContext'
 import MetaTags from '../../components/SEO/MetaTags'
+import { seoMeta } from '../../lib/seoPages'
 import { slugify } from '../../lib/utils/slug'
 import AdSlot from '../../components/Ads/AdBanner'
 import SaveAuthGate from '../../components/Restaurant/SaveAuthGate'
@@ -222,13 +223,7 @@ export default function ListView() {
         paddingBottom: 80,
       }}
     >
-      <MetaTags
-        title="Tutti i ristoranti di Torino consigliati da Bi — ChiamamiBi"
-        description="Esplora la lista completa dei ristoranti, bar e locali consigliati da Bi a Torino. Filtra per categoria, fascia di prezzo, momento della giornata."
-        url="https://chiamamibi.com/list"
-        canonical="https://chiamamibi.com/list"
-        type="website"
-      />
+      <MetaTags {...seoMeta('/list')} />
       {/* Navbar */}
       <Navbar view="list" onToggleView={handleToggleView} restaurants={restaurants} />
 

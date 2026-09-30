@@ -36,6 +36,7 @@ import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { getCurrentMoment } from '../../lib/hours'
 import { proxyImg, proxyImgSrcSet } from '../../lib/supabase'
 import MetaTags from '../../components/SEO/MetaTags'
+import { seoMeta } from '../../lib/seoPages'
 import JsonLd from '../../components/SEO/JsonLd'
 import SaveButton from '../../components/Restaurant/SaveButton'
 import SuggestRestaurantSheet from '../../components/Restaurant/SuggestRestaurantSheet'
@@ -850,13 +851,7 @@ export default function HomeDesktopClassic() {
         flexDirection: 'column',
       }}
     >
-      <MetaTags
-        title="Dove mangiare a Torino — I migliori ristoranti consigliati da ChiamamiBi"
-        description="La guida personale di Bi ai migliori ristoranti, bar e locali di Torino. Mappa interattiva, recensioni curate, sconti esclusivi e i drop del giorno."
-        url="https://chiamamibi.com/"
-        canonical="https://chiamamibi.com/"
-        type="website"
-      />
+      <MetaTags {...seoMeta('/')} />
       {topRestaurants.length > 0 && (
         <JsonLd
           type="itemList"
