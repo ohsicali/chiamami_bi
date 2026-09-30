@@ -22,6 +22,30 @@
 
 export const DROP_WIN_EVENT = 'chiamamibi:drop-win'
 
+/**
+ * Il primo sconto sbloccato (30/09, deciso dal proprietario): a chi sblocca
+ * il suo PRIMO sconto — drop o convenzione — parte "Come si usa lo sconto",
+ * così tutti sanno come usarlo. A chi ne ha già sbloccati altri no.
+ * `claimCount` = quanti riscatti ha l'utente contando quello appena fatto
+ * (null se non si è riusciti a contarli: niente tutorial). `seen` = già
+ * mostrato su questo browser (un riscatto cancellato non lo fa ripartire).
+ */
+export function isFirstClaim({ claimCount, seen = false } = {}) {
+  return !seen && claimCount === 1
+}
+
+const firstClaimKey = (userId) => `chiamamibi:first-claim-tour:${userId}`
+
+export function hasSeenFirstClaimTour(userId) {
+  if (!userId) return true
+  try { return localStorage.getItem(firstClaimKey(userId)) === '1' } catch { return false }
+}
+
+export function markFirstClaimTourSeen(userId) {
+  if (!userId) return
+  try { localStorage.setItem(firstClaimKey(userId), '1') } catch { /* niente */ }
+}
+
 /** Sotto questo numero di posti i pallini si contano a colpo d'occhio. */
 export const DOTS_MAX = 30
 
@@ -70,14 +94,15 @@ export const NO_WIN = Object.freeze({ shown: false, action: null })
 
 /**
  * Da chiamare dopo uno sblocco NUOVO (non quando si riapre un riscatto che
- * c'era già). `deal` se chi chiama ce l'ha: se non è un drop si evita la
- * chiamata al DB. Si risolve quando la festa si chiude, con `{ shown, action }`:
- * con `shown` il QR non si apre.
+ * c'era già), drop o convenzione: il Gate decide se c'è la festa (drop) e
+ * se parte "Come si usa lo sconto" (primo sblocco). `deal` se chi chiama ce
+ * l'ha: per una convenzione si evita di chiedere il posto al DB. Si
+ * risolve quando festa e tutorial si sono chiusi, con `{ shown, action }`:
+ * con `shown` (c'è stata la festa) il QR non si apre; senza, chi chiama
+ * apre il QR come sempre (dopo il tutorial, se c'era).
  */
-
 export function celebrateClaim({ redemptionId, deal } = {}) {
   if (typeof window === 'undefined' || !redemptionId) return Promise.resolve(NO_WIN)
-  if (deal && !deal.is_drop) return Promise.resolve(NO_WIN)
   return new Promise((resolve) => {
     let taken = false
     const detail = {

@@ -4,7 +4,7 @@
  */
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { DOTS_MAX, DROP_WIN_EVENT, celebrateClaim, dropWinCopy } from '../src/lib/dropWin.js'
+import { DOTS_MAX, DROP_WIN_EVENT, celebrateClaim, dropWinCopy, isFirstClaim } from '../src/lib/dropWin.js'
 
 test('il numero X su 20, col nome del locale', () => {
   const c = dropWinCopy({ rank: 7, total: 20, restaurantName: 'Gelateria Borghese' })
@@ -52,13 +52,22 @@ function withWindow(fn) {
   return Promise.resolve(fn(target)).finally(() => { delete globalThis.window })
 }
 
-test('non è un drop: nessuna festa, si va avanti subito (e il QR si apre)', () => withWindow(async (w) => {
+test('convenzione: il Gate la sente (per il primo sblocco), niente festa, il QR si apre', () => withWindow(async (w) => {
   let heard = false
-  w.addEventListener(DROP_WIN_EVENT, () => { heard = true })
+  w.addEventListener(DROP_WIN_EVENT, (e) => { heard = true; e.detail.take(); e.detail.done() })
   const res = await celebrateClaim({ redemptionId: 'r1', deal: { is_drop: false } })
-  assert.equal(heard, false)
+  assert.equal(heard, true)
   assert.equal(res.shown, false)
 }))
+
+test('"Come si usa lo sconto" solo al primo sconto sbloccato', () => {
+  assert.equal(isFirstClaim({ claimCount: 1 }), true)
+  assert.equal(isFirstClaim({ claimCount: 2 }), false, 'ne aveva già sbloccati altri')
+  assert.equal(isFirstClaim({ claimCount: 7 }), false)
+  assert.equal(isFirstClaim({ claimCount: 1, seen: true }), false, 'già visto su questo browser')
+  assert.equal(isFirstClaim({ claimCount: null }), false, 'conteggio non riuscito: meglio niente')
+  assert.equal(isFirstClaim({ claimCount: 0 }), false)
+})
 
 test('nessuno ascolta: lo sblocco non resta appeso', () => withWindow(async () => {
   const res = await celebrateClaim({ redemptionId: 'r1', deal: { is_drop: true } })

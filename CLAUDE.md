@@ -330,6 +330,14 @@ QR, il popup si chiude. Primo e ultimo posto hanno la loro frase; mai "21 su 20"
   quando la festa si chiude, così il QR si apre dopo. La mostra `DropWinGate`
   in `App.jsx` (chunk a parte `DropWin.jsx`). Un punto nuovo che sblocca uno
   sconto deve chiamarla anche lui, e con `shown` non aprire il QR.
+- **Primo sconto sbloccato (30/09)**: a chi sblocca il suo **primo** sconto in
+  assoluto — drop o convenzione — parte "Come si usa lo sconto"; a chi ne ha
+  già sbloccati altri no. Lo decide `DropWinGate` contando i propri riscatti
+  (`isFirstClaim` in `dropWin.js`: esattamente 1 contando quello appena fatto)
+  e segnandolo in `localStorage` (`chiamamibi:first-claim-tour:<id>`).
+  Convenzione: prima il tutorial, poi il QR come sempre (`openUseTour` aspetta
+  che si chiuda). Drop: la festa mostra solo "Scopri come usare lo sconto"
+  (niente "Chiudi"), poi il tutorial. PostHog `first_claim_tour`.
 - Il posto lo dice il DB: RPC `my_claim_rank(redemption_id)` (solo il proprio
   riscatto). Nello stesso SQL (`supabase/drop-claim-rank-2026-09-30.sql`,
   **già eseguito** il 30/09) `guard_redemption_insert` prende un lucchetto

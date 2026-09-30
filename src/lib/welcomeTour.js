@@ -125,8 +125,24 @@ export function markTourSeen(userId) {
  *   WelcomeTour.jsx), niente animazione finale, si resta sulla pagina e non
  *   conta come tutorial visto.
  */
-export function openWelcomeTour({ source = 'settings', origin = null, topic = null } = {}) {
-  window.dispatchEvent(new CustomEvent(OPEN_TOUR_EVENT, { detail: { source, origin, topic } }))
+export function openWelcomeTour({ source = 'settings', origin = null, topic = null, onClosed = null } = {}) {
+  let taken = false
+  const take = () => { taken = true }
+  window.dispatchEvent(new CustomEvent(OPEN_TOUR_EVENT, { detail: { source, origin, topic, onClosed, take } }))
+  return taken
+}
+
+/**
+ * "Come si usa lo sconto" e aspetta che si chiuda. Si risolve subito se il
+ * tutorial non può aprirsi (Gate non montato, o un altro già aperto): chi
+ * aspetta per aprire il QR non deve restare appeso.
+ */
+export function openUseTour({ source = 'first_claim' } = {}) {
+  if (typeof window === 'undefined') return Promise.resolve()
+  return new Promise((resolve) => {
+    const taken = openWelcomeTour({ source, topic: 'use', onClosed: resolve })
+    if (!taken) resolve()
+  })
 }
 
 

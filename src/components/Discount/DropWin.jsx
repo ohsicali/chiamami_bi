@@ -17,7 +17,7 @@ import './DropWin.css'
  * coi bottoni o con Esc, non toccando a caso: il numero è il bello, non
  * deve sparire per un tocco mentre sale.
  */
-export default function DropWin({ rank, total, restaurantName, onClose }) {
+export default function DropWin({ rank, total, restaurantName, first = false, onClose }) {
   const reduce = useReducedMotion()
   const copy = useMemo(() => dropWinCopy({ rank, total, restaurantName }), [rank, total, restaurantName])
   const panelRef = useRef(null)
@@ -119,9 +119,13 @@ export default function DropWin({ rank, total, restaurantName, onClose }) {
           <button type="button" className="dw-btn" onClick={() => onClose?.('tutorial')}>
             Scopri come usare lo sconto
           </button>
-          <button type="button" className="dw-btn-ghost" onClick={() => onClose?.('close')}>
-            Chiudi
-          </button>
+          {/* Al primo sconto sbloccato il tutorial non si salta: c'è solo
+              il bottone per vederlo. */}
+          {!first && (
+            <button type="button" className="dw-btn-ghost" onClick={() => onClose?.('close')}>
+              Chiudi
+            </button>
+          )}
         </motion.div>
       </motion.div>
     </motion.div>
