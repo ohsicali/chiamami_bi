@@ -4,7 +4,7 @@ import BiLogoMark from '../UI/BiLogoMark'
 import { formatDiscountBadge } from '../../lib/utils/discountFormat'
 import { formatShortCode } from '../../lib/shortCode'
 import { CHAT_MAINTENANCE } from '../../lib/chatMaintenance'
-import { DEALS_TOUR_KEYS, TOUR_COVERED_EVENT } from '../../lib/welcomeTour'
+import { TOUR_COVERED_EVENT } from '../../lib/welcomeTour'
 import { DUR, EASE_OUT, SPRING_SNAP, SPRING_SOFT } from '../../lib/motion'
 import './WelcomeTour.css'
 
@@ -20,6 +20,9 @@ import './WelcomeTour.css'
  *        miei vantaggi» → su cosa e quando vale → alla cassa, sullo scontrino;
  *   7. i Salvati.
  * In fondo un'animazione di chiusura, e WelcomeTourGate porta alla home.
+ *
+ * Con `topic="use"` invece è "Come si usa lo sconto" (vedi buildUseSlides):
+ * quattro schermate per chi ha appena preso un drop, e l'ultima chiude.
  *
  * Le illustrazioni sono pezzi dell'app in piccolo — la mappa coi pin, la
  * card di un drop, il selettore QR/Codice, la scheda delle regole — e non
@@ -103,14 +106,52 @@ function buildSlides(name, topic) {
       Art: ArtAsk,
     })
   }
-  // Dopo un drop preso ("Scopri come usare lo sconto"): solo le quattro
-  // schermate sugli sconti, e l'ultima chiude.
-  if (topic === 'deals') {
-    const only = slides.filter((sl) => DEALS_TOUR_KEYS.includes(sl.key))
-    only[only.length - 1] = { ...only[only.length - 1], cta: 'Tutto chiaro' }
-    return only
-  }
+  if (topic === 'use') return buildUseSlides()
   return slides
+}
+
+/**
+ * "Come si usa lo sconto" (30/09) — si apre da "Scopri come usare lo
+ * sconto" dopo aver preso un drop (DropWin). Non è il benvenuto: chi lo
+ * vede lo sconto l'ha appena sbloccato, e gli servono solo i passi da qui
+ * alla cassa. Deciso dal proprietario: «I miei vantaggi» → controlla giorni,
+ * orari e informazioni → al locale apri il QR e mostralo in cassa → il
+ * locale lo convalida e lo sconto è applicato.
+ * Se cambia uno di questi passi nell'app (nomi dei bottoni, «Apri QR»,
+ * «Info sconto»), va cambiato anche qui.
+ */
+function buildUseSlides() {
+  return [
+    {
+      key: 'use-wallet',
+      eyebrow: 'Come si usa · 1 di 4',
+      title: 'Ora è nei tuoi vantaggi.',
+      body: 'Lo sconto che hai sbloccato è salvato in «I miei vantaggi», nel Bi Club. È tuo: non devi usarlo adesso, lo ritrovi lì quando vai al locale.',
+      Art: ArtUnlock,
+    },
+    {
+      key: 'use-rules',
+      eyebrow: 'Come si usa · 2 di 4',
+      title: 'Prima di andare, guarda quando vale.',
+      body: 'In «Info sconto» trovi i giorni e gli orari in cui è valido, su cosa si applica e le condizioni. Controllali prima di uscire: fuori da quei giorni e orari il QR non si apre.',
+      Art: ArtRules,
+    },
+    {
+      key: 'use-show',
+      eyebrow: 'Come si usa · 3 di 4',
+      title: 'Al locale, apri il QR.',
+      body: 'Quando sei alla cassa apri «I miei vantaggi», tocca «Apri QR» sullo sconto e mostralo. Se la fotocamera non lo legge, detta il codice di sei caratteri.',
+      Art: ArtOpenPass,
+    },
+    {
+      key: 'use-validate',
+      eyebrow: 'Come si usa · 4 di 4',
+      title: 'Il locale lo convalida.',
+      body: 'Il locale scansiona il QR o scrive il codice: se lo sconto è valido lo convalida e ti applica la promozione, che trovi sullo scontrino. Poi dimmi com’è andata!',
+      cta: 'Tutto chiaro',
+      Art: ArtCheckout,
+    },
+  ]
 }
 
 // Quanto dura l'animazione di chiusura prima di passare alla home.
@@ -133,7 +174,7 @@ export default function WelcomeTour({ name, origin, topic = null, onClose }) {
   const skip = () => { if (!finishing) onClose({ completed: false, step: slide.key }) }
   const next = () => {
     if (finishing) return
-    // Solo gli sconti: niente animazione di benvenuto in fondo, si chiude.
+    // "Come si usa": niente animazione di benvenuto in fondo, si chiude.
     if (last && topic) onClose({ completed: true, step: slide.key })
     else if (last) setFinishing(true)
     else go(index + 1)
@@ -901,6 +942,105 @@ function ArtCheckout({ reduce }) {
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  )
+}
+
+// «I miei vantaggi» → il dito tocca «Apri QR» → il pass col QR, e sotto
+// «Info sconto». 0 la riga · 1 il dito arriva · 2 tocco · 3 il QR · 4 il codice
+const OPEN_PHASES = [900, 650, 450, 2400, 1800]
+
+function ArtOpenPass({ reduce }) {
+  const phase = usePhases(OPEN_PHASES, reduce, 3)
+  const open = phase >= 3
+  const showCode = phase === 4
+  const code = formatShortCode(DEMO_CODE)
+  return (
+    <div className="wt-art-unlock wt-art-open">
+      <div className="wt-seg wt-seg-club">
+        <span className="wt-seg-thumb" style={{ transform: 'translateX(100%)' }} />
+        <span>Tutti gli sconti</span>
+        <span className="is-on">I miei vantaggi<b className="wt-seg-count">1</b></span>
+      </div>
+      <div className="wt-unlock-stage">
+        <AnimatePresence mode="wait" initial={false}>
+          {!open ? (
+            <motion.div
+              key="row"
+              className="wt-wallet-row wt-open-row"
+              initial={reduce ? { opacity: 0 } : { opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.96 }}
+              transition={SPRING_SNAP}
+            >
+              <span className="wt-badge is-small">{formatDiscountBadge(DEMO_UNLOCK)}</span>
+              <div>
+                <strong>Osteria Sotto i Portici</strong>
+                <span>Pronto da usare</span>
+              </div>
+              <motion.span
+                className="wt-wallet-qr"
+                animate={phase === 2 && !reduce ? { scale: [1, 0.92, 1.04, 1] } : { scale: 1 }}
+                transition={{ duration: 0.4, ease: EASE_OUT }}
+              >
+                Apri QR
+              </motion.span>
+              {!reduce && (
+                <motion.span
+                  className="wt-finger wt-finger-qr"
+                  aria-hidden="true"
+                  initial={false}
+                  animate={
+                    phase === 0 ? { opacity: 0, x: 40, y: 50, scale: 1 }
+                      : phase === 1 ? { opacity: 1, x: 0, y: 0, scale: 1 }
+                        : { opacity: 1, x: 0, y: 0, scale: 0.8 }
+                  }
+                  transition={{ duration: phase === 2 ? 0.15 : 0.5, ease: EASE_OUT }}
+                />
+              )}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="pass"
+              className="wt-pass wt-open-pass"
+              initial={reduce ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.94 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={SPRING_SNAP}
+            >
+              <div className="wt-pass-head">
+                <strong>Osteria Sotto i Portici</strong>
+                <span className="wt-badge is-small">{formatDiscountBadge(DEMO_UNLOCK)}</span>
+              </div>
+              <div className="wt-seg" role="presentation">
+                <motion.span
+                  className="wt-seg-thumb"
+                  initial={false}
+                  animate={{ x: showCode ? '100%' : '0%' }}
+                  transition={SPRING_SNAP}
+                />
+                <span className={!showCode ? 'is-on' : ''}>QR</span>
+                <span className={showCode ? 'is-on' : ''}>Codice</span>
+              </div>
+              <div className="wt-pass-body">
+                {!showCode ? (
+                  <div className="wt-pass-qr"><FakeQR /></div>
+                ) : (
+                  <div className="wt-pass-code" aria-label={`Codice ${code}`}>
+                    <span className="wt-code-label">Detta questo codice</span>
+                    <span className="wt-code-cells" aria-hidden="true">
+                      {DEMO_CODE.split('').map((c, i) => (
+                        <i key={i} className={i === 0 ? 'is-letter' : ''}>{c}</i>
+                      ))}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <span className="wt-open-info">ⓘ Info sconto</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   )
 }

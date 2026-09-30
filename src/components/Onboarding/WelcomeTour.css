@@ -1247,3 +1247,29 @@
   .wt-receipt > :nth-child(-n+3) { display: none; }
   .wt-receipt-total { padding-top: 4px; }
 }
+
+/* ── Come si usa · al locale apri il QR (topic "use") ─────────────── */
+.wt-open-row { position: relative; }
+.wt-finger.wt-finger-qr {
+  left: auto;
+  right: 22px;
+  top: 50%;
+  bottom: auto;
+  margin: -19px 0 0 0;
+}
+.wt-art-open .wt-unlock-stage { justify-items: center; }
+.wt-art-open .wt-unlock-stage > .wt-wallet-row { width: 100%; }
+.wt-open-pass { padding: 12px; }
+.wt-open-pass .wt-pass-body { height: 132px; margin-top: 8px; }
+.wt-open-pass .wt-qr { width: 118px; height: 118px; }
+.wt-open-info {
+  display: block;
+  margin-top: 8px;
+  padding: 8px 0;
+  border-radius: 10px;
+  background: var(--color-ink-05);
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-ink-70);
+}

@@ -312,9 +312,14 @@ Chi sblocca un **drop** (primo sblocco, mai quando riapre il QR) vede prima del
 QR una schermata corallo a tutto schermo: **Bi che applaude** (`clap` in
 `BiCharacter`), coriandoli, il numero che sale fino al proprio posto, un
 pallino per posto col proprio che si accende in oro, "Goditelo!". Sotto,
-**"Scopri come usare lo sconto"** (apre le quattro schermate sugli sconti del
-tutorial: `openWelcomeTour({ topic: 'deals' })`, niente animazione finale, si
-resta sulla pagina, non segna il tutorial come visto) e **"Chiudi"** (nel Bi
+**"Scopri come usare lo sconto"** (apre **"Come si usa lo sconto"**, quattro
+schermate nello stile del tutorial ma solo sui passi da qui alla cassa:
+«I miei vantaggi» → giorni, orari e «Info sconto» → al locale «Apri QR» in
+cassa (o il codice) → il locale convalida e la promozione è sullo scontrino;
+`openWelcomeTour({ topic: 'use' })`, `buildUseSlides` in `WelcomeTour.jsx`,
+niente animazione finale, si resta sulla pagina, non segna il benvenuto come
+visto. Non riaprire il tutorial di benvenuto: racconta tutto il sito, non
+l'uso dello sconto — deciso dal proprietario il 30/09) e **"Chiudi"** (nel Bi
 Club poi il toast "Salvato in «I miei vantaggi»"). **Il QR non si apre dopo la
 festa** (deciso dal proprietario il 30/09: chi ha appena preso il drop non è
 alla cassa); chi sblocca riceve `{ shown, action }` e con `shown` non apre il
@@ -332,7 +337,7 @@ QR, il popup si chiude. Primo e ultimo posto hanno la loro frase; mai "21 su 20"
   passavano tutti e due. Se il DB non risponde in 2,5 s la festa parte senza
   numero. PostHog: `drop_win_shown` (`rank`, `total`, `rank_failed`),
   `drop_win_closed` (`action`: tutorial/close); il tutorial così aperto manda
-  gli `onboarding_*` con `source: 'drop_win'`, `topic: 'deals'`.
+  gli `onboarding_*` con `source: 'drop_win'`, `topic: 'use'`.
 
 ## Data di nascita (29/09)
 Dal 29/09 la registrazione con email chiede la **data di nascita** (obbligatoria,

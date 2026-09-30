@@ -82,7 +82,7 @@ export default function DropWinGate() {
     setOpen(null)
     track('drop_win_closed', { action })
     finish({ shown: true, action })
-    if (action === 'tutorial') openWelcomeTour({ source: 'drop_win', topic: 'deals' })
+    if (action === 'tutorial') openWelcomeTour({ source: 'drop_win', topic: 'use' })
   }
 
   return (

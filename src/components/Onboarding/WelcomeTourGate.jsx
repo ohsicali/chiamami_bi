@@ -63,8 +63,8 @@ export default function WelcomeTourGate() {
 
   // Arrivato in fondo si va alla home (l'animazione di chiusura sta in
   // WelcomeTour); chi salta resta sulla pagina dov'era.
-  // Solo gli sconti (dopo un drop preso): si resta dove si era, e il
-  // tutorial di benvenuto non si segna come visto.
+  // "Come si usa lo sconto" (dopo un drop preso): si resta dove si era, e
+  // il tutorial di benvenuto non si segna come visto.
   const handleClose = ({ completed, step }) => {
     const topic = openAs?.topic || null
     if (!topic) markTourSeen(userId)
