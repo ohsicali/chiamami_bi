@@ -561,6 +561,25 @@ pin → avviso → render girava ~300 volte al secondo, CPU al 100%. Ora
 `notifyVisible` avvisa solo se qualcosa cambia, ma una lista derivata va
 comunque in `useMemo`.
 
+## Sezioni del sito su Google — sitelink (30/09)
+Per far uscire sotto il risultato di ChiamamiBi i link alle sezioni
+("Promozioni ristoranti Torino" → /sconti, "I migliori ristoranti di Torino"
+→ /esplora) ogni sezione deve essere per Google una pagina a sé. Prima
+/sconti, /esplora e /list arrivavano col titolo della home e il canonical
+verso "/": doppioni della home.
+- Titoli e descrizioni in **`src/lib/seoPages.js`** (una fonte sola): li usa
+  MetaTags nelle pagine (`seoMeta('/sconti')`) e `scripts/seo-pages.mjs`, che
+  dopo `vite build` scrive `dist/seo/<sezione>.html` con il `<head>` giusto e
+  le briciole di pane. Le rewrite in `vercel.json` servono quel file per
+  /esplora, /sconti, /list, /about, /partner (prima del catch-all). Test in
+  `tests/seo-pages.test.mjs`. Una sezione nuova: aggiungila in tutti e tre.
+- /esplora non ha una Route: il suo MetaTags sta in `App.jsx`.
+- I link interni vanno a **/sconti**, non a /deals (che fa redirect 301).
+- La tab bar del telefono è fatta di `<a href>`, non di bottoni: Google
+  guarda il sito da telefono e segue solo i link. Non rimettere `<button>`.
+- I sitelink li sceglie Google da solo e non si possono imporre; quelli dello
+  screenshot di TheFork erano un annuncio Google Ads (estensioni sitelink).
+
 ## Connettori disponibili — USALI SE ATTIVI
 - **GitHub** — PR, issues, merge (funziona via `gh` CLI, testato e operativo)
 - **Supabase** — se il connettore è attivo, esegui query SQL direttamente. Se non funziona, fornisci SQL all'utente da eseguire nel dashboard Supabase. CLI disponibile (`npx supabase`) ma richiede login/token.

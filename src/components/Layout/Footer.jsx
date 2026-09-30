@@ -2,7 +2,7 @@ import { Link, useLocation, matchPath } from 'react-router-dom'
 
 const NAV_LINKS = [
   { to: '/about', label: 'Chi è Bi' },
-  { to: '/deals', label: 'Sconti' },
+  { to: '/sconti', label: 'Sconti' },
   { to: '/partner', label: 'Per i ristoratori' },
   { to: '/privacy', label: 'Privacy' },
   { to: '/terms', label: 'Termini' },

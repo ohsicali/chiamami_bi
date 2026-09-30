@@ -12,6 +12,7 @@ import SconteAuthGate from '../../components/Discount/SconteAuthGate'
 import { readAndClearPendingDiscountId } from '../../lib/utils/pendingDiscount'
 import { celebrateClaim } from '../../lib/dropWin'
 import MetaTags from '../../components/SEO/MetaTags'
+import { seoMeta } from '../../lib/seoPages'
 import SconteSchemaOrg from '../../components/Discount/SconteSchemaOrg'
 import ValidityPill from '../../components/Discount/ValidityPill'
 import QRBlockedView from '../../components/Discount/QRBlockedView'
@@ -506,12 +507,7 @@ function SconteRedesignPageInner() {
 
   return (
     <div className="sc-page" style={{ paddingBottom: isDesktop ? 0 : `calc(${TAB_BAR_HEIGHT + 28}px + env(safe-area-inset-bottom, 0px))` }}>
-      <MetaTags
-        title="Sconti ristoranti Torino · Bi Club | ChiamamiBi"
-        description="Sconti e vantaggi nei ristoranti che ho selezionato a Torino. Drop a tempo, convenzioni sempre valide e promozioni riservate ai membri del Bi Club."
-        url="https://chiamamibi.com/sconti"
-        canonical="https://chiamamibi.com/sconti"
-      />
+      <MetaTags {...seoMeta('/sconti')} />
       <SconteSchemaOrg drops={dropsAvailable.filter((d) => !isSoldOut(d))} conv={convAvailable} />
       {!isDesktop && <MobileLogoHeader />}
       <div className={isDesktop ? 'sc-shell sc-shell-desktop' : 'sc-shell sc-shell-mobile'}>

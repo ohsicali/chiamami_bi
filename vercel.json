@@ -76,6 +76,9 @@
       ]
     }
   ],
+  "redirects": [
+    { "source": "/deals", "destination": "/sconti", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/api/verify-recovery-otp", "destination": "/api/recovery-otp" },
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
@@ -92,6 +95,11 @@
       ],
       "destination": "/api/og-restaurant?slug=:slug"
     },
+    { "source": "/esplora", "destination": "/seo/esplora.html" },
+    { "source": "/sconti", "destination": "/seo/sconti.html" },
+    { "source": "/list", "destination": "/seo/list.html" },
+    { "source": "/about", "destination": "/seo/about.html" },
+    { "source": "/partner", "destination": "/seo/partner.html" },
     { "source": "/((?!api/).*)", "destination": "/" }
   ]
 }

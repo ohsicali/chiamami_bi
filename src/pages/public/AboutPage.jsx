@@ -9,6 +9,7 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import MetaTags from '../../components/SEO/MetaTags'
+import { seoMeta } from '../../lib/seoPages'
 
 const fadeUp = {
   hidden: { opacity: 0, y: 12 },
@@ -78,13 +79,7 @@ export default function AboutPage() {
 
   return (
     <div className="flex flex-col min-h-dvh" style={{ background: 'var(--color-page)', overflowX: 'hidden' }}>
-      <MetaTags
-        title="Chi è Bi — La guida ristoranti di Torino | ChiamamiBi"
-        description="Bi è una community di food lover di Torino: 130k+ su Instagram, 50k+ su TikTok, oltre 400 ristoranti consigliati. Scopri la storia dietro ChiamamiBi."
-        url="https://chiamamibi.com/about"
-        canonical="https://chiamamibi.com/about"
-        type="website"
-      />
+      <MetaTags {...seoMeta('/about')} />
       {!isDesktop && <MobileLogoHeader />}
 
       <main style={{

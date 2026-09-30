@@ -16,6 +16,8 @@ import WelcomeTourGate from './components/Onboarding/WelcomeTourGate'
 import RedemptionFeedbackGate from './components/Feedback/RedemptionFeedbackGate'
 import BirthDateGate from './components/Onboarding/BirthDateGate'
 import DropWinGate from './components/Discount/DropWinGate'
+import MetaTags from './components/SEO/MetaTags'
+import { seoMeta } from './lib/seoPages'
 
 // CookieConsent is rendered after first paint via requestIdleCallback so it
 // doesn't compete with the LCP. The library + its CSS adds ~20 kB to the
@@ -252,6 +254,10 @@ export default function App() {
       {/* Map page stays mounted when viewing restaurant detail — but only if
           the map was actually visited in this session (see `showMap` above) */}
       {showMap && <HomePage />}
+      {/* La mappa non ha una Route sua: il titolo per Google lo mette qui, e
+          solo su /esplora (sotto la scheda di un locale vale quello del
+          locale). Montato a ogni ritorno su /esplora, così lo rimette. */}
+      {location.pathname === '/esplora' && <MetaTags {...seoMeta('/esplora')} />}
 
       {/* Restaurant detail overlays on top */}
       {isRestaurantDetail && <RestaurantPage />}

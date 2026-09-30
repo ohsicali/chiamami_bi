@@ -7,7 +7,7 @@ import { prewarmExplore } from '../../lib/prewarmExplore'
 const NAV_ITEMS = [
   { to: '/', label: 'Home', match: (p) => p === '/' },
   { to: '/esplora', label: 'Esplora', match: (p) => p === '/esplora' || p === '/list' || p.startsWith('/restaurant/') },
-  { to: '/deals', label: 'Sconti', match: (p) => p === '/deals', hasDot: true },
+  { to: '/sconti', label: 'Sconti', match: (p) => p === '/sconti' || p === '/deals', hasDot: true },
   { to: '/saved', label: 'Salvati', match: (p) => p === '/saved', requiresAuth: true, gateReason: 'saved' },
 ]
 
