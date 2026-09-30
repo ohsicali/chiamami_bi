@@ -185,6 +185,15 @@ nuova o rifatta del pannello usa questi, non stili in linea.
 - Anteprime per controllare il disegno senza Supabase: vedi la PR (Playwright con
   le chiamate intercettate).
 
+## Video di Bea nella scheda del locale (30/09)
+Riquadro "Ho fatto un video in questo posto" con **un bottone per piattaforma**:
+«Guarda il video su Instagram» e/o «Guarda il video su TikTok»; senza link il
+riquadro non c'è. I link li legge `restaurantVideos()` (`src/lib/restaurantVideos.js`,
+test in `tests/restaurant-videos.test.mjs`): Instagram da `instagram_url` (il
+campo "Video Instagram" del pannello, dove li mette Bea) e se vuoto dal vecchio
+`instagram_reel`; TikTok da `tiktok_url` (campo "Video TikTok"). Fino al 30/09 la
+scheda leggeva solo `instagram_reel` e i reel messi dal pannello nuovo non si vedevano.
+
 ## Convenzioni contenuti sconti (per riferimento futuro)
 - **Offerte "paghi X prendi Y"** (es. 3 al posto di 2): scrivere sempre in formato `AxB` (es. `3x2`, `2x1`), mai per esteso ("Paghi 2 prendi 3 Veneziane"). Vale per `title` e `discount_value` del record in `discounts`.
 - **Sticker/badge sconto** (percentuale o importo fisso su foto/card): devono sempre avere il segno meno davanti al valore, es. `-20%`, `-1€`. Gestito centralmente da `formatDiscountBadge()` / `formatDiscountBadgeShort()` in `src/lib/utils/discountFormat.js` — quando si aggiunge un nuovo punto che mostra uno sticker sconto, usare sempre queste funzioni (mai `formatDiscountValue()` da solo, che non mette il segno).

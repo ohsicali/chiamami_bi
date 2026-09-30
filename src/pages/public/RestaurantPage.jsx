@@ -10,6 +10,7 @@ import MetaTags from '../../components/SEO/MetaTags'
 import JsonLd from '../../components/SEO/JsonLd'
 import { proxyImg } from '../../lib/supabase'
 import { slugify } from '../../lib/utils/slug'
+import { restaurantVideos } from '../../lib/restaurantVideos'
 import SaveToListSheet from '../../components/Restaurant/SaveToListSheet'
 import SaveAuthGate from '../../components/Restaurant/SaveAuthGate'
 import { useSaveGate } from '../../lib/hooks/useSaveGate'
@@ -135,6 +136,7 @@ export default function RestaurantPage() {
 
   const resolvedSlug = restaurant.slug || slugify(restaurant.name)
   const restaurantUrl = `https://chiamamibi.com/restaurant/${resolvedSlug}`
+  const videos = restaurantVideos(restaurant)
   const firstPhoto = restaurant.photos?.[0]
   const ogImage =
     (firstPhoto && (firstPhoto.photo_url || firstPhoto.thumb_url)) ||
@@ -176,7 +178,7 @@ export default function RestaurantPage() {
         image={photoImages.length ? photoImages : ogImage}
         latitude={restaurant.latitude}
         longitude={restaurant.longitude}
-        sameAs={[restaurant.website, restaurant.google_maps_url, restaurant.tiktok_url, restaurant.instagram_reel].filter(Boolean)}
+        sameAs={[restaurant.website, restaurant.google_maps_url, videos.tiktok, videos.instagram].filter(Boolean)}
         hoursCache={restaurant.hours_cache}
         rating={restaurant.our_rating}
       />

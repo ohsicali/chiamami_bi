@@ -25,6 +25,7 @@ import { getDistance, formatDistance } from '../../lib/utils/distance'
 import { formatAddress } from '../../lib/utils/formatAddress'
 import { hasMultipleLocations } from '../../lib/utils/restaurantLocations'
 import RestaurantLocationsNote from './RestaurantLocationsNote'
+import { restaurantVideos } from '../../lib/restaurantVideos'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import { useGeolocation } from '../../lib/hooks/useGeolocation'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
@@ -423,6 +424,7 @@ export default function RestaurantSheet({
   const phoneUrl = restaurant.phone ? `tel:${restaurant.phone.replace(/\s/g, '')}` : null
   const reviewText = restaurant.our_review || ''
   const tipText = restaurant.our_tip || null
+  const videos = restaurantVideos(restaurant)
   // Un locale può avere più sconti attivi insieme: qui prendiamo tutti,
   // `FloatingDiscountBar` sceglie da sola quale mettere in primo piano e
   // offre un "+N altri" per il resto. `discount` resta il primo per la
@@ -1008,7 +1010,7 @@ export default function RestaurantSheet({
               </motion.div>
 
               {/* Video links — "Ho fatto un video" */}
-              {(restaurant.instagram_reel || restaurant.tiktok_url) && (
+              {(videos.instagram || videos.tiktok) && (
                 <motion.div className="sec-video" variants={itemVariants} style={{ marginBottom: 20 }}>
                   <div style={{
                     borderRadius: 16, padding: '16px 18px',
@@ -1022,9 +1024,9 @@ export default function RestaurantSheet({
                     }}>
                       Ho fatto un video in questo posto, guardalo!
                     </p>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      {restaurant.instagram_reel && (
-                        <a href={restaurant.instagram_reel} target="_blank" rel="noopener noreferrer" style={{
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {videos.instagram && (
+                        <a href={videos.instagram} target="_blank" rel="noopener noreferrer" style={{
                           flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                           padding: '10px 14px', borderRadius: 10,
                           background: '#F0EBE3', textDecoration: 'none',
@@ -1042,11 +1044,11 @@ export default function RestaurantSheet({
                             <circle cx="12" cy="12" r="5" stroke="url(#igVid)" strokeWidth="2" fill="none"/>
                             <circle cx="17.5" cy="6.5" r="1.5" fill="#DD2A7B"/>
                           </svg>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: '#22181C' }}>Reel</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: '#22181C' }}>Guarda il video su Instagram</span>
                         </a>
                       )}
-                      {restaurant.tiktok_url && (
-                        <a href={restaurant.tiktok_url} target="_blank" rel="noopener noreferrer" style={{
+                      {videos.tiktok && (
+                        <a href={videos.tiktok} target="_blank" rel="noopener noreferrer" style={{
                           flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                           padding: '10px 14px', borderRadius: 10,
                           background: '#F0EBE3', textDecoration: 'none',
@@ -1055,7 +1057,7 @@ export default function RestaurantSheet({
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="#22181C">
                             <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.69a8.16 8.16 0 004.76 1.52v-3.4a4.85 4.85 0 01-1-.12z"/>
                           </svg>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: '#22181C' }}>TikTok</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: '#22181C' }}>Guarda il video su TikTok</span>
                         </a>
                       )}
                     </div>
