@@ -311,20 +311,28 @@ vanno rifatte.
 Chi sblocca un **drop** (primo sblocco, mai quando riapre il QR) vede prima del
 QR una schermata corallo a tutto schermo: **Bi che applaude** (`clap` in
 `BiCharacter`), coriandoli, il numero che sale fino al proprio posto, un
-pallino per posto col proprio che si accende in oro, "Goditelo!", poi
-**"Vedi il tuo QR"**. Primo e ultimo posto hanno la loro frase; mai "21 su 20".
+pallino per posto col proprio che si accende in oro, "Goditelo!". Sotto,
+**"Scopri come usare lo sconto"** (apre le quattro schermate sugli sconti del
+tutorial: `openWelcomeTour({ topic: 'deals' })`, niente animazione finale, si
+resta sulla pagina, non segna il tutorial come visto) e **"Chiudi"** (nel Bi
+Club poi il toast "Salvato in «I miei vantaggi»"). **Il QR non si apre dopo la
+festa** (deciso dal proprietario il 30/09: chi ha appena preso il drop non è
+alla cassa); chi sblocca riceve `{ shown, action }` e con `shown` non apre il
+QR, il popup si chiude. Primo e ultimo posto hanno la loro frase; mai "21 su 20".
 - Lo lancia `celebrateClaim()` (`src/lib/dropWin.js`, test in
   `tests/drop-win.test.mjs`) da tutti i punti che creano un riscatto (Bi Club
   `claimDeal`/`claimFromPopup`, `useUserRedemption`): la promessa si risolve
   quando la festa si chiude, così il QR si apre dopo. La mostra `DropWinGate`
   in `App.jsx` (chunk a parte `DropWin.jsx`). Un punto nuovo che sblocca uno
-  sconto deve chiamarla anche lui.
+  sconto deve chiamarla anche lui, e con `shown` non aprire il QR.
 - Il posto lo dice il DB: RPC `my_claim_rank(redemption_id)` (solo il proprio
   riscatto). Nello stesso SQL (`supabase/drop-claim-rank-2026-09-30.sql`,
   **già eseguito** il 30/09) `guard_redemption_insert` prende un lucchetto
   **per sconto**: prima due sblocchi nello stesso istante sull'ultimo posto
   passavano tutti e due. Se il DB non risponde in 2,5 s la festa parte senza
-  numero. PostHog: `drop_win_shown` (`rank`, `total`, `rank_failed`).
+  numero. PostHog: `drop_win_shown` (`rank`, `total`, `rank_failed`),
+  `drop_win_closed` (`action`: tutorial/close); il tutorial così aperto manda
+  gli `onboarding_*` con `source: 'drop_win'`, `topic: 'deals'`.
 
 ## Data di nascita (29/09)
 Dal 29/09 la registrazione con email chiede la **data di nascita** (obbligatoria,

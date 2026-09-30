@@ -51,6 +51,7 @@ export default function WelcomeTourGate() {
     const onOpen = (e) => setOpenAs((cur) => cur ?? {
       source: e?.detail?.source || 'settings',
       origin: e?.detail?.origin || null,
+      topic: e?.detail?.topic || null,
     })
     window.addEventListener(OPEN_TOUR_EVENT, onOpen)
     return () => window.removeEventListener(OPEN_TOUR_EVENT, onOpen)
@@ -62,10 +63,13 @@ export default function WelcomeTourGate() {
 
   // Arrivato in fondo si va alla home (l'animazione di chiusura sta in
   // WelcomeTour); chi salta resta sulla pagina dov'era.
+  // Solo gli sconti (dopo un drop preso): si resta dove si era, e il
+  // tutorial di benvenuto non si segna come visto.
   const handleClose = ({ completed, step }) => {
-    markTourSeen(userId)
-    track(completed ? 'onboarding_completed' : 'onboarding_skipped', { step, source })
-    if (completed && pathname !== '/') navigate('/')
+    const topic = openAs?.topic || null
+    if (!topic) markTourSeen(userId)
+    track(completed ? 'onboarding_completed' : 'onboarding_skipped', { step, source, topic })
+    if (completed && !topic && pathname !== '/') navigate('/')
     setOpenAs(null)
   }
 
@@ -77,6 +81,7 @@ export default function WelcomeTourGate() {
             key="welcome-tour"
             name={greetingName(user, profile)}
             origin={openAs?.origin}
+            topic={openAs?.topic}
             onClose={handleClose}
           />
         )}

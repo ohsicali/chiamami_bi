@@ -52,15 +52,23 @@ function withWindow(fn) {
   return Promise.resolve(fn(target)).finally(() => { delete globalThis.window })
 }
 
-test('non è un drop: nessuna festa, si va avanti subito', () => withWindow(async (w) => {
+test('non è un drop: nessuna festa, si va avanti subito (e il QR si apre)', () => withWindow(async (w) => {
   let heard = false
   w.addEventListener(DROP_WIN_EVENT, () => { heard = true })
-  await celebrateClaim({ redemptionId: 'r1', deal: { is_drop: false } })
+  const res = await celebrateClaim({ redemptionId: 'r1', deal: { is_drop: false } })
   assert.equal(heard, false)
+  assert.equal(res.shown, false)
 }))
 
-test('nessuno ascolta: il QR non resta appeso', () => withWindow(async () => {
-  await celebrateClaim({ redemptionId: 'r1', deal: { is_drop: true } })
+test('nessuno ascolta: lo sblocco non resta appeso', () => withWindow(async () => {
+  const res = await celebrateClaim({ redemptionId: 'r1', deal: { is_drop: true } })
+  assert.equal(res.shown, false)
+}))
+
+test('il Gate decide che non è un drop: come se la festa non ci fosse', () => withWindow(async (w) => {
+  w.addEventListener(DROP_WIN_EVENT, (e) => { e.detail.take(); e.detail.done() })
+  const res = await celebrateClaim({ redemptionId: 'r1' })
+  assert.deepEqual({ ...res }, { shown: false, action: null })
 }))
 
 test('con la festa aperta si aspetta che si chiuda', () => withWindow(async (w) => {
@@ -70,7 +78,13 @@ test('con la festa aperta si aspetta che si chiuda', () => withWindow(async (w) 
   const p = celebrateClaim({ redemptionId: 'r1', deal: { is_drop: true } }).then(() => { resolved = true })
   await new Promise((r) => setTimeout(r, 10))
   assert.equal(resolved, false)
-  close()
+  close({ shown: true, action: 'tutorial' })
   await p
   assert.equal(resolved, true)
+}))
+
+test('dopo la festa si sa com\'è finita: tutorial o chiudi, e niente QR', () => withWindow(async (w) => {
+  w.addEventListener(DROP_WIN_EVENT, (e) => { e.detail.take(); e.detail.done({ shown: true, action: 'close' }) })
+  const res = await celebrateClaim({ redemptionId: 'r1', deal: { is_drop: true } })
+  assert.deepEqual(res, { shown: true, action: 'close' })
 }))

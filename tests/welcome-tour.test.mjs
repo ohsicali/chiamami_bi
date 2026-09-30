@@ -6,6 +6,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  DEALS_TOUR_KEYS,
   TOUR_WINDOW_MS,
   greetingName,
   isFreshAccount,
@@ -103,4 +104,8 @@ test('di ritorno da Google o dal link della mail: tutorial subito per un account
   const viaLink = { id: 'e1', created_at: ago(TOUR_WINDOW_MS - 60 * 1000) }
   assert.equal(shouldWelcomeAfterAuth({ user: viaLink, type: 'signup', seen: false, now: NOW }), true)
   assert.equal(shouldWelcomeAfterAuth({ user: null, type: 'signup', seen: false, now: NOW }), false)
+})
+
+test('dopo un drop preso si riaprono solo le quattro schermate sugli sconti', () => {
+  assert.deepEqual(DEALS_TOUR_KEYS, ['deals', 'unlock', 'rules', 'checkout'])
 })

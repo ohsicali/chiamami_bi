@@ -152,6 +152,12 @@ function FloatingDiscountBar({ discounts: discountsFromParent, restaurantId, res
     setGenerating(true)
     try {
       const result = await generateRedemption()
+      // Drop appena preso: dopo la festa il QR non si apre, il popup si
+      // chiude (lo sconto è in «I miei vantaggi»; vedi src/lib/dropWin.js).
+      if (result?.dropWin?.shown) {
+        setPopupOpen(false)
+        return null
+      }
       if (result && checkValidity(discount) !== 'valid_now') {
         setBlockedMessage(discountBlockedMessage(discount))
         return null

@@ -191,7 +191,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 4px;
 }
 /* Bianco su corallo: il bottone dell'azione resta corallo ovunque, ma qui
    il fondo è già corallo e un corallo sopra non si vedrebbe. La scritta
@@ -217,8 +217,28 @@
   outline: 3px solid #fff;
   outline-offset: 3px;
 }
-.dw-actions small {
-  font-size: 12.5px;
+.dw-btn-ghost {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  font-size: 15px;
+  min-height: 44px;
+  padding: 0 24px;
+  cursor: pointer;
+  opacity: 0.92;
+}
+.dw-btn-ghost:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+  border-radius: var(--radius-pill);
+}
+.dw-where {
+  display: block;
+  margin-top: 8px;
+  font-size: 13px;
   opacity: 0.85;
 }
 

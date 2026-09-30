@@ -13,9 +13,11 @@
  *
  * Chi sblocca chiama `celebrateClaim()` e aspetta: la promessa si risolve
  * quando l'animazione si chiude (o subito, se non è un drop o se
- * `DropWinGate` non è montato). Così il QR si apre DOPO la festa, e i punti
- * che sbloccano (Bi Club, scheda del locale) non devono sapere niente di
- * come è fatta.
+ * `DropWinGate` non è montato) con `{ shown, action }`. Se la festa c'è
+ * stata il QR NON si apre (deciso dal proprietario il 30/09: chi ha appena
+ * preso il drop non è alla cassa, lo userà dopo da «I miei vantaggi»):
+ * dalla festa si va al tutorial sugli sconti ("Scopri come usare lo
+ * sconto", `action: 'tutorial'`) o si chiude (`action: 'close'`).
  */
 
 export const DROP_WIN_EVENT = 'chiamamibi:drop-win'
@@ -63,25 +65,31 @@ export function dropWinCopy({ rank, total, restaurantName } = {}) {
   }
 }
 
+/** Com'è finita quando la festa non c'è stata (non è un drop, nessun Gate). */
+export const NO_WIN = Object.freeze({ shown: false, action: null })
+
 /**
  * Da chiamare dopo uno sblocco NUOVO (non quando si riapre un riscatto che
  * c'era già). `deal` se chi chiama ce l'ha: se non è un drop si evita la
- * chiamata al DB. Si risolve quando la festa si chiude.
+ * chiamata al DB. Si risolve quando la festa si chiude, con `{ shown, action }`:
+ * con `shown` il QR non si apre.
  */
+
 export function celebrateClaim({ redemptionId, deal } = {}) {
-  if (typeof window === 'undefined' || !redemptionId) return Promise.resolve()
-  if (deal && !deal.is_drop) return Promise.resolve()
+  if (typeof window === 'undefined' || !redemptionId) return Promise.resolve(NO_WIN)
+  if (deal && !deal.is_drop) return Promise.resolve(NO_WIN)
   return new Promise((resolve) => {
     let taken = false
     const detail = {
       redemptionId,
       deal: deal || null,
       // Il Gate lo segna appena riceve l'evento: se nessuno ascolta
-      // (pagina senza Gate) si va avanti subito, il QR non resta appeso.
+      // (pagina senza Gate) si va avanti subito, lo sblocco non resta appeso.
       take: () => { taken = true },
-      done: resolve,
+      // Il Gate chiama `done({ shown, action })`; senza argomenti = niente festa.
+      done: (result) => resolve(result || NO_WIN),
     }
     window.dispatchEvent(new CustomEvent(DROP_WIN_EVENT, { detail }))
-    if (!taken) resolve()
+    if (!taken) resolve(NO_WIN)
   })
 }

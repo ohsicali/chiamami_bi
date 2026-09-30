@@ -4,7 +4,7 @@ import BiLogoMark from '../UI/BiLogoMark'
 import { formatDiscountBadge } from '../../lib/utils/discountFormat'
 import { formatShortCode } from '../../lib/shortCode'
 import { CHAT_MAINTENANCE } from '../../lib/chatMaintenance'
-import { TOUR_COVERED_EVENT } from '../../lib/welcomeTour'
+import { DEALS_TOUR_KEYS, TOUR_COVERED_EVENT } from '../../lib/welcomeTour'
 import { DUR, EASE_OUT, SPRING_SNAP, SPRING_SOFT } from '../../lib/motion'
 import './WelcomeTour.css'
 
@@ -37,7 +37,7 @@ const DEMO_CONV = { discount_type: 'percentage', discount_value: '15' }
 const DEMO_UNLOCK = { discount_type: 'percentage', discount_value: '20' }
 const DEMO_CODE = 'K48213'
 
-function buildSlides(name) {
+function buildSlides(name, topic) {
   const slides = [
     {
       key: 'welcome',
@@ -103,6 +103,13 @@ function buildSlides(name) {
       Art: ArtAsk,
     })
   }
+  // Dopo un drop preso ("Scopri come usare lo sconto"): solo le quattro
+  // schermate sugli sconti, e l'ultima chiude.
+  if (topic === 'deals') {
+    const only = slides.filter((sl) => DEALS_TOUR_KEYS.includes(sl.key))
+    only[only.length - 1] = { ...only[only.length - 1], cta: 'Tutto chiaro' }
+    return only
+  }
   return slides
 }
 
@@ -110,9 +117,9 @@ function buildSlides(name) {
 const FINALE_MS = 2000
 const FINALE_MS_REDUCED = 900
 
-export default function WelcomeTour({ name, origin, onClose }) {
+export default function WelcomeTour({ name, origin, topic = null, onClose }) {
   const reduce = useReducedMotion()
-  const slides = useMemo(() => buildSlides(name), [name])
+  const slides = useMemo(() => buildSlides(name, topic), [name, topic])
   const [[index, dir], setPage] = useState([0, 0])
   const [finishing, setFinishing] = useState(false)
   const panelRef = useRef(null)
@@ -126,7 +133,9 @@ export default function WelcomeTour({ name, origin, onClose }) {
   const skip = () => { if (!finishing) onClose({ completed: false, step: slide.key }) }
   const next = () => {
     if (finishing) return
-    if (last) setFinishing(true)
+    // Solo gli sconti: niente animazione di benvenuto in fondo, si chiude.
+    if (last && topic) onClose({ completed: true, step: slide.key })
+    else if (last) setFinishing(true)
     else go(index + 1)
   }
 

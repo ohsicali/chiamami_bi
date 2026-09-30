@@ -118,11 +118,17 @@ export function markTourSeen(userId) {
  *   accettato, link della mail, primo accesso con Google), senza aspettare
  *   di atterrare sulla home. Con `origin` ({ x, y, r } in px) il tutorial
  *   entra come un cerchio che si allarga da quel punto: il cerchio corallo
- *   della spunta "Ci sei" diventa la prima schermata, che è corallo anche lei.
+ *   della spunta "Ci sei" diventa la prima schermata, che è corallo anche lei;
+ * - `source: 'drop_win', topic: 'deals'` → "Scopri come usare lo sconto"
+ *   dopo aver preso un drop: solo le quattro schermate sugli sconti, niente
+ *   animazione finale, si resta sulla pagina e non conta come tutorial visto.
  */
-export function openWelcomeTour({ source = 'settings', origin = null } = {}) {
-  window.dispatchEvent(new CustomEvent(OPEN_TOUR_EVENT, { detail: { source, origin } }))
+export function openWelcomeTour({ source = 'settings', origin = null, topic = null } = {}) {
+  window.dispatchEvent(new CustomEvent(OPEN_TOUR_EVENT, { detail: { source, origin, topic } }))
 }
+
+/** Le schermate del tutorial che spiegano gli sconti (`topic: 'deals'`). */
+export const DEALS_TOUR_KEYS = ['deals', 'unlock', 'rules', 'checkout']
 
 /**
  * Dopo l'"account confermato": la spunta si disegna e si legge "Ci sei",

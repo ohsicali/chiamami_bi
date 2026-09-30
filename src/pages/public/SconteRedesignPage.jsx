@@ -178,6 +178,13 @@ function SconteRedesignPageInner() {
     setToast({ text: 'Salvato in «I miei vantaggi»', goMiei: true })
   }
 
+  // Dopo la festa di un drop il QR non si apre: con "Chiudi" il toast dice
+  // dove è finito lo sconto; col tutorial aperto sopra non serve.
+  const afterDropWin = (win) => {
+    justSavedRef.current = false
+    if (win.action === 'close') setToast({ text: 'Salvato in «I miei vantaggi»', goMiei: true })
+  }
+
   const goToMiei = () => {
     setToast(null)
     setTab('miei')
@@ -351,7 +358,8 @@ function SconteRedesignPageInner() {
           .maybeSingle()
         if (!recovered) throw error
         justSavedRef.current = true
-        await celebrateClaim({ redemptionId: recovered.id, deal })
+        const win = await celebrateClaim({ redemptionId: recovered.id, deal })
+        if (win.shown) { afterDropWin(win); return }
         showClaimedQR(deal, recovered)
         return
       }
@@ -363,8 +371,10 @@ function SconteRedesignPageInner() {
       // registro e non manda due volte la stessa ricevuta.
       sendClaimReceipt(data.id)
 
-      // Drop: prima "Ce l'hai fatta, sei il numero X su 20", poi il QR.
-      await celebrateClaim({ redemptionId: data.id, deal })
+      // Drop: "Ce l'hai fatta, sei il numero X su 20" al posto del QR (chi
+      // l'ha appena preso non è alla cassa; vedi src/lib/dropWin.js).
+      const win = await celebrateClaim({ redemptionId: data.id, deal })
+      if (win.shown) { afterDropWin(win); return }
       showClaimedQR(deal, data)
     } catch (e) {
       // Esaurito/scaduto nel frattempo: "Riprova" non serve, si dice cosa è
@@ -456,13 +466,16 @@ function SconteRedesignPageInner() {
           .maybeSingle()
         if (recovered) {
           justSavedRef.current = true
-          await celebrateClaim({ redemptionId: recovered.id, deal })
+          const win = await celebrateClaim({ redemptionId: recovered.id, deal })
+          if (win.shown) { setInfoDeal(null); afterDropWin(win); return null }
           return recovered
         }
         throw error
       }
       justSavedRef.current = true
-      await celebrateClaim({ redemptionId: data.id, deal })
+      // Drop: la festa al posto del QR, e il popup si chiude.
+      const win = await celebrateClaim({ redemptionId: data.id, deal })
+      if (win.shown) { setInfoDeal(null); afterDropWin(win); return null }
       return data
     } catch (e) {
       const refusal = claimRefusal(e)

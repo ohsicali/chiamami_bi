@@ -244,8 +244,8 @@ export function useUserRedemption(discountId, userId, discount = null) {
         .maybeSingle()
       if (recovered) {
         setRedemption(recovered)
-        await celebrateClaim({ redemptionId: recovered.id, deal: discountRef.current })
-        return recovered
+        const dropWin = await celebrateClaim({ redemptionId: recovered.id, deal: discountRef.current })
+        return dropWin.shown ? { ...recovered, dropWin } : recovered
       }
       throw error
     }
@@ -253,10 +253,11 @@ export function useUserRedemption(discountId, userId, discount = null) {
     // Il contatore delle prese lo alza il trigger all'INSERT: niente +1 da
     // qui (fix-verify-and-counters-2026-09-24.sql).
     setRedemption(data)
-    // Drop: "Ce l'hai fatta, sei il numero X su 20" prima del QR. Chi non
-    // passa lo sconto lo fa decidere al DB (vedi src/lib/dropWin.js).
-    await celebrateClaim({ redemptionId: data.id, deal: discountRef.current })
-    return data
+    // Drop: "Ce l'hai fatta, sei il numero X su 20" al posto del QR. Chi non
+    // passa lo sconto lo fa decidere al DB (vedi src/lib/dropWin.js). Il
+    // risultato torna in `dropWin`: con `shown` chi chiama non apre il QR.
+    const dropWin = await celebrateClaim({ redemptionId: data.id, deal: discountRef.current })
+    return dropWin.shown ? { ...data, dropWin } : data
   }, [discountId, userId])
 
   return { redemption, loading, generateRedemption }

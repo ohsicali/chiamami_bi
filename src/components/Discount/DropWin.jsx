@@ -11,9 +11,11 @@ import './DropWin.css'
  * Tutto corallo, perché il corallo è il colore dei drop (regola del colore,
  * CLAUDE.md): Bi applaude, i coriandoli saltano, il numero sale fino al
  * proprio posto e nei pallini (uno per posto) si accende il tuo, dopo quelli
- * di chi è arrivato prima. Poi "Vedi il tuo QR". Si chiude solo col bottone
- * o con Esc, non toccando a caso: il numero è il bello, non deve sparire
- * per un tocco mentre sale.
+ * di chi è arrivato prima. Sotto, "Scopri come usare lo sconto" (il
+ * tutorial sugli sconti) e "Chiudi". Niente QR qui: chi ha appena preso il
+ * drop non è alla cassa (deciso dal proprietario il 30/09). Si chiude solo
+ * coi bottoni o con Esc, non toccando a caso: il numero è il bello, non
+ * deve sparire per un tocco mentre sale.
  */
 export default function DropWin({ rank, total, restaurantName, onClose }) {
   const reduce = useReducedMotion()
@@ -25,7 +27,7 @@ export default function DropWin({ rank, total, restaurantName, onClose }) {
   const onCloseRef = useRef(onClose)
   useEffect(() => { onCloseRef.current = onClose })
   useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onCloseRef.current?.() }
+    const onKey = (e) => { if (e.key === 'Escape') onCloseRef.current?.('close') }
     window.addEventListener('keydown', onKey)
     // Il fuoco sulla finestra (non sul bottone, che su telefono si
     // accenderebbe col contorno): Tab porta al bottone, Esc chiude.
@@ -105,6 +107,7 @@ export default function DropWin({ rank, total, restaurantName, onClose }) {
           transition={{ delay: reduce ? 0 : 0.6, duration: 0.3, ease: EASE_OUT }}
         >
           {copy.line} <b>{copy.outro}</b>
+          <small className="dw-where">Lo ritrovi in «I miei vantaggi»: il QR lo mostri alla cassa.</small>
         </motion.p>
 
         <motion.div
@@ -113,10 +116,12 @@ export default function DropWin({ rank, total, restaurantName, onClose }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: reduce ? 0 : 0.9, duration: 0.3, ease: EASE_OUT }}
         >
-          <button type="button" className="dw-btn" onClick={() => onClose?.()}>
-            Vedi il tuo QR
+          <button type="button" className="dw-btn" onClick={() => onClose?.('tutorial')}>
+            Scopri come usare lo sconto
           </button>
-          <small>Lo ritrovi anche in «I miei vantaggi»</small>
+          <button type="button" className="dw-btn-ghost" onClick={() => onClose?.('close')}>
+            Chiudi
+          </button>
         </motion.div>
       </motion.div>
     </motion.div>

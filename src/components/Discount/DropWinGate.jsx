@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
 import { track } from '../../lib/posthog'
 import { DROP_WIN_EVENT } from '../../lib/dropWin'
+import { openWelcomeTour } from '../../lib/welcomeTour'
 
 // Bi che applaude e i coriandoli stanno in un chunk a parte: li scarica solo
 // chi prende un drop. Il download parte insieme alla domanda al DB.
@@ -41,11 +42,11 @@ export default function DropWinGate() {
   const [open, setOpen] = useState(null) // { key, rank, total, restaurantName }
   const doneRef = useRef(null)
 
-  // Chiude il giro: chi aveva chiamato `celebrateClaim` va avanti (col QR).
-  const finish = () => {
+  // Chiude il giro: chi aveva chiamato `celebrateClaim` sa com'è finita.
+  const finish = (result) => {
     const done = doneRef.current
     doneRef.current = null
-    done?.()
+    done?.(result)
   }
 
   useEffect(() => {
@@ -75,9 +76,13 @@ export default function DropWinGate() {
     return () => window.removeEventListener(DROP_WIN_EVENT, onWin)
   }, [])
 
-  const handleClose = () => {
+  // "Scopri come usare lo sconto" apre le quattro schermate sugli sconti
+  // del tutorial di benvenuto; "Chiudi" (o Esc) lascia dov'era.
+  const handleClose = (action) => {
     setOpen(null)
-    finish()
+    track('drop_win_closed', { action })
+    finish({ shown: true, action })
+    if (action === 'tutorial') openWelcomeTour({ source: 'drop_win', topic: 'deals' })
   }
 
   return (
