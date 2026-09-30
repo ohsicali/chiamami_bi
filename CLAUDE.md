@@ -249,6 +249,10 @@ prefisso "🧪 PROVA".
 - Token del bot e id del gruppo nel **Vault** (`telegram_bot_token`,
   `telegram_admin_chat_id`); senza, non parte niente. Per spegnere: cancellare
   `telegram_admin_chat_id` dal Vault. Istruzioni in testa al file SQL.
+  Configurato il 30/09: bot **@LaGuidaDiBi_bot**, gruppo **"La Guida di Bi"**.
+  Se il gruppo diventa supergruppo (Telegram lo fa da solo, per esempio quando
+  si rende visibile la cronologia) l'id cambia in `-100…` e gli avvisi si
+  fermano: rifare `getUpdates` e aggiornare `telegram_admin_chat_id`.
 - **Un avviso non fa mai fallire quello che lo ha fatto partire**: ogni trigger
   ha il suo `EXCEPTION WHEN OTHERS` → solo un WARNING (provato: con l'invio in
   errore la convalida passa lo stesso). Non toglierlo.
