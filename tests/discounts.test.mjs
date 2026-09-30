@@ -20,6 +20,7 @@ import {
   isVisibleDrop, filterActive, filterActiveDrops, filterActiveConventions,
   filterVisibleDrops, sortByExpiry, remainingCount, formatCountdown,
   findUnreachableDiscounts, pickFeaturedDeal, filterShownDrops,
+  chooseFeaturedDeal, canFeatureInHome,
 } from '../src/lib/discounts.js'
 
 const NOW = new Date('2026-09-08T12:00:00Z')
@@ -179,15 +180,66 @@ test('filterShownDrops: dei drop esauriti resta solo l\'ultimo uscito (Borghese 
     d({ id: 'conv' }),
   ]
   assert.deepEqual(filterShownDrops(list, NOW).map((x) => x.id).sort(), ['borghese', 'live'])
-  assert.equal(pickFeaturedDeal(list.filter((x) => x.id !== 'live'), NOW).id, 'borghese')
+  const OGGI = new Date('2026-10-01T12:00:00Z')
+  assert.equal(pickFeaturedDeal(list.filter((x) => x.id !== 'live'), OGGI).id, 'borghese')
 })
 
-test('pickFeaturedDeal: un drop attivo passa davanti a quello esaurito', () => {
+test('pickFeaturedDeal: esce un drop nuovo → prende il posto del precedente (anche se quello ha ancora posti)', () => {
   const list = [
-    d({ id: 'esaurito', is_drop: true, restaurant_id: 'a', valid_until: '2026-10-01T00:00:00Z', max_quantity: 10, claimed_count: 10 }),
-    d({ id: 'live', is_drop: true, restaurant_id: 'b', valid_until: '2026-12-01T00:00:00Z', max_quantity: 10, claimed_count: 3 }),
+    d({ id: 'vecchio', is_drop: true, drop_starts_at: '2026-09-01T17:00:00Z', max_quantity: 10, claimed_count: 3 }),
+    d({ id: 'nuovo', is_drop: true, drop_starts_at: '2026-09-07T17:00:00Z', max_quantity: 20, total_redeemed: 20 }),
   ]
-  assert.equal(pickFeaturedDeal(list, NOW).id, 'live')
+  assert.equal(pickFeaturedDeal(list, NOW).id, 'nuovo')
+  assert.equal(chooseFeaturedDeal(list, NOW).reason, 'drop')
+})
+
+test('pickFeaturedDeal: un drop programmato che non è ancora iniziato non va in vetrina', () => {
+  const list = [
+    d({ id: 'uscito', is_drop: true, drop_starts_at: '2026-09-01T17:00:00Z', max_quantity: 10 }),
+    d({ id: 'domani', is_drop: true, drop_starts_at: '2026-09-09T17:00:00Z', max_quantity: 10 }),
+  ]
+  assert.equal(pickFeaturedDeal(list, NOW).id, 'uscito')
+})
+
+/* ── Vetrina scelta a mano dal pannello (home_featured_at) ── */
+
+const BORGHESE = d({ id: 'borghese', is_drop: true, valid_until: null, drop_starts_at: '2026-09-05T17:00:00Z', max_quantity: 20, total_redeemed: 20 })
+
+test('scelta a mano: lo sconto scelto dopo l\'ultimo drop va in vetrina al suo posto', () => {
+  const conv = d({ id: 'papalele', home_featured_at: '2026-09-07T10:00:00Z' })
+  const { deal, reason } = chooseFeaturedDeal([BORGHESE, conv], NOW)
+  assert.equal(deal.id, 'papalele')
+  assert.equal(reason, 'pinned')
+})
+
+test('scelta a mano: esce un drop più nuovo della scelta → torna il drop', () => {
+  const conv = d({ id: 'papalele', home_featured_at: '2026-09-07T10:00:00Z' })
+  const nuovo = d({ id: 'nuovo', is_drop: true, drop_starts_at: '2026-09-08T09:00:00Z', max_quantity: 10 })
+  assert.equal(pickFeaturedDeal([BORGHESE, conv, nuovo], NOW).id, 'nuovo')
+})
+
+test('scelta a mano: vale l\'ultima scelta; una scelta in pausa, scaduta, esaurita o di prova non conta', () => {
+  const list = [
+    BORGHESE,
+    d({ id: 'prima', home_featured_at: '2026-09-06T10:00:00Z' }),
+    d({ id: 'dopo', home_featured_at: '2026-09-07T10:00:00Z' }),
+    d({ id: 'pausa', is_active: false, home_featured_at: '2026-09-07T11:00:00Z' }),
+    d({ id: 'scaduta', valid_until: '2026-09-01T00:00:00Z', home_featured_at: '2026-09-07T12:00:00Z' }),
+    d({ id: 'finita', max_redemptions: 5, total_redeemed: 5, home_featured_at: '2026-09-07T13:00:00Z' }),
+    d({ id: 'prova', is_test: true, home_featured_at: '2026-09-07T14:00:00Z' }),
+  ]
+  assert.equal(pickFeaturedDeal(list, NOW).id, 'dopo')
+})
+
+test('scelta a mano: tolta la scelta si torna all\'ultimo drop', () => {
+  const conv = d({ id: 'papalele', home_featured_at: null })
+  assert.equal(pickFeaturedDeal([BORGHESE, conv], NOW).id, 'borghese')
+})
+
+test('canFeatureInHome: un drop esaurito si può scegliere, una convenzione esaurita no', () => {
+  assert.equal(canFeatureInHome(BORGHESE, NOW), true)
+  assert.equal(canFeatureInHome(d({ max_redemptions: 5, total_redeemed: 5 }), NOW), false)
+  assert.equal(canFeatureInHome(d({ is_test: true }), NOW), false)
 })
 
 test('pickFeaturedDeal: drop esaurito ma disattivato o scaduto → non va in vetrina', () => {

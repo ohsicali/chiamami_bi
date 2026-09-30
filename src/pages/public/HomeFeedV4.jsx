@@ -545,9 +545,9 @@ export default function HomeFeedV4() {
       return true
     }))
   }, [discounts])
-  // In evidenza il drop attivo; se non ce n'è, il drop esaurito resta in
-  // vetrina con la scritta "sold out" e il bottone spento (vedi
-  // `pickFeaturedDeal` e `dealCta`).
+  // In evidenza l'ultimo drop uscito (anche esaurito, col "sold out" e il
+  // bottone spento — vedi `dealCta`), o lo sconto scelto a mano dal pannello
+  // (🏠 sulla card dello sconto). Regole in `pickFeaturedDeal`.
   const featuredDrop = useMemo(
     () => pickFeaturedDeal(discounts) || activeDeals[0] || null,
     [discounts, activeDeals]
