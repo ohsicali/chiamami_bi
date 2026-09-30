@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-30 (Drop preso: festa "sei il numero X su 20")
+Ultima modifica: 2026-09-30 (Avvisi agli admin su Telegram)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -37,6 +37,7 @@ dove siamo. Aggiorna a ogni step importante.
 | Uscita programmata di locali e sconti (con email all'uscita) | #328 | ✅ Merged (802159c) | SQL colonne `supabase/scheduled-publish-2026-09-29.sql` e cron `supabase/scheduled-publish-cron-2026-09-29.sql` **tutti e due eseguiti** il 29/09 (pg_cron `chiamamibi-scheduled-publish`, ogni 5 min; prima chiamata: 200, niente da pubblicare). Vedi CLAUDE.md "Uscita programmata" e EMAIL-FLOWS §7e. |
 | Drop preso — "Ce l'hai fatta, sei il numero X su 20" (Bi che applaude) | — | 🚧 In review | Branch `claude/drop-win-animation`. SQL `supabase/drop-claim-rank-2026-09-30.sql` **già eseguito** il 30/09 (provato in transazione annullata: 1/3, 2/3, 3/3, il quarto `sold_out`; niente numero per il riscatto di un altro; anon rifiutato). Lucchetto per sconto sui riscatti + RPC `my_claim_rank`. Vedi CLAUDE.md. |
 | Pannello admin rifatto — aggiunta locali e sconti | #330 | 🚧 In review | Branch `claude/admin-redesign`. **Nessun SQL.** Kit `adm-*`, percorso "Aggiungi un locale" senza bozze vuote, scheda locale con checklist, editor sconti a tutto schermo con anteprima. Vedi CLAUDE.md "Pannello admin rifatto". |
+| Avvisi agli admin su Telegram (sconto usato, recensione, suggerimento, candidatura) | — | 🚧 In review | Branch `claude/sleepy-ride-2d13rk`. SQL `supabase/admin-telegram-2026-09-30.sql` **già eseguito** il 30/09 (provato in transazione annullata: i 4 messaggi, suggerimento anon incluso; con l'invio in errore la convalida passa). **Manca**: token del bot e id del gruppo nel Vault (vedi testa del file SQL). Vedi CLAUDE.md. |
 | Feedback dopo la convalida (festa, stelle, Bi che ringrazia, email 30 min / 1 giorno, recensioni in /verify) | #320 | ✅ Merged (9d3cf06) | SQL `redemption-feedback-2026-09-29.sql`, `verify-feedback-list-2026-09-29.sql` e `redemption-feedback-cron-2026-09-29.sql` **tutti eseguiti** il 29/09. Giro email attivo (pg_cron `chiamamibi-feedback-asks`, ogni 10 min; prima chiamata: 200). Vedi sezione "29/09 — feedback" sotto e CLAUDE.md. |
 
 ## 29/09 — feedback dopo lo sconto convalidato
