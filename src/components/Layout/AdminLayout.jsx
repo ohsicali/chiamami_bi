@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import MetaTags from '../SEO/MetaTags'
+import { Sheet } from '../admin/ui'
 
 /* ------------------------------------------------------------------ */
 /*  SVG Icons                                                          */
@@ -427,7 +428,7 @@ function SidebarContent({ user, location, counts, onNavClick, onClose }) {
 /* ------------------------------------------------------------------ */
 /*  Desktop top bar — search + date pill + "+ Nuovo" + avatar          */
 /* ------------------------------------------------------------------ */
-function AdminTopBar({ userInitial }) {
+function AdminTopBar({ userInitial, onCreate }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams] = useSearchParams()
@@ -527,26 +528,14 @@ function AdminTopBar({ userInitial }) {
 
       <div style={{ flex: 1 }} />
 
-      <Link
-        to="/admin/restaurant/new"
-        style={{
-          background: '#E8453C',
-          border: '1px solid #E8453C',
-          borderRadius: 999,
-          padding: '8px 16px',
-          fontSize: 12,
-          fontWeight: 800,
-          color: '#fff',
-          textDecoration: 'none',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 6,
-          boxShadow: '0 6px 14px rgba(232,69,60,0.28)',
-          fontFamily: 'var(--font-sans)',
-        }}
+      <button
+        type="button"
+        onClick={onCreate}
+        className="adm-btn adm-btn--primary adm-btn--sm"
+        style={{ minHeight: 36, padding: '0 16px' }}
       >
-        + Nuovo
-      </Link>
+        <span aria-hidden style={{ fontSize: 16, lineHeight: 1 }}>+</span> Crea
+      </button>
 
       <Link
         to="/admin/settings"
@@ -574,7 +563,56 @@ function AdminTopBar({ userInitial }) {
 /* ------------------------------------------------------------------ */
 /*  Mobile Top Bar                                                     */
 /* ------------------------------------------------------------------ */
-function MobileTopBar({ userInitial, mobileOpen, onBurgerClick }) {
+function MobileTopBar({ userInitial, mobileOpen, onBurgerClick, back, title }) {
+  // Nelle pagine di modifica (AdminLayout `focus`) al posto del marchio c'è
+  // la freccia per tornare all'elenco e il nome di quello che si modifica:
+  // è la cosa che serve sapere, il menu resta a un tocco dal ☰ della lista.
+  if (back) {
+    return (
+      <div
+        className="flex md:hidden"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          background: 'var(--color-page, #FAF7F2)',
+          zIndex: 20,
+          alignItems: 'center',
+          gap: 10,
+          padding: '8px 16px 12px',
+          borderBottom: '1px solid var(--color-line, #EAE3D7)',
+        }}
+      >
+        <Link
+          to={back.to}
+          aria-label={back.label || 'Indietro'}
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: 12,
+            background: '#fff',
+            border: '1px solid var(--color-line,#EAE3D7)',
+            display: 'grid',
+            placeItems: 'center',
+            color: 'var(--color-ink, #22181C)',
+            flexShrink: 0,
+            textDecoration: 'none',
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+        </Link>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--color-ink-64, rgba(34,24,28,0.64))' }}>
+            {back.label || 'Indietro'}
+          </div>
+          <div style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 15, color: 'var(--color-ink, #22181C)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.01em' }}>
+            {title}
+          </div>
+        </div>
+      </div>
+    )
+  }
   return (
     <div
       className="flex md:hidden"
@@ -765,54 +803,93 @@ function MobileBottomNav({ location, counts, onAltroClick }) {
 /* ------------------------------------------------------------------ */
 /*  Mobile FAB                                                         */
 /* ------------------------------------------------------------------ */
-function MobileFAB({ location }) {
+function MobileFAB({ location, onClick }) {
   const p = location.pathname
-  const isRestaurants = p === '/admin/restaurants'
-  if (!isRestaurants) return null
-
-  const to = '/admin/restaurant/new'
-  const icon = '+'
+  // Sulle pagine da cui si parte per aggiungere qualcosa: dashboard ed elenco
+  // locali. Apre la scelta "Nuovo locale / Nuovo sconto".
+  // Negli Sconti no: lì c'è già "+ Nuovo sconto" in testa alla pagina.
+  if (p !== '/admin' && p !== '/admin/restaurants') return null
 
   return (
-    <Link
-      to={to}
+    <button
+      type="button"
+      onClick={onClick}
       className="admin-mobile-fab"
+      aria-label="Crea un locale o uno sconto"
       style={{
         position: 'fixed',
-        bottom: 'calc(90px + env(safe-area-inset-bottom, 0px))',
+        bottom: 'calc(96px + env(safe-area-inset-bottom, 0px))',
         right: 16,
-        width: 52,
-        height: 52,
-        borderRadius: '50%',
+        height: 54,
+        padding: '0 20px 0 16px',
+        borderRadius: 999,
         background: '#E8453C',
         color: '#fff',
-        display: 'grid',
-        placeItems: 'center',
-        fontSize: 26,
-        fontWeight: 300,
-        boxShadow: '0 10px 24px rgba(232,69,60,0.4)',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 8,
+        fontFamily: 'var(--font-sans)',
+        fontSize: 15,
+        fontWeight: 800,
+        border: 0,
+        boxShadow: '0 12px 26px rgba(232,69,60,0.42)',
         zIndex: 15,
-        textDecoration: 'none',
-        lineHeight: 1,
+        cursor: 'pointer',
       }}
     >
-      {icon}
-    </Link>
+      <span aria-hidden style={{ fontSize: 26, fontWeight: 400, lineHeight: 1, marginTop: -2 }}>+</span>
+      Crea
+    </button>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Create sheet — "cosa vuoi aggiungere?"                             */
+/* ------------------------------------------------------------------ */
+function CreateSheet({ open, onClose }) {
+  return (
+    <Sheet open={open} onClose={onClose} title="Cosa aggiungi?">
+      <p className="adm-sub" style={{ margin: '0 0 16px' }}>Due strade, ognuna ti guida passo passo.</p>
+      <Link to="/admin/restaurant/new" className="adm-bigpick" onClick={onClose}>
+        <span className="adm-bigpick__icon" style={{ background: 'var(--color-cream, #F5F0E4)' }} aria-hidden>🍽️</span>
+        <span>
+          <b>Nuovo locale</b>
+          <small>Incolli il link di Google Maps e si compila da solo.</small>
+        </span>
+        <span className="adm-bigpick__arrow" aria-hidden>→</span>
+      </Link>
+      <Link to="/admin/discounts?new=1" className="adm-bigpick" onClick={onClose}>
+        <span className="adm-bigpick__icon" style={{ background: 'linear-gradient(135deg, #A3E635, #4ADE80)' }} aria-hidden>🎟️</span>
+        <span>
+          <b>Nuovo sconto</b>
+          <small>Convenzione sempre valida o drop a tempo, con l'anteprima di come si vede.</small>
+        </span>
+        <span className="adm-bigpick__arrow" aria-hidden>→</span>
+      </Link>
+    </Sheet>
   )
 }
 
 /* ------------------------------------------------------------------ */
 /*  Main AdminLayout                                                   */
 /* ------------------------------------------------------------------ */
-export default function AdminLayout({ children, title }) {
+/**
+ * `focus` — pagina di modifica (scheda locale, nuovo locale): sul telefono
+ * niente barra di navigazione in basso né bottone Crea, in alto la freccia
+ * `back` ({ to, label }) e il `title`. La pagina mette la sua barra azioni
+ * attaccata al fondo.
+ */
+export default function AdminLayout({ children, title, focus = false, back = null }) {
   const { user, loading: authLoading } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [createOpen, setCreateOpen] = useState(false)
   const [counts, setCounts] = useState({ restaurants: 0, discounts: 0, suggestions: 0, applications: 0 })
   const location = useLocation()
 
   // Close mobile menu + scroll to top on route change
   useEffect(() => {
     setMobileOpen(false)
+    setCreateOpen(false)
     window.scrollTo(0, 0)
   }, [location.pathname])
 
@@ -908,7 +985,7 @@ export default function AdminLayout({ children, title }) {
     <div
       style={{
         minHeight: '100vh',
-        background: '#fafafa',
+        background: 'var(--color-page, #FAF7F2)',
         display: 'flex',
         fontFamily: "var(--font-sans)",
         WebkitOverflowScrolling: 'touch',
@@ -937,6 +1014,8 @@ export default function AdminLayout({ children, title }) {
         userInitial={initials}
         mobileOpen={mobileOpen}
         onBurgerClick={() => setMobileOpen(!mobileOpen)}
+        back={focus ? (back || { to: '/admin', label: 'Pannello' }) : null}
+        title={title}
       />
 
       {/* ── Mobile overlay sidebar ── */}
@@ -986,14 +1065,17 @@ export default function AdminLayout({ children, title }) {
       </AnimatePresence>
 
       {/* ── Mobile bottom nav ── */}
-      <MobileBottomNav
-        location={location}
-        counts={counts}
-        onAltroClick={() => setMobileOpen(!mobileOpen)}
-      />
+      {!focus && (
+        <MobileBottomNav
+          location={location}
+          counts={counts}
+          onAltroClick={() => setMobileOpen(!mobileOpen)}
+        />
+      )}
 
       {/* ── Mobile FAB ── */}
-      <MobileFAB location={location} />
+      {!focus && <MobileFAB location={location} onClick={() => setCreateOpen(true)} />}
+      <CreateSheet open={createOpen} onClose={() => setCreateOpen(false)} />
 
       {/* ── Main content ── */}
       <div
@@ -1002,11 +1084,11 @@ export default function AdminLayout({ children, title }) {
           minWidth: 0,
           display: 'flex',
           flexDirection: 'column',
-          background: '#fafafa',
+          background: 'var(--color-page, #FAF7F2)',
         }}
         className="md:ml-[240px] pt-[60px] md:pt-0"
       >
-        <AdminTopBar userInitial={initials} />
+        <AdminTopBar userInitial={initials} onCreate={() => setCreateOpen(true)} />
         <style>{`
           @media (max-width: 767px) {
             .admin-mobile-main { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
@@ -1017,7 +1099,7 @@ export default function AdminLayout({ children, title }) {
           }
         `}</style>
         <main
-          className="admin-mobile-main"
+          className={focus ? 'admin-focus-main' : 'admin-mobile-main'}
           style={{
             flex: 1,
             minWidth: 0,

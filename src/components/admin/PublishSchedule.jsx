@@ -1,4 +1,5 @@
 import { toLocalInput, fromLocalInput, defaultPublishInput, formatPublishAt } from '../../lib/scheduledPublish'
+import { ToggleRow } from './ui'
 
 /**
  * "Quando esce?" — l'uscita di un locale ancora in bozza: subito (al tocco
@@ -17,10 +18,9 @@ import { toLocalInput, fromLocalInput, defaultPublishInput, formatPublishAt } fr
  * e api/_scheduled-publish.js.
  */
 export default function PublishSchedule({ form, onChange, compact = false }) {
-  const muted = 'var(--color-ink-55, rgba(34,24,28,0.55))'
-  const ink = 'var(--color-ink, #22181C)'
   const scheduled = !!form.schedule_on
   const whenLabel = formatPublishAt(fromLocalInput(form.publish_at))
+  const emailOn = form.notify_on_publish !== false
 
   const choose = (on) =>
     onChange({
@@ -28,102 +28,73 @@ export default function PublishSchedule({ form, onChange, compact = false }) {
       publish_at: on && !form.publish_at ? defaultPublishInput() : form.publish_at,
     })
 
-  const choice = (active) => ({
-    flex: 1,
-    minWidth: 0,
-    padding: '10px 12px',
-    borderRadius: 12,
-    border: active ? `1.5px solid ${ink}` : '1px solid var(--color-line, #EAE3D7)',
-    background: active ? ink : '#fff',
-    color: active ? '#fff' : ink,
-    fontSize: 13,
-    fontWeight: 800,
-    fontFamily: 'var(--font-sans)',
-    cursor: 'pointer',
-    textAlign: 'left',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 2,
-    lineHeight: 1.25,
-  })
-
   return (
     <section
       aria-label="Quando esce"
-      style={{
-        marginTop: compact ? 0 : 14,
-        padding: compact ? 0 : '14px 16px',
-        background: compact ? 'transparent' : 'var(--color-cream, #F5F0E4)',
-        borderRadius: 16,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 12,
-        maxWidth: 720,
-        fontFamily: 'var(--font-sans)',
-      }}
+      className={compact ? 'adm' : 'adm adm-card adm-card--cream'}
+      style={{ marginTop: compact ? 0 : 14, display: 'flex', flexDirection: 'column', gap: 12 }}
     >
       {!compact && (
-        <div style={{ fontSize: 14, fontWeight: 900, color: ink, letterSpacing: '-0.01em' }}>
-          ⏰ Quando esce?
+        <div className="adm-card__head" style={{ marginBottom: 0 }}>
+          <span className="adm-card__icon" style={{ background: '#fff' }} aria-hidden>⏰</span>
+          <div>
+            <h3 className="adm-card__title">Quando esce?</h3>
+            <p className="adm-card__hint">Finché è in bozza non lo vede nessuno.</p>
+          </div>
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <button type="button" onClick={() => choose(false)} aria-pressed={!scheduled} style={choice(!scheduled)}>
-          <span>Subito</span>
-          <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.75 }}>quando premi Pubblica</span>
+      <div className="adm-choices" role="radiogroup" aria-label="Quando esce" style={{ '--cols': 2, '--cols-sm': 2 }}>
+        <button type="button" role="radio" aria-checked={!scheduled} className="adm-choice" onClick={() => choose(false)}>
+          <span className="adm-choice__check" aria-hidden>✓</span>
+          <span className="adm-choice__emoji" aria-hidden>⚡</span>
+          <span className="adm-choice__title">Subito</span>
+          <span className="adm-choice__hint">quando premi Pubblica</span>
         </button>
-        <button type="button" onClick={() => choose(true)} aria-pressed={scheduled} style={choice(scheduled)}>
-          <span>Programma l'uscita</span>
-          <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.75 }}>scegli giorno e ora</span>
+        <button type="button" role="radio" aria-checked={scheduled} className="adm-choice" onClick={() => choose(true)}>
+          <span className="adm-choice__check" aria-hidden>✓</span>
+          <span className="adm-choice__emoji" aria-hidden>📅</span>
+          <span className="adm-choice__title">Programma l'uscita</span>
+          <span className="adm-choice__hint">scegli giorno e ora</span>
         </button>
       </div>
 
       {scheduled && (
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12, fontWeight: 700, color: ink }}>
-          Esce il
+        <div className="adm-field">
+          <label className="adm-label" htmlFor="ps-when">Esce il</label>
           <input
+            id="ps-when"
+            className="adm-input"
             type="datetime-local"
             value={form.publish_at}
             min={toLocalInput(new Date().toISOString())}
             onChange={(e) => onChange({ publish_at: e.target.value })}
-            style={{
-              fontSize: 15,
-              fontFamily: 'var(--font-sans)',
-              padding: '10px 12px',
-              borderRadius: 12,
-              border: '1px solid var(--color-line, #EAE3D7)',
-              background: '#fff',
-              color: ink,
-              maxWidth: 280,
-            }}
+            style={{ maxWidth: 300 }}
           />
-        </label>
+        </div>
       )}
 
-      <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: ink, cursor: 'pointer' }}>
-        <input
-          type="checkbox"
-          checked={form.notify_on_publish !== false}
-          onChange={(e) => onChange({ notify_on_publish: e.target.checked })}
-          style={{ accentColor: 'var(--color-corallo, #E8453C)', width: 16, height: 16 }}
-        />
-        Manda l'email a tutti gli utenti quando esce
-      </label>
+      <ToggleRow
+        icon="✉️"
+        title="Email a tutti gli utenti quando esce"
+        text={emailOn ? 'Parte una volta sola, all\'uscita' : 'Esce in silenzio, senza email'}
+        checked={emailOn}
+        onChange={(v) => onChange({ notify_on_publish: v })}
+      />
 
-      <p style={{ fontSize: 12, color: muted, margin: 0, lineHeight: 1.45 }}>
+      <p className="adm-help">
         {scheduled ? (
           <>
-            Resta in bozza fino a <b style={{ color: ink }}>{whenLabel || '…'}</b>, poi va online da solo (entro 5
-            minuti){form.notify_on_publish !== false ? ' e parte l\'email a tutti gli utenti' : ', senza email agli utenti'}
+            Resta in bozza fino a <b style={{ color: 'var(--adm-ink)' }}>{whenLabel || '…'}</b>, poi va online da solo (entro 5
+            minuti){emailOn ? ' e parte l\'email a tutti gli utenti' : ', senza email agli utenti'}
             {form.partner_email && form.verify_pin ? '; al locale arriva il suo PIN' : ''}. Premi{' '}
-            <b style={{ color: ink }}>Programma</b> per confermare. Gli sconti programmati per lo stesso momento escono
+            <b style={{ color: 'var(--adm-ink)' }}>Programma</b> per confermare. Gli sconti programmati per lo stesso momento escono
             insieme a lui.
           </>
         ) : (
           <>
-            Va online quando premi <b style={{ color: ink }}>Pubblica</b>
-            {form.notify_on_publish !== false ? ', e in quel momento parte l\'email a tutti gli utenti' : ''}.
+            Va online quando premi <b style={{ color: 'var(--adm-ink)' }}>Pubblica</b>
+            {emailOn ? ', e in quel momento parte l\'email a tutti gli utenti' : ''}.
           </>
         )}
       </p>

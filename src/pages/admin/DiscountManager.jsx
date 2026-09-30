@@ -1,18 +1,17 @@
 import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import { fetchRestaurantSecrets } from '../../lib/restaurantColumns'
 import AdminLayout from '../../components/Layout/AdminLayout'
 import PillTab from '../../components/admin/PillTab'
 import EmptyState from '../../components/admin/EmptyState'
-import PrettyDatePicker from '../../components/admin/PrettyDatePicker'
-import { ProductsEditor, ValidityPicker } from '../../components/admin/DiscountRulesFields'
+import DiscountEditor from '../../components/admin/DiscountEditor'
 import { isExpired as isDiscountExpired, discountEndsAt, maxQuantity } from '../../lib/discounts'
 import { useAdminRedemptions } from '../../lib/hooks/useAdminRedemptions'
 import LiveRedemptionsPanel from '../../components/admin/LiveRedemptionsPanel'
-import { toLocalInput, fromLocalInput, defaultPublishInput, publishAtError, formatPublishAt } from '../../lib/scheduledPublish'
+import { toLocalInput, fromLocalInput, publishAtError, formatPublishAt } from '../../lib/scheduledPublish'
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -467,39 +466,9 @@ function ActionIcon({ onClick, disabled, title, color, children }) {
 /* ------------------------------------------------------------------ */
 function StatCard({ label, value, accent = 'var(--color-ink)' }) {
   return (
-    <div
-      style={{
-        background: '#fff',
-        border: '1px solid var(--color-line, #EAE3D7)',
-        borderRadius: 18,
-        padding: 18,
-        fontFamily: "var(--font-sans)",
-      }}
-    >
-      <div
-        style={{
-          fontSize: 11,
-          color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
-          fontWeight: 700,
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
-        }}
-      >
-        {label}
-      </div>
-      <div
-        style={{
-          fontFamily: 'var(--font-sans)',
-          fontWeight: 900,
-          fontSize: 34,
-          letterSpacing: '-0.03em',
-          color: accent,
-          marginTop: 8,
-          lineHeight: 1,
-        }}
-      >
-        {value}
-      </div>
+    <div className="adm-stat">
+      <div className="adm-stat__label">{label}</div>
+      <div className="adm-stat__value" style={{ color: accent }}>{value}</div>
     </div>
   )
 }
@@ -624,12 +593,7 @@ export default function DiscountManager() {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
   const [filter, setFilter] = useState('all')
-  // Restaurant search inside the form
-  const [restSearch, setRestSearch] = useState('')
-  const [showRestDD, setShowRestDD] = useState(false)
   // "Create partner" flow
-  const [addPartnerOpen, setAddPartnerOpen] = useState(false)
-  const [addPartnerSearch, setAddPartnerSearch] = useState('')
   const [newPartner, setNewPartner] = useState(null) // { id, name } — restaurant that will be created as partner
   const [pinPopup, setPinPopup] = useState(null)  // { name, pin } — shown after save
   const [deleteConfirm, setDeleteConfirm] = useState(null)
@@ -649,28 +613,16 @@ export default function DiscountManager() {
   const [testersByDiscount, setTestersByDiscount] = useState({})
 
   const [form, setForm] = useState(EMPTY_FORM)
+  // Link diretti all'editor: `?new=1` (dal bottone Crea), con
+  // `&restaurant=ID` dalla scheda del locale, e `?edit=ID` dalla lista
+  // sconti del locale. Si leggono una volta, a dati caricati.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [urlHandled, setUrlHandled] = useState(false)
 
   // Presi / utilizzati, dal vivo: alimenta sia il pannello "In diretta" sia
   // i contatori di ogni card (vedi `useAdminRedemptions`).
   const live = useAdminRedemptions({ enabled: !!user && isAdmin })
 
-  // Blocca lo scroll del body quando la modal è aperta (impedisce lo "swipe orizzontale" su mobile).
-  useEffect(() => {
-    if (!showForm) return
-    const html = document.documentElement
-    const body = document.body
-    const prevHtmlOverflow = html.style.overflow
-    const prevBodyOverflow = body.style.overflow
-    const prevBodyOverscroll = body.style.overscrollBehavior
-    html.style.overflow = 'hidden'
-    body.style.overflow = 'hidden'
-    body.style.overscrollBehavior = 'contain'
-    return () => {
-      html.style.overflow = prevHtmlOverflow
-      body.style.overflow = prevBodyOverflow
-      body.style.overscrollBehavior = prevBodyOverscroll
-    }
-  }, [showForm])
 
   useEffect(() => {
     if (!isSupabaseConfigured()) {
@@ -679,7 +631,7 @@ export default function DiscountManager() {
     }
     Promise.all([
       supabase.from('discounts').select('*, products:discount_products(id, name, note, photo_url, thumb_url, sort_order), restaurant:restaurants(id, name)').order('created_at', { ascending: false }),
-      supabase.from('restaurants').select('id, name, restaurant_photos(photo_url)').order('name'),
+      supabase.from('restaurants').select('id, name, address, is_published, restaurant_photos(photo_url, thumb_url, sort_order)').order('name'),
       supabase.from('restaurant_partners').select('restaurant_id, pin_code').eq('is_active', true),
       supabase.from('sponsored_placements').select('id, discount_id').not('discount_id', 'is', null),
       // Chi ha un PIN: il PIN non si legge dalla tabella, lo dà l'RPC admin.
@@ -700,7 +652,17 @@ export default function DiscountManager() {
         restaurant_photo: restPhotoMap[d.restaurant_id] || null,
       }))
       setDiscounts(enriched)
-      setRestaurants((restRes.data || []).map((r) => ({ id: r.id, name: r.name, has_pin: !!secrets[r.id]?.verify_pin })))
+      setRestaurants((restRes.data || []).map((r) => {
+        const cover = [...(r.restaurant_photos || [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))[0]
+        return {
+          id: r.id,
+          name: r.name,
+          address: r.address,
+          is_published: r.is_published,
+          photo: cover?.thumb_url || cover?.photo_url || null,
+          has_pin: !!secrets[r.id]?.verify_pin,
+        }
+      }))
       const partnerRows = partRes.data || []
       setPartnerIds(new Set(partnerRows.map((p) => p.restaurant_id)))
       setPartnerPins(Object.fromEntries(partnerRows.filter((p) => p.pin_code).map((p) => [p.restaurant_id, p.pin_code])))
@@ -728,6 +690,29 @@ export default function DiscountManager() {
         setNotifyLogs(map)
       })
   }, [])
+
+  useEffect(() => {
+    if (loading || urlHandled) return
+    setUrlHandled(true)
+    const editId = searchParams.get('edit')
+    const restId = searchParams.get('restaurant')
+    if (editId) {
+      const d = discounts.find((x) => x.id === editId)
+      if (d) handleEdit(d)
+    } else if (searchParams.get('new') === '1' || restId) {
+      openNew(restaurants.some((r) => r.id === restId) ? restId : '')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, urlHandled])
+
+  // Salvato o chiuso l'editor, i parametri del link diretto non servono più:
+  // senza, ricaricando la pagina si riaprirebbe un "Nuovo sconto".
+  useEffect(() => {
+    if (!urlHandled || showForm) return
+    if (searchParams.has('new') || searchParams.has('edit') || searchParams.has('restaurant')) {
+      setSearchParams({}, { replace: true })
+    }
+  }, [urlHandled, showForm, searchParams, setSearchParams])
 
   const handleNotify = async (d, { force = false } = {}) => {
     if (!d?.id) return
@@ -776,11 +761,18 @@ export default function DiscountManager() {
     setForm(EMPTY_FORM)
     setEditing(null)
     setSaveError(null)
-    setRestSearch('')
-    setShowRestDD(false)
     setNewPartner(null)
-    setAddPartnerOpen(false)
-    setAddPartnerSearch('')
+  }
+
+  const closeEditor = () => {
+    setShowForm(false)
+    resetForm()
+  }
+
+  const openNew = (restaurantId = '') => {
+    resetForm()
+    if (restaurantId) setForm((f) => ({ ...f, restaurant_id: restaurantId }))
+    setShowForm(true)
   }
 
   const handleEdit = (d) => {
@@ -1291,101 +1283,29 @@ export default function DiscountManager() {
           .dm-row-actions { grid-area: actions; }
         }
       `}</style>
-      <div style={{ fontFamily: "var(--font-sans)", padding: '28px 32px', maxWidth: 1400, margin: '0 auto' }} className="max-md:!p-[18px]">
+      <div className="adm adm-page adm-page--wide">
         {/* ── Header ── */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
-            gap: 16,
-            flexWrap: 'wrap',
-            marginBottom: 24,
-          }}
-        >
+        <div className="adm-crumbs">Gestione › <b>Sconti & Drop</b></div>
+        <div className="adm-head">
           <div>
-            <div
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
-                letterSpacing: '0.04em',
-                marginBottom: 8,
-              }}
-            >
-              Gestione › <b style={{ color: 'var(--color-ink)', fontWeight: 800 }}>Sconti & Drop</b>
-            </div>
-            <h1
-              style={{
-                fontFamily: 'var(--font-sans)',
-                fontWeight: 900,
-                fontSize: 32,
-                letterSpacing: '-0.025em',
-                margin: 0,
-                color: 'var(--color-ink, #22181C)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 14,
-                flexWrap: 'wrap',
-              }}
-            >
-              Sconti & Drop
-              <span
-                style={{
-                  fontSize: 12,
-                  fontWeight: 800,
-                  letterSpacing: '0.06em',
-                  background: 'var(--color-cream-deep, #F1EBE0)',
-                  color: 'var(--color-ink, #22181C)',
-                  padding: '5px 10px',
-                  borderRadius: 999,
-                  textTransform: 'uppercase',
-                }}
-              >
-                {stats.active} attivi · {stats.drops} drop
-              </span>
-            </h1>
-            <div style={{ marginTop: 6, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', fontSize: 14, fontWeight: 500 }}>
-              Gestisci offerte e drop dei ristoranti della guida.
-            </div>
+            <h1 className="adm-title">Sconti & Drop</h1>
+            <p className="adm-sub">
+              <b style={{ color: 'var(--adm-ink)' }}>{stats.active}</b> online
+              {stats.drops > 0 && <> · <b style={{ color: 'var(--adm-coral-ink)' }}>{stats.drops}</b> drop in corso</>}
+              {' '}· {stats.total} in tutto
+            </p>
           </div>
-          <button
-            type="button"
-            onClick={() => { resetForm(); setShowForm(true) }}
-            style={{
-              padding: '10px 18px',
-              borderRadius: 999,
-              background: 'var(--color-corallo, #E8453C)',
-              color: '#fff',
-              border: 'none',
-              fontSize: 13,
-              fontWeight: 800,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              fontFamily: "var(--font-sans)",
-              boxShadow: '0 6px 14px rgba(232,69,60,0.28)',
-            }}
-          >
-            + Nuovo drop
+          <button type="button" onClick={() => openNew()} className="adm-btn adm-btn--primary">
+            <span aria-hidden style={{ fontSize: 18, lineHeight: 1 }}>+</span> Nuovo sconto
           </button>
         </div>
 
-        {/* ── Stats ── */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: 10,
-            marginBottom: 18,
-          }}
-          className="md:!grid-cols-4"
-        >
+        {/* ── Stats ── (i drop in corallo: è il loro colore) */}
+        <div className="adm-stats">
           <StatCard label="Totali" value={stats.total} />
-          <StatCard label="Attivi" value={stats.active} accent="#2C7A4A" />
-          <StatCard label="Drop attivi" value={stats.drops} accent="var(--color-oro, #B08954)" />
-          <StatCard label="QR utilizzati" value={stats.redemptions} accent="var(--color-corallo, #E8453C)" />
+          <StatCard label="Online" value={stats.active} accent="var(--adm-ok)" />
+          <StatCard label="Drop live" value={stats.drops} accent="var(--adm-coral)" />
+          <StatCard label="Usati" value={stats.redemptions} />
         </div>
 
         {/* ── In diretta: sconti presi e utilizzati ── */}
@@ -1435,7 +1355,7 @@ export default function DiscountManager() {
             icon="🎟"
             title={filter === 'all' ? 'Nessuno sconto creato' : 'Nessuno sconto in questa categoria'}
             subtitle={filter === 'all' ? 'Crea il primo sconto per un ristorante partner.' : 'Cambia filtro per vedere altri sconti.'}
-            cta={filter === 'all' ? { label: '+ Nuovo drop', onClick: () => { resetForm(); setShowForm(true) } } : null}
+            cta={filter === 'all' ? { label: '+ Nuovo sconto', onClick: () => openNew() } : null}
           />
         )}
 
@@ -1550,669 +1470,23 @@ export default function DiscountManager() {
           </div>
         )}
 
-        {/* ── Form modal ── */}
-        <AnimatePresence>
-          {showForm && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => { setShowForm(false); resetForm() }}
-              style={{
-                position: 'fixed',
-                inset: 0,
-                zIndex: 100,
-                background: 'rgba(26,26,31,0.5)',
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: 16,
-                overflow: 'hidden',
-                touchAction: 'none',
-              }}
-            >
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0, y: 20 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                  background: '#fff',
-                  borderRadius: 14,
-                  border: '1px solid #eee',
-                  boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
-                  width: '100%',
-                  maxWidth: 520,
-                  maxHeight: '85vh',
-                  overflowY: 'auto',
-                  overflowX: 'hidden',
-                  overscrollBehavior: 'contain',
-                  touchAction: 'pan-y',
-                  WebkitOverflowScrolling: 'touch',
-                  fontFamily: "var(--font-sans)",
-                }}
-              >
-                {/* Modal header */}
-                <div style={{ padding: '20px 22px 14px', borderBottom: '1px solid #f3f3f3' }}>
-                  <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>
-                    {editing ? 'Modifica sconto' : 'Nuovo sconto'}
-                  </h2>
-                </div>
-
-                {/* Modal body */}
-                <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <FormField label="Ristorante">
-                    {/* When editing, just show the name — can't change it */}
-                    {editing ? (
-                      <div style={{ ...inputStyle, color: 'var(--color-ink)', background: '#f9f9f9' }}>
-                        {restaurants.find((r) => r.id === form.restaurant_id)?.name || '—'}
-                      </div>
-                    ) : form.restaurant_id ? (
-                      /* Partner already selected */
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ ...inputStyle, flex: 1, color: 'var(--color-ink)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#059669', flexShrink: 0 }} />
-                          {restaurants.find((r) => r.id === form.restaurant_id)?.name}
-                        </div>
-                        <button type="button" onClick={() => { setForm((f) => ({ ...f, restaurant_id: '' })); setRestSearch(''); setNewPartner(null) }} style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 20, lineHeight: 1 }}>×</button>
-                      </div>
-                    ) : newPartner ? (
-                      /* Non-partner selected — will be auto-created */
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ ...inputStyle, flex: 1, color: '#B08954', display: 'flex', alignItems: 'center', gap: 6, background: '#fffbf0' }}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#B08954" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>
-                          {newPartner.name}
-                          <span style={{ fontSize: 11, color: '#B08954', background: '#fef3c7', borderRadius: 6, padding: '1px 7px', marginLeft: 4 }}>verrà aggiunto come partner</span>
-                        </div>
-                        <button type="button" onClick={() => { setNewPartner(null); setAddPartnerOpen(false) }} style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 20, lineHeight: 1 }}>×</button>
-                      </div>
-                    ) : (
-                      /* Search UI */
-                      <div style={{ position: 'relative' }}>
-                        <input
-                          type="text"
-                          value={restSearch}
-                          onChange={(e) => { setRestSearch(e.target.value); setShowRestDD(true) }}
-                          onFocus={() => setShowRestDD(true)}
-                          placeholder="Cerca ristorante partner..."
-                          style={{ ...inputStyle, paddingLeft: 36 }}
-                          autoComplete="off"
-                        />
-                        <svg style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-
-                        {showRestDD && (
-                          <div style={{
-                            position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
-                            background: '#fff', border: '1px solid #eee', borderRadius: 10,
-                            boxShadow: '0 8px 24px rgba(0,0,0,0.12)', marginTop: 4,
-                            maxHeight: 220, overflowY: 'auto',
-                          }}>
-                            {(() => {
-                              const q = restSearch.toLowerCase().trim()
-                              // Eligibili: ristoranti con PIN attivo (verify_pin) o
-                              // già presenti come partner nella tabella legacy.
-                              const partners = restaurants.filter(
-                                (r) => (r.has_pin || partnerIds.has(r.id)) && (!q || r.name.toLowerCase().includes(q))
-                              )
-                              return partners.length > 0 ? (
-                                partners.map((r) => (
-                                  <div
-                                    key={r.id}
-                                    onClick={() => { setForm((f) => ({ ...f, restaurant_id: r.id })); setRestSearch(''); setShowRestDD(false) }}
-                                    style={{ padding: '10px 14px', cursor: 'pointer', fontSize: 13, color: 'var(--color-ink)', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid #f5f5f5' }}
-                                    onMouseEnter={(e) => (e.currentTarget.style.background = '#fafafa')}
-                                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                                  >
-                                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#059669', flexShrink: 0 }} />
-                                    {r.name}
-                                  </div>
-                                ))
-                              ) : (
-                                <div style={{ padding: '12px 14px', color: '#999', fontSize: 13 }}>
-                                  {q ? `Nessun partner trovato per "${restSearch}"` : 'Nessun ristorante con PIN attivo'}
-                                </div>
-                              )
-                            })()}
-                            <div
-                              onClick={() => { setShowRestDD(false); setAddPartnerOpen(true); setAddPartnerSearch(restSearch) }}
-                              style={{
-                                padding: '11px 14px', cursor: 'pointer', fontSize: 12, fontWeight: 600,
-                                color: '#B08954', borderTop: '1px solid #f0f0f0',
-                                display: 'flex', alignItems: 'center', gap: 7,
-                                background: '#fffbf0',
-                              }}
-                              onMouseEnter={(e) => (e.currentTarget.style.background = '#fef3c7')}
-                              onMouseLeave={(e) => (e.currentTarget.style.background = '#fffbf0')}
-                            >
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>
-                              Crea partner (ristorante non ancora partner)
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Add-partner sub-panel */}
-                    {addPartnerOpen && !newPartner && (
-                      <div style={{ marginTop: 10, padding: 14, background: '#fffbf0', borderRadius: 10, border: '1px solid #fde68a' }}>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: '#92400e', marginBottom: 10 }}>
-                          Seleziona il ristorante da aggiungere come partner:
-                        </div>
-                        <div style={{ position: 'relative', marginBottom: 8 }}>
-                          <input
-                            type="text"
-                            value={addPartnerSearch}
-                            onChange={(e) => setAddPartnerSearch(e.target.value)}
-                            placeholder="Cerca tra tutti i ristoranti..."
-                            style={{ ...inputStyle, paddingLeft: 32, fontSize: 13 }}
-                            autoFocus
-                            autoComplete="off"
-                          />
-                          <svg style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-                        </div>
-                        <div style={{ maxHeight: 180, overflowY: 'auto', background: '#fff', borderRadius: 8, border: '1px solid #eee' }}>
-                          {restaurants
-                            .filter((r) => !partnerIds.has(r.id) && r.name.toLowerCase().includes(addPartnerSearch.toLowerCase().trim()))
-                            .slice(0, 30)
-                            .map((r) => (
-                              <div
-                                key={r.id}
-                                onClick={() => { setNewPartner({ id: r.id, name: r.name }); setAddPartnerOpen(false) }}
-                                style={{ padding: '9px 12px', cursor: 'pointer', fontSize: 13, color: 'var(--color-ink)', borderBottom: '1px solid #f5f5f5' }}
-                                onMouseEnter={(e) => (e.currentTarget.style.background = '#fafafa')}
-                                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                              >
-                                {r.name}
-                              </div>
-                            ))}
-                        </div>
-                        <button type="button" onClick={() => setAddPartnerOpen(false)} style={{ marginTop: 8, fontSize: 12, color: '#999', background: 'none', border: 'none', cursor: 'pointer' }}>Annulla</button>
-                      </div>
-                    )}
-                  </FormField>
-
-                  <FormField label="Titolo">
-                    <input
-                      type="text"
-                      value={form.title}
-                      onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                      placeholder="Es: 10% su tutta la cena"
-                      style={inputStyle}
-                    />
-                  </FormField>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <FormField label="Tipo">
-                      <select
-                        value={form.discount_type}
-                        onChange={(e) => setForm((f) => ({ ...f, discount_type: e.target.value }))}
-                        style={inputStyle}
-                      >
-                        <option value="percentage">Percentuale (10% sul conto)</option>
-                        <option value="fixed">Importo fisso (-5€ sul conto)</option>
-                        <option value="freebie">Omaggio (qualcosa in regalo)</option>
-                        <option value="special_price">Prezzo speciale (es. tramezzino a 5€)</option>
-                      </select>
-                    </FormField>
-                    <FormField label="Valore">
-                      <input
-                        type="text"
-                        value={form.discount_value}
-                        onChange={(e) => setForm((f) => ({ ...f, discount_value: e.target.value }))}
-                        placeholder="Es: 10, 5"
-                        style={inputStyle}
-                      />
-                    </FormField>
-                  </div>
-
-                  {/* Su cosa vale — le foto dei prodotti coperti dallo sconto */}
-                  <FormField label="Su cosa vale" hint="facoltativo">
-                    <ProductsEditor
-                      products={form.products}
-                      folder={editing || form.restaurant_id || newPartner?.id || 'nuovi'}
-                      onChange={(products) => setForm((f) => ({ ...f, products }))}
-                    />
-                  </FormField>
-
-                  {/* Quando vale — giorni e fasce, che prima si potevano solo
-                      raccontare dentro "Condizioni" */}
-                  <FormField label="Quando vale" hint="facoltativo">
-                    <ValidityPicker
-                      days={form.valid_days}
-                      slots={form.valid_meal_slots}
-                      onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
-                    />
-                  </FormField>
-
-                  <FormField label="Altre regole (opzionale)" hint="una per riga">
-                    <textarea
-                      value={form.conditions}
-                      onChange={(e) => setForm((f) => ({ ...f, conditions: e.target.value }))}
-                      placeholder={'Es: Escluso asporto\nMinimo 2 persone'}
-                      rows={3}
-                      style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.5 }}
-                    />
-                  </FormField>
-
-                  {/* Tipo offerta: selettore unico (sostituisce i due checkbox drop + evidenza) */}
-                  <FormField label="Tipo offerta">
-                    <div
-                      role="radiogroup"
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(3, 1fr)',
-                        gap: 8,
-                        background: 'var(--color-cream, #F5F0E4)',
-                        padding: 4,
-                        borderRadius: 12,
-                      }}
-                    >
-                      {[
-                        { id: 'discount', label: 'Sconto', hint: 'Sempre attivo', color: '#E8453C' },
-                        { id: 'featured', label: 'In evidenza', hint: 'In primo piano', color: '#B08954' },
-                        { id: 'drop', label: '🔥 Drop', hint: 'Tempo limitato', color: '#E8453C' },
-                      ].map((opt) => {
-                        const active = form.kind === opt.id
-                        const switchingToDrop = !active && opt.id === 'drop' && form.kind !== 'drop'
-                        const switchingFromDrop = !active && form.kind === 'drop' && opt.id !== 'drop'
-                        return (
-                          <button
-                            type="button"
-                            key={opt.id}
-                            role="radio"
-                            aria-checked={active}
-                            onClick={() =>
-                              setForm((f) => {
-                                // Converte tra date e datetime-local quando si passa da/a drop.
-                                const next = { ...f, kind: opt.id }
-                                if (switchingToDrop && f.starts_at && !f.starts_at.includes('T')) {
-                                  next.starts_at = `${f.starts_at}T19:00`
-                                }
-                                if (switchingToDrop && f.ends_at && !f.ends_at.includes('T')) {
-                                  next.ends_at = `${f.ends_at}T23:00`
-                                }
-                                if (switchingFromDrop && f.starts_at?.includes('T')) {
-                                  next.starts_at = f.starts_at.split('T')[0]
-                                }
-                                if (switchingFromDrop && f.ends_at?.includes('T')) {
-                                  next.ends_at = f.ends_at.split('T')[0]
-                                }
-                                return next
-                              })
-                            }
-                            style={{
-                              padding: '10px 8px',
-                              borderRadius: 9,
-                              border: 0,
-                              background: active ? '#fff' : 'transparent',
-                              color: active ? opt.color : 'var(--color-ink-55, rgba(34,24,28,0.55))',
-                              fontSize: 12,
-                              fontWeight: active ? 800 : 600,
-                              cursor: 'pointer',
-                              boxShadow: active ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
-                              fontFamily: 'var(--font-sans)',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              gap: 2,
-                              lineHeight: 1.2,
-                            }}
-                          >
-                            <span>{opt.label}</span>
-                            <span style={{ fontSize: 9, fontWeight: 600, opacity: 0.7 }}>{opt.hint}</span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </FormField>
-
-                  {/* Periodo di validità: date picker custom */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <FormField label={form.kind === 'drop' ? 'Inizio' : 'Valido dal'}>
-                      <PrettyDatePicker
-                        value={form.starts_at}
-                        onChange={(v) => setForm((f) => ({ ...f, starts_at: v }))}
-                        withTime={form.kind === 'drop'}
-                        placeholder="Scegli data"
-                      />
-                    </FormField>
-                    <FormField label={form.kind === 'drop' ? 'Fine' : 'Valido fino al'}>
-                      {form.no_end_date ? (
-                        <div style={{ ...inputStyle, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', display: 'flex', alignItems: 'center' }}>
-                          Nessuna scadenza
-                        </div>
-                      ) : (
-                        <PrettyDatePicker
-                          value={form.ends_at}
-                          onChange={(v) => setForm((f) => ({ ...f, ends_at: v }))}
-                          withTime={form.kind === 'drop'}
-                          minDate={form.starts_at?.split('T')[0]}
-                          placeholder="Scegli data"
-                        />
-                      )}
-                      <label
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 6,
-                          marginTop: 7,
-                          fontSize: 11,
-                          fontWeight: 600,
-                          color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={form.no_end_date}
-                          onChange={(e) =>
-                            setForm((f) => ({ ...f, no_end_date: e.target.checked, ends_at: e.target.checked ? '' : f.ends_at }))
-                          }
-                          style={{ accentColor: '#E8453C', width: 13, height: 13, cursor: 'pointer' }}
-                        />
-                        Nessuna data di fine
-                      </label>
-                    </FormField>
-                  </div>
-
-                  {/* Limite utilizzi: unico campo */}
-                  <FormField
-                    label={form.kind === 'drop' ? 'Quantità disponibile' : 'Max utilizzi'}
-                    hint={form.kind === 'drop' ? 'Quanti pezzi metti in palio' : 'Lascia vuoto per illimitato'}
-                  >
-                    <input
-                      type="number"
-                      value={form.max_uses}
-                      onChange={(e) => setForm((f) => ({ ...f, max_uses: e.target.value }))}
-                      placeholder={form.kind === 'drop' ? 'Es. 10' : 'Illimitato'}
-                      min="1"
-                      style={inputStyle}
-                    />
-                  </FormField>
-
-                  {/* Stato attivo / in pausa — programmato, lo decide l'ora d'uscita */}
-                  {!(form.schedule_on && !form.is_test) && (
-                    <label
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: 12,
-                        cursor: 'pointer',
-                        padding: '10px 12px',
-                        background: 'var(--color-cream, #F5F0E4)',
-                        borderRadius: 10,
-                      }}
-                    >
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink)' }}>
-                          {form.is_active ? 'Pubblicato' : 'In pausa'}
-                        </span>
-                        <span style={{ fontSize: 11, color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
-                          {form.is_active ? (form.is_test ? 'Visibile solo a chi è invitato alla prova' : 'Visibile agli utenti') : 'Nascosto agli utenti, modificabile in seguito'}
-                        </span>
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={form.is_active}
-                        onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))}
-                        style={{ accentColor: '#E8453C', width: 18, height: 18 }}
-                      />
-                    </label>
-                  )}
-
-                  {/* Uscita programmata: resta spento fino all'ora scelta, poi
-                      si accende da solo (giro ogni 5 minuti) e, se spuntata,
-                      parte l'email. Non per le prove: quelle non escono. */}
-                  {!form.is_test && !form.was_live && (
-                    <div
-                      style={{
-                        padding: '10px 12px',
-                        background: form.schedule_on ? '#fff' : 'var(--color-cream, #F5F0E4)',
-                        border: form.schedule_on ? '1px solid var(--color-ink, #22181C)' : '1px solid transparent',
-                        borderRadius: 10,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 10,
-                      }}
-                    >
-                      <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, cursor: 'pointer' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink)' }}>
-                            Programma l'uscita
-                          </span>
-                          <span style={{ fontSize: 11, color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
-                            {form.schedule_on
-                              ? `Nascosto fino a ${formatPublishAt(fromLocalInput(form.publish_at)) || '…'}, poi si accende da solo (entro 5 minuti)`
-                              : 'Scegli giorno e ora: fino ad allora non lo vede nessuno'}
-                          </span>
-                        </div>
-                        <input
-                          type="checkbox"
-                          checked={form.schedule_on}
-                          onChange={(e) => {
-                            const on = e.target.checked
-                            setForm((f) => ({
-                              ...f,
-                              schedule_on: on,
-                              publish_at: on && !f.publish_at ? defaultPublishInput() : f.publish_at,
-                              // Creando, l'annuncio all'uscita è la scelta di default.
-                              send_email: on && !editing ? true : f.send_email,
-                            }))
-                          }}
-                          style={{ accentColor: '#E8453C', width: 18, height: 18 }}
-                        />
-                      </label>
-                      {form.schedule_on && (
-                        <FormField label="Esce il" hint="Se il locale non è ancora online, lo sconto aspetta lui ed esce insieme.">
-                          <input
-                            type="datetime-local"
-                            value={form.publish_at}
-                            min={toLocalInput(new Date().toISOString())}
-                            onChange={(e) => setForm((f) => ({ ...f, publish_at: e.target.value }))}
-                            style={inputStyle}
-                          />
-                        </FormField>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Sconto di prova: esiste davvero (si sblocca, il locale lo
-                      convalida) ma lo vedono solo gli admin e le email scritte
-                      qui. Il DB lo nasconde a tutti gli altri. */}
-                  <div
-                    style={{
-                      padding: '10px 12px',
-                      background: form.is_test ? '#fff' : 'var(--color-cream, #F5F0E4)',
-                      border: form.is_test ? '1px dashed var(--color-ink, #22181C)' : '1px solid transparent',
-                      borderRadius: 10,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 10,
-                    }}
-                  >
-                    <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, cursor: 'pointer' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink)' }}>
-                          Sconto di prova
-                        </span>
-                        <span style={{ fontSize: 11, color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
-                          {form.is_test
-                            ? 'Non va online: lo vedono solo gli admin e le email qui sotto, nessuna email parte'
-                            : form.was_test
-                              ? 'Salvando lo pubblichi: da adesso lo vedono tutti'
-                              : 'Per provarlo col locale prima di metterlo online'}
-                        </span>
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={form.is_test}
-                        onChange={(e) => {
-                          const on = e.target.checked
-                          setForm((f) => ({ ...f, is_test: on, testers: on && !f.testers ? readLastTesters() : f.testers }))
-                        }}
-                        style={{ accentColor: '#E8453C', width: 18, height: 18 }}
-                      />
-                    </label>
-                    {form.is_test && (
-                      <FormField
-                        label="Chi lo vede"
-                        hint="Le email degli account, separate da virgola. Lo trovano in home, nel Bi Club e sulla scheda del locale."
-                      >
-                        <input
-                          type="text"
-                          value={form.testers}
-                          onChange={(e) => setForm((f) => ({ ...f, testers: e.target.value }))}
-                          placeholder="nome@esempio.it"
-                          autoCapitalize="none"
-                          autoCorrect="off"
-                          spellCheck={false}
-                          style={inputStyle}
-                        />
-                      </FormField>
-                    )}
-                    {form.was_test && !form.is_test && (() => {
-                      const taken = live.byDiscount[editing]?.taken || 0
-                      if (!taken) return null
-                      return (
-                        <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer', fontSize: 12, color: 'var(--color-ink)' }}>
-                          <input
-                            type="checkbox"
-                            checked={form.clear_test_redemptions}
-                            onChange={(e) => setForm((f) => ({ ...f, clear_test_redemptions: e.target.checked }))}
-                            style={{ accentColor: '#E8453C', width: 16, height: 16, marginTop: 1 }}
-                          />
-                          <span>
-                            Cancella {taken === 1 ? 'lo sconto preso' : `i ${taken} sconti presi`} durante la prova
-                            (così contatori e posti ripartono da zero)
-                          </span>
-                        </label>
-                      )
-                    })()}
-                  </div>
-
-                  {/* Email agli utenti: si sceglie solo creando. Modificando
-                      lo si dice chiaro, perché era proprio la paura di
-                      rimandare l'annuncio a tenere ferme le correzioni. */}
-                  {form.is_test ? null : form.schedule_on ? (
-                    <label
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: 12,
-                        cursor: 'pointer',
-                        padding: '10px 12px',
-                        background: 'var(--color-cream, #F5F0E4)',
-                        borderRadius: 10,
-                      }}
-                    >
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink)' }}>
-                          Manda l'email a tutti gli utenti quando esce
-                        </span>
-                        <span style={{ fontSize: 11, color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
-                          Parte una volta sola, all'ora dell'uscita
-                        </span>
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={form.send_email}
-                        onChange={(e) => setForm((f) => ({ ...f, send_email: e.target.checked }))}
-                        style={{ accentColor: '#E8453C', width: 18, height: 18 }}
-                      />
-                    </label>
-                  ) : editing ? (
-                    <p style={{ fontSize: 12, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', margin: 0, padding: '10px 12px', background: '#f7f7f7', borderRadius: 10 }}>
-                      Salvare le modifiche <strong>non manda nessuna email</strong>: lo sconto si aggiorna e basta.
-                      Per riannunciarlo c'è il megafono sulla card.
-                    </p>
-                  ) : (
-                    <label
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: 12,
-                        cursor: form.is_active ? 'pointer' : 'not-allowed',
-                        padding: '10px 12px',
-                        background: 'var(--color-cream, #F5F0E4)',
-                        borderRadius: 10,
-                        opacity: form.is_active ? 1 : 0.55,
-                      }}
-                    >
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink)' }}>
-                          Manda l'email a tutti gli utenti
-                        </span>
-                        <span style={{ fontSize: 11, color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
-                          {form.is_active
-                            ? 'Parte una volta sola, appena crei lo sconto'
-                            : 'Da in pausa non parte: potrai mandarla col megafono'}
-                        </span>
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={form.is_active && form.send_email}
-                        disabled={!form.is_active}
-                        onChange={(e) => setForm((f) => ({ ...f, send_email: e.target.checked }))}
-                        style={{ accentColor: '#E8453C', width: 18, height: 18 }}
-                      />
-                    </label>
-                  )}
-
-                  {saveError && (
-                    <p style={{ fontSize: 11, color: '#dc2626', margin: 0, padding: 10, background: '#fef2f2', borderRadius: 8, border: '1px solid #fecaca' }}>
-                      {saveError}
-                    </p>
-                  )}
-                </div>
-
-                {/* Modal footer */}
-                <div style={{ padding: '14px 22px 20px', borderTop: '1px solid #f3f3f3', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                  <button
-                    type="button"
-                    onClick={() => { setShowForm(false); resetForm() }}
-                    style={{
-                      padding: '9px 16px',
-                      borderRadius: 8,
-                      background: 'transparent',
-                      border: '1px solid #eee',
-                      color: '#666',
-                      fontSize: 13,
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      fontFamily: "var(--font-sans)",
-                    }}
-                  >
-                    Annulla
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSave}
-                    disabled={saving || !(form.restaurant_id || newPartner?.id) || !form.title || !form.discount_value}
-                    style={{
-                      padding: '9px 18px',
-                      borderRadius: 8,
-                      background: '#E8453C',
-                      border: 'none',
-                      color: '#fff',
-                      fontSize: 13,
-                      fontWeight: 600,
-                      cursor: saving ? 'not-allowed' : 'pointer',
-                      opacity: saving || !(form.restaurant_id || newPartner?.id) || !form.title || !form.discount_value ? 0.5 : 1,
-                      fontFamily: "var(--font-sans)",
-                    }}
-                  >
-                    {saving ? 'Salvataggio...' : editing ? 'Salva modifiche' : form.schedule_on && !form.is_test ? 'Programma sconto' : 'Crea sconto'}
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* ── Editor a tutto schermo (DiscountEditor, 30/09) ── */}
+        <DiscountEditor
+          open={showForm}
+          editing={editing}
+          form={form}
+          setForm={setForm}
+          restaurants={restaurants}
+          partnerIds={partnerIds}
+          newPartner={newPartner}
+          setNewPartner={setNewPartner}
+          saving={saving}
+          saveError={saveError}
+          takenDuringTest={editing ? (live.byDiscount[editing]?.taken || 0) : 0}
+          readLastTesters={readLastTesters}
+          onSave={handleSave}
+          onClose={closeEditor}
+        />
 
         {/* ── PIN popup — shown after auto-creating a partner ── */}
         <AnimatePresence>
@@ -2436,30 +1710,6 @@ export default function DiscountManager() {
 /* ------------------------------------------------------------------ */
 /*  Local helpers                                                      */
 /* ------------------------------------------------------------------ */
-function FormField({ label, hint, children }) {
-  return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 5 }}>
-        <label style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-ink)' }}>{label}</label>
-        {hint && <span style={{ fontSize: 10, color: '#999' }}>{hint}</span>}
-      </div>
-      {children}
-    </div>
-  )
-}
-
-const inputStyle = {
-  width: '100%',
-  padding: '9px 12px',
-  borderRadius: 8,
-  border: '1px solid #eee',
-  background: '#fff',
-  fontSize: 13,
-  color: 'var(--color-ink)',
-  outline: 'none',
-  fontFamily: "var(--font-sans)",
-}
-
 const thStyle = {
   padding: '12px 16px',
   textAlign: 'left',

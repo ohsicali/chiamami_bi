@@ -2,9 +2,15 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../../../lib/supabase'
 import FGroup from './_FGroup'
+import { formatDiscountBadge, formatDiscountBadgeShort } from '../../../lib/utils/discountFormat'
+import { formatPublishAt } from '../../../lib/scheduledPublish'
 
 /**
- * ScontoTab — read-only panel showing the active discount for the restaurant.
+ * ScontoTab — gli sconti del locale (tutti, con lo stato) e il tasto per
+ * crearne uno nuovo già intestato a lui (/admin/discounts?new=1&restaurant=).
+ * Tocchi una riga e si apre l'editor su quello sconto (?edit=).
+ *
+ * (Prima: read-only panel showing the active discount for the restaurant.)
  * Create / edit flow lives in /admin/discounts (full-page manager).
  * This tab is the "quick glance" from inside the drawer.
  *
@@ -13,34 +19,25 @@ import FGroup from './_FGroup'
  */
 export default function ScontoTab({ form, restaurantId }) {
   const [loading, setLoading] = useState(true)
-  const [discount, setDiscount] = useState(null)
-  const [stats, setStats] = useState({ redeemed: 0, total: 0 })
+  const [discounts, setDiscounts] = useState([])
 
   const pinActive = !!form?.verify_pin
 
+  // Tutti gli sconti del locale, non solo il primo attivo: un locale può
+  // averne più d'uno insieme (21/09), e da qui si deve vedere quali sono,
+  // in che stato, e aprirli.
   useEffect(() => {
     if (!restaurantId || !isSupabaseConfigured()) return
     let cancelled = false
     ;(async () => {
       setLoading(true)
-      const nowIso = new Date().toISOString()
       const { data } = await supabase
         .from('discounts')
-        .select('id, title, description, conditions, discount_value, discount_type, drop_time, valid_from, valid_until, is_active, max_redemptions, total_redeemed')
+        .select('id, title, description, conditions, discount_value, discount_type, is_drop, is_active, is_test, publish_at, valid_from, valid_until, drop_ends_at, created_at')
         .eq('restaurant_id', restaurantId)
-        .eq('is_active', true)
-        .or(`valid_until.is.null,valid_until.gt.${nowIso}`)
-        .order('drop_time', { ascending: false, nullsFirst: false })
-        .limit(1)
+        .order('created_at', { ascending: false })
       if (cancelled) return
-      const d = data?.[0] || null
-      setDiscount(d)
-      if (d) {
-        setStats({
-          redeemed: d.total_redeemed || 0,
-          total: d.max_redemptions || 0,
-        })
-      }
+      setDiscounts(data || [])
       setLoading(false)
     })()
     return () => {
@@ -49,7 +46,7 @@ export default function ScontoTab({ form, restaurantId }) {
   }, [restaurantId])
 
   if (loading) {
-    return <FGroup title="Sconto"><div style={{ color: 'var(--color-ink-55, rgba(34,24,28,0.55))', fontSize: 13 }}>Carico…</div></FGroup>
+    return <FGroup title="Sconti"><div style={{ color: 'var(--color-ink-55, rgba(34,24,28,0.55))', fontSize: 13 }}>Carico…</div></FGroup>
   }
 
   // ── Blocker: gli sconti richiedono PIN attivo ──
@@ -119,153 +116,64 @@ export default function ScontoTab({ form, restaurantId }) {
     )
   }
 
-  if (!discount) {
+  const newHref = `/admin/discounts?new=1&restaurant=${restaurantId}`
+
+  if (discounts.length === 0) {
     return (
-      <FGroup title="Sconto per i lettori di Bi">
-        <div
-          style={{
-            background: 'var(--color-cream, #F5F0E4)',
-            borderRadius: 12,
-            padding: 20,
-            textAlign: 'center',
-          }}
-        >
-          <div style={{ fontSize: 30, marginBottom: 8 }} aria-hidden>🎟</div>
-          <div style={{ fontWeight: 800, fontSize: 14, color: 'var(--color-ink)' }}>
-            Nessuno sconto attivo
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', margin: '6px 0 14px' }}>
-            Lo sconto è la leva più forte per far sì che un lettore di Bi scelga questo locale.
-          </div>
-          <Link
-            to={`/admin/discounts?restaurant=${restaurantId}`}
-            style={{
-              display: 'inline-block',
-              background: 'var(--color-corallo, #E8453C)',
-              color: '#fff',
-              textDecoration: 'none',
-              padding: '10px 18px',
-              borderRadius: 999,
-              fontSize: 13,
-              fontWeight: 800,
-              boxShadow: '0 6px 14px rgba(232,69,60,0.28)',
-              fontFamily: 'var(--font-sans)',
-            }}
-          >
-            + Crea uno sconto
-          </Link>
-        </div>
-      </FGroup>
+      <div className="adm-card adm-card--cream" style={{ textAlign: 'center', padding: 26 }}>
+        <div style={{ fontSize: 30, marginBottom: 8 }} aria-hidden>🎟</div>
+        <div style={{ fontWeight: 800, fontSize: 15 }}>Ancora nessuno sconto</div>
+        <p className="adm-help" style={{ margin: '6px auto 16px', maxWidth: 380 }}>
+          Lo sconto è la leva più forte per far scegliere questo locale a chi legge Bi.
+        </p>
+        <Link to={newHref} className="adm-btn adm-btn--primary">+ Crea uno sconto</Link>
+      </div>
     )
   }
 
-  const isDrop = discount.drop_time != null
-  const pct = stats.total ? Math.min(100, Math.round((stats.redeemed / stats.total) * 100)) : null
+  const now = new Date()
+  const live = discounts.filter((d) => discountState(d, now).key === 'live').length
 
   return (
-    <>
-      <FGroup title="Sconto attivo">
-        <div
-          style={{
-            background: 'linear-gradient(135deg, var(--color-green-a, #A3E635), var(--color-green-b, #4ADE80))',
-            borderRadius: 14,
-            padding: 18,
-            color: '#0f2c12',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-            <div style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 24, letterSpacing: '-0.02em' }}>
-              {discount.discount_value}
-            </div>
-            {isDrop && (
-              <span
-                style={{
-                  fontSize: 10,
-                  fontWeight: 900,
-                  background: 'var(--color-corallo, #E8453C)',
-                  color: '#fff',
-                  padding: '3px 8px',
-                  borderRadius: 999,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                🔥 Drop
-              </span>
-            )}
-          </div>
-          <div style={{ fontWeight: 800, fontSize: 16, marginBottom: 4 }}>{discount.title}</div>
-          {discount.description && (
-            <div style={{ fontSize: 13, fontWeight: 600, opacity: 0.85, lineHeight: 1.5 }}>
-              {discount.description}
-            </div>
-          )}
-          {discount.conditions && (
-            <div style={{ fontSize: 12, marginTop: 8, opacity: 0.75, fontStyle: 'italic' }}>
-              {discount.conditions}
-            </div>
-          )}
+    <div className="adm-card" style={{ padding: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px 10px' }}>
+        <div style={{ flex: 1, fontSize: 13, fontWeight: 700, color: 'var(--adm-muted)' }}>
+          {discounts.length === 1 ? '1 sconto' : `${discounts.length} sconti`}
+          {live > 0 ? ` · ${live} online` : ''}
         </div>
-      </FGroup>
-
-      {pct !== null && (
-        <FGroup title="Performance">
-          <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 10 }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 28, letterSpacing: '-0.02em', color: 'var(--color-ink)' }}>
-                {stats.redeemed}
-                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', marginLeft: 8 }}>
-                  / {stats.total}
+        <Link to={newHref} className="adm-btn adm-btn--primary adm-btn--sm">+ Nuovo</Link>
+      </div>
+      <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+        {discounts.map((d) => {
+          const st = discountState(d, now)
+          const badge = formatDiscountBadge(d)
+          return (
+            <li key={d.id}>
+              <Link to={`/admin/discounts?edit=${d.id}`} className="adm-disc-row">
+                <span className={`adm-disc-row__badge${d.is_drop ? ' is-drop' : ''}`}>{formatDiscountBadgeShort(d) || '🎟'}</span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <b>{d.title || badge}</b>
+                  <small>
+                    {d.is_drop ? '🔥 Drop' : 'Convenzione'}
+                    {d.valid_until || d.drop_ends_at ? ` · fino al ${new Date(d.drop_ends_at || d.valid_until).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}` : ' · senza scadenza'}
+                  </small>
                 </span>
-              </div>
-              <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-ink-55, rgba(34,24,28,0.55))', marginTop: 2 }}>
-                Presi
-              </div>
-            </div>
-            <div style={{ flex: 2 }}>
-              <div
-                style={{
-                  height: 10,
-                  background: 'var(--color-cream, #F5F0E4)',
-                  borderRadius: 999,
-                  overflow: 'hidden',
-                }}
-              >
-                <div
-                  style={{
-                    height: '100%',
-                    width: `${pct}%`,
-                    background: 'linear-gradient(135deg, var(--color-green-a, #A3E635), var(--color-green-b, #4ADE80))',
-                    borderRadius: 999,
-                  }}
-                />
-              </div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', marginTop: 6 }}>
-                {pct}% di raggiungimento target
-              </div>
-            </div>
-          </div>
-        </FGroup>
-      )}
-
-      <FGroup title="Edita, pausa, chiudi">
-        <Link
-          to="/admin/discounts"
-          style={{
-            display: 'inline-block',
-            background: 'var(--color-ink, #22181C)',
-            color: '#fff',
-            textDecoration: 'none',
-            padding: '10px 18px',
-            borderRadius: 999,
-            fontSize: 13,
-            fontWeight: 800,
-            fontFamily: 'var(--font-sans)',
-          }}
-        >
-          Apri gestione sconti & drop →
-        </Link>
-      </FGroup>
-    </>
+                <span className={`adm-pill ${st.cls}`}>{st.label}</span>
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
   )
+}
+
+// Lo stato di uno sconto detto in una parola, per la lista del locale.
+function discountState(d, now) {
+  if (d.is_test) return { key: 'test', label: 'Prova', cls: 'adm-pill--test' }
+  if (d.publish_at && !d.is_active) return { key: 'scheduled', label: `⏰ ${formatPublishAt(d.publish_at)}`, cls: 'adm-pill--scheduled' }
+  const end = d.is_drop ? (d.drop_ends_at || d.valid_until) : d.valid_until
+  if (end && new Date(end) <= now) return { key: 'expired', label: 'Scaduto', cls: 'adm-pill--draft' }
+  if (!d.is_active) return { key: 'paused', label: 'In pausa', cls: 'adm-pill--warn' }
+  return { key: 'live', label: 'Online', cls: 'adm-pill--live' }
 }

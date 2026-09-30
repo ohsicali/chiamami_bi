@@ -10,6 +10,9 @@ import EmptyState from '../../components/admin/EmptyState'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import { PhotoOrEmoji } from '../../components/UI/SmartImage'
 import { formatPublishAt } from '../../lib/scheduledPublish'
+import { formatDiscountBadgeShort } from '../../lib/utils/discountFormat'
+import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
+import '../../components/admin/admin-ui.css'
 
 const PAGE_SIZE = 20
 const MONTH_MS = 30 * 24 * 60 * 60 * 1000
@@ -81,7 +84,10 @@ function CategoryTag({ name, colorKey = '' }) {
   )
 }
 
-function DiscountTag({ value }) {
+// Il badge col segno meno ("−20%") come ovunque: `formatDiscountBadgeShort`,
+// mai il valore grezzo del DB (CLAUDE.md → Convenzioni contenuti sconti).
+function DiscountTag({ discount }) {
+  const label = formatDiscountBadgeShort(discount) || discount?.discount_value
   return (
     <span
       style={{
@@ -91,10 +97,10 @@ function DiscountTag({ value }) {
         fontSize: 12,
         fontWeight: 900,
         background: 'linear-gradient(135deg, var(--color-green-a, #A3E635), var(--color-green-b, #4ADE80))',
-        color: '#0f2c12',
+        color: 'var(--color-sconto-ink, #1A4731)',
       }}
     >
-      {value}
+      {label}
     </span>
   )
 }
@@ -134,6 +140,13 @@ export default function AdminRestaurants() {
   const navigate = useNavigate()
   const { allRestaurants: restaurants, loading: dataLoading } = useRestaurants()
   const { categories } = useCategories()
+  const isDesktop = useIsDesktop()
+  // Bozze lasciate vuote dalla vecchia "Nuovo ristorante", che creava la riga
+  // appena si apriva la pagina: restavano in lista come "Nuovo ristorante —".
+  // Da qui si tolgono in un colpo. Quelle eliminate spariscono subito anche
+  // se la lista (useRestaurants) non si ricarica.
+  const [removedIds, setRemovedIds] = useState(() => new Set())
+  const [cleaning, setCleaning] = useState(false)
 
   const [searchParams, setSearchParams] = useSearchParams()
   const queryFromUrl = searchParams.get('q') || ''
@@ -263,7 +276,7 @@ export default function AdminRestaurants() {
       const nowIso = new Date().toISOString()
       const { data } = await supabase
         .from('discounts')
-        .select('id, restaurant_id, discount_value, drop_time, is_active, valid_until')
+        .select('id, restaurant_id, title, discount_value, discount_type, is_drop, drop_time, is_active, valid_until')
         .eq('is_active', true)
         .or(`valid_until.is.null,valid_until.gt.${nowIso}`)
       if (cancelled) return
@@ -322,6 +335,31 @@ export default function AdminRestaurants() {
     }
   }, [user])
 
+  const emptyDrafts = useMemo(
+    () => restaurants.filter((r) =>
+      !removedIds.has(r.id) &&
+      r.is_published === false &&
+      /^nuovo ristorante$/i.test(String(r.name || '').trim()) &&
+      !String(r.address || '').trim()
+    ),
+    [restaurants, removedIds]
+  )
+
+  async function cleanEmptyDrafts() {
+    const ids = emptyDrafts.map((r) => r.id)
+    if (!ids.length) return
+    const ok = window.confirm(`Eliminare ${ids.length === 1 ? 'la bozza vuota' : `le ${ids.length} bozze vuote`} ("Nuovo ristorante", senza indirizzo)?`)
+    if (!ok) return
+    setCleaning(true)
+    const { error } = await supabase.from('restaurants').delete().in('id', ids).eq('is_published', false)
+    setCleaning(false)
+    if (error) {
+      window.alert('Non eliminate: ' + error.message)
+      return
+    }
+    setRemovedIds((prev) => new Set([...prev, ...ids]))
+  }
+
   // Derived stats
   const stats = useMemo(() => {
     const pub = restaurants.filter((r) => r.is_published !== false).length
@@ -334,7 +372,7 @@ export default function AdminRestaurants() {
 
   // Filtered + sorted
   const filtered = useMemo(() => {
-    let result = [...restaurants]
+    let result = restaurants.filter((r) => !removedIds.has(r.id))
 
     if (statusFilter === 'published') result = result.filter((r) => r.is_published !== false)
     else if (statusFilter === 'draft') result = result.filter((r) => r.is_published === false)
@@ -365,7 +403,7 @@ export default function AdminRestaurants() {
     else result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
 
     return result
-  }, [restaurants, statusFilter, categoryFilter, discountFilter, search, sortBy, discountsMap, viewsMap])
+  }, [restaurants, removedIds, statusFilter, categoryFilter, discountFilter, search, sortBy, discountsMap, viewsMap])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const pageClamped = Math.min(page, totalPages)
@@ -395,64 +433,53 @@ export default function AdminRestaurants() {
 
   return (
     <AdminLayout title="Ristoranti">
-      <div style={{ padding: '28px 32px', maxWidth: 1400, margin: '0 auto' }} className="max-md:!p-[18px]">
+      <div className="adm adm-page adm-page--wide">
         {/* ── Header ── */}
-        <div style={{ marginBottom: 24 }}>
-          <div
-            style={{
-              fontSize: 12,
-              fontWeight: 600,
-              color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
-              letterSpacing: '0.04em',
-              marginBottom: 8,
-            }}
-          >
-            Catalogo › <b style={{ color: 'var(--color-ink)', fontWeight: 800 }}>Ristoranti</b>
+        <div className="adm-crumbs">Catalogo › <b>Ristoranti</b></div>
+        <div className="adm-head">
+          <div>
+            <h1 className="adm-title">Ristoranti</h1>
+            <p className="adm-sub">
+              <b style={{ color: 'var(--adm-ink)' }}>{stats.published}</b> in guida
+              {stats.draft > 0 && <> · <b style={{ color: 'var(--adm-ink)' }}>{stats.draft}</b> in bozza</>}
+              {' '}· {stats.total} in tutto
+            </p>
           </div>
-          <h1
-            style={{
-              fontFamily: 'var(--font-sans)',
-              fontWeight: 900,
-              fontSize: 32,
-              letterSpacing: '-0.025em',
-              margin: 0,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 14,
-              color: 'var(--color-ink, #22181C)',
-              flexWrap: 'wrap',
-            }}
-          >
-            Ristoranti
-            <span
-              style={{
-                fontFamily: 'var(--font-sans)',
-                fontSize: 12,
-                fontWeight: 800,
-                letterSpacing: '0.06em',
-                background: 'var(--color-cream-deep, #F1EBE0)',
-                color: 'var(--color-ink, #22181C)',
-                padding: '5px 10px',
-                borderRadius: 999,
-                textTransform: 'uppercase',
-              }}
-            >
-              {stats.total} totali · {stats.published} pubblicati
-            </span>
-          </h1>
-          <div style={{ marginTop: 6, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', fontSize: 14, fontWeight: 500 }}>
-            Filtra, edita, archivia la guida.
-          </div>
+          {isDesktop && (
+            <Link to="/admin/restaurant/new" className="adm-btn adm-btn--primary">
+              <span aria-hidden style={{ fontSize: 18, lineHeight: 1 }}>+</span> Aggiungi un locale
+            </Link>
+          )}
         </div>
+
+        {/* ── Ricerca (telefono: prima di tutto, a tutta larghezza) ── */}
+        {!isDesktop && (
+          <div className="adm-affix" style={{ marginBottom: 12, borderRadius: 999 }}>
+            <span style={{ background: 'transparent', padding: '0 4px 0 16px' }}><SearchIcon w={16} /></span>
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Cerca un locale, una via, una zona…"
+              aria-label="Cerca"
+              style={{ minHeight: 48, fontSize: 16, fontWeight: 500, letterSpacing: 0, padding: '0 16px 0 8px' }}
+            />
+          </div>
+        )}
 
         {/* ── Filters ── */}
         <div
+          className="adm-rest-filters"
           style={{
             display: 'flex',
             gap: 10,
             marginBottom: 16,
             alignItems: 'center',
-            flexWrap: 'wrap',
+            flexWrap: isDesktop ? 'wrap' : 'nowrap',
+            overflowX: isDesktop ? 'visible' : 'auto',
+            scrollbarWidth: 'none',
+            margin: isDesktop ? '0 0 16px' : '0 -16px 16px',
+            padding: isDesktop ? 0 : '2px 16px',
           }}
         >
           <PillTab active={statusFilter === 'all'} onClick={() => setStatusFilter('all')} count={stats.total}>
@@ -494,40 +521,55 @@ export default function AdminRestaurants() {
             <option value="views">Ordina: più visti</option>
           </FilterSelect>
 
-          {/* Small search */}
-          <div
-            style={{
-              marginLeft: 'auto',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              background: '#fff',
-              border: '1px solid var(--color-line, #EAE3D7)',
-              borderRadius: 999,
-              padding: '7px 12px',
-              fontSize: 12,
-              minWidth: 240,
-            }}
-          >
-            <SearchIcon w={13} />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cerca per nome…"
+          {/* Small search (computer) */}
+          {isDesktop && (
+            <div
               style={{
-                flex: 1,
-                border: 'none',
-                outline: 'none',
-                background: 'transparent',
-                fontFamily: 'var(--font-sans)',
+                marginLeft: 'auto',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                background: '#fff',
+                border: '1px solid var(--color-line, #EAE3D7)',
+                borderRadius: 999,
+                padding: '7px 12px',
                 fontSize: 12,
-                color: 'var(--color-ink)',
-                padding: 0,
+                minWidth: 240,
               }}
-            />
-          </div>
+            >
+              <SearchIcon w={13} />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Cerca per nome…"
+                style={{
+                  flex: 1,
+                  border: 'none',
+                  outline: 'none',
+                  background: 'transparent',
+                  fontFamily: 'var(--font-sans)',
+                  fontSize: 12,
+                  color: 'var(--color-ink)',
+                  padding: 0,
+                }}
+              />
+            </div>
+          )}
         </div>
+
+        {/* ── Bozze vuote lasciate dalla vecchia "Nuovo ristorante" ── */}
+        {emptyDrafts.length > 0 && (
+          <div className="adm-note adm-note--warn" style={{ marginBottom: 14, alignItems: 'center', flexWrap: 'wrap' }}>
+            <span aria-hidden>🧹</span>
+            <span style={{ flex: 1, minWidth: 180 }}>
+              {emptyDrafts.length === 1 ? 'C\'è una bozza vuota' : `Ci sono ${emptyDrafts.length} bozze vuote`} («Nuovo ristorante», mai compilate).
+            </span>
+            <button type="button" className="adm-btn adm-btn--sm" onClick={cleanEmptyDrafts} disabled={cleaning}>
+              {cleaning ? 'Elimino…' : 'Eliminale'}
+            </button>
+          </div>
+        )}
 
         {/* ── Table (desktop) / Card list (mobile) ── */}
         {filtered.length === 0 ? (
@@ -537,6 +579,25 @@ export default function AdminRestaurants() {
             subtitle={search ? `Prova a cambiare filtri o ricerca "${search}"` : 'Aggiungi il primo per iniziare la guida.'}
             cta={!search ? { label: '+ Nuovo ristorante', to: '/admin/restaurant/new' } : null}
           />
+        ) : !isDesktop ? (
+          <>
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {paginated.map((r) => (
+                <RestaurantCard
+                  key={r.id}
+                  r={r}
+                  discount={discountsMap[r.id]}
+                  publishAt={scheduledMap[r.id] || null}
+                  views={viewsMap[r.slug] || 0}
+                  categoriesValue={getCategoriesFor(r)}
+                  onEdit={() => openEdit(r.id)}
+                />
+              ))}
+            </ul>
+            <div style={{ marginTop: 12, background: '#fff', border: '1px solid var(--color-line, #EAE3D7)', borderRadius: 18 }}>
+              <Paging page={pageClamped} totalPages={totalPages} totalItems={filtered.length} onChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }) }} />
+            </div>
+          </>
         ) : (
           <div
             style={{
@@ -741,6 +802,83 @@ function MomentQuickToggles({ moments, onToggle, saving, restaurantId }) {
   )
 }
 
+/**
+ * La riga dell'elenco sul telefono: la tabella da dieci colonne lì
+ * scorreva di lato e lasciava vedere solo il nome (e per le bozze vuote
+ * "Nuovo ristorante —"). Qui c'è quello che serve per decidere se aprirla:
+ * foto, nome, zona, stato, sconto attivo. Le modifiche veloci (categorie,
+ * fasce) restano sulla tabella da computer.
+ */
+function RestaurantCard({ r, discount, publishAt, views, categoriesValue, onEdit }) {
+  const cats = (categoriesValue || []).map((n) => getCategoryInfo(n)).filter(Boolean)
+  const isPublished = r.is_published !== false
+  const thumb = proxyImg(pickThumb(r), { w: 200 })
+  const isDrop = discount?.is_drop === true || discount?.drop_time != null
+  const where = [cats[0]?.name, r.neighborhood || (r.city && r.city !== 'Torino' ? r.city : null)].filter(Boolean).join(' · ')
+  const address = String(r.address || '').split(',')[0]
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onEdit}
+        style={{
+          width: '100%',
+          display: 'flex',
+          gap: 12,
+          alignItems: 'center',
+          padding: 10,
+          background: '#fff',
+          border: '1px solid var(--color-line, #EAE3D7)',
+          borderRadius: 18,
+          textAlign: 'left',
+          fontFamily: 'var(--font-sans)',
+          color: 'var(--color-ink)',
+          cursor: 'pointer',
+          boxShadow: '0 1px 2px rgba(34,24,28,0.04)',
+        }}
+      >
+        <span style={{ position: 'relative', width: 72, height: 72, borderRadius: 14, overflow: 'hidden', flexShrink: 0, fontSize: 26, background: 'var(--color-cream, #F5F0E4)', display: 'grid', placeItems: 'center' }}>
+          <PhotoOrEmoji
+            src={thumb}
+            alt=""
+            emoji={cats[0]?.emoji || '🍽️'}
+            imgStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        </span>
+        <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <span style={{ fontWeight: 800, fontSize: 15, letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {r.name}
+          </span>
+          <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-ink-64, rgba(34,24,28,0.64))', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {address || where || 'Indirizzo da compilare'}
+            {address && where ? ` · ${where}` : ''}
+          </span>
+          <span style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginTop: 2 }}>
+            {!isPublished && publishAt ? (
+              <span className="adm-pill adm-pill--scheduled">⏰ {formatPublishAt(publishAt)}</span>
+            ) : isPublished ? (
+              <span className="adm-pill adm-pill--live"><i />In guida</span>
+            ) : (
+              <span className="adm-pill adm-pill--draft"><i />Bozza</span>
+            )}
+            {discount && (
+              <span className={`adm-pill ${isDrop ? 'adm-pill--drop' : 'adm-pill--sconto'}`}>
+                {isDrop ? '🔥 ' : ''}{formatDiscountBadgeShort(discount) || 'Sconto'}
+              </span>
+            )}
+            {views > 0 && (
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-ink-64, rgba(34,24,28,0.64))' }}>
+                👁 {views.toLocaleString('it-IT')}
+              </span>
+            )}
+          </span>
+        </span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(34,24,28,0.35)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} aria-hidden><path d="M9 18l6-6-6-6" /></svg>
+      </button>
+    </li>
+  )
+}
+
 function RestaurantRow({
   r, idx, discount, publishAt, views, moments, momentsSaving,
   categoriesValue, categorySaving, onOpenCategoryEdit,
@@ -749,7 +887,7 @@ function RestaurantRow({
   const cats = (categoriesValue || []).map((n) => getCategoryInfo(n)).filter(Boolean)
   const isPublished = r.is_published !== false
   const thumb = proxyImg(pickThumb(r))
-  const isDrop = discount?.drop_time != null
+  const isDrop = discount?.is_drop === true || discount?.drop_time != null
   const zona = r.city && r.city !== 'Torino' ? r.city : '—'
   return (
     <tr
@@ -834,7 +972,7 @@ function RestaurantRow({
         />
       </Td>
       <Td>{zona}</Td>
-      <Td>{discount ? <DiscountTag value={discount.discount_value} /> : <span style={{ color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>—</span>}</Td>
+      <Td>{discount ? <DiscountTag discount={discount} /> : <span style={{ color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>—</span>}</Td>
       <Td>{formatShortDate(r.created_at)}</Td>
       <Td>
         <b style={{ fontWeight: 900 }}>{views > 0 ? views.toLocaleString('it-IT') : '—'}</b>
