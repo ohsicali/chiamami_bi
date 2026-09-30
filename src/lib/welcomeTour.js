@@ -118,11 +118,33 @@ export function markTourSeen(userId) {
  *   accettato, link della mail, primo accesso con Google), senza aspettare
  *   di atterrare sulla home. Con `origin` ({ x, y, r } in px) il tutorial
  *   entra come un cerchio che si allarga da quel punto: il cerchio corallo
- *   della spunta "Ci sei" diventa la prima schermata, che è corallo anche lei.
+ *   della spunta "Ci sei" diventa la prima schermata, che è corallo anche lei;
+ * - `source: 'drop_win', topic: 'use'` → "Scopri come usare lo sconto"
+ *   dopo aver preso un drop: non il benvenuto ma "Come si usa lo sconto",
+ *   quattro schermate dai «I miei vantaggi» alla cassa (buildUseSlides in
+ *   WelcomeTour.jsx), niente animazione finale, si resta sulla pagina e non
+ *   conta come tutorial visto.
  */
-export function openWelcomeTour({ source = 'settings', origin = null } = {}) {
-  window.dispatchEvent(new CustomEvent(OPEN_TOUR_EVENT, { detail: { source, origin } }))
+export function openWelcomeTour({ source = 'settings', origin = null, topic = null, onClosed = null } = {}) {
+  let taken = false
+  const take = () => { taken = true }
+  window.dispatchEvent(new CustomEvent(OPEN_TOUR_EVENT, { detail: { source, origin, topic, onClosed, take } }))
+  return taken
 }
+
+/**
+ * "Come si usa lo sconto" e aspetta che si chiuda. Si risolve subito se il
+ * tutorial non può aprirsi (Gate non montato, o un altro già aperto): chi
+ * aspetta per aprire il QR non deve restare appeso.
+ */
+export function openUseTour({ source = 'first_claim' } = {}) {
+  if (typeof window === 'undefined') return Promise.resolve()
+  return new Promise((resolve) => {
+    const taken = openWelcomeTour({ source, topic: 'use', onClosed: resolve })
+    if (!taken) resolve()
+  })
+}
+
 
 /**
  * Dopo l'"account confermato": la spunta si disegna e si legge "Ci sei",

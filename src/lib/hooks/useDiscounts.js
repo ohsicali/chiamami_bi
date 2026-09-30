@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase, isSupabaseConfigured } from '../supabase'
 import { ACTIVE_DISCOUNTS_SELECT, fetchPublic, isAdminPath } from '../publicQueries'
+import { celebrateClaim } from '../dropWin'
 
 // Stale-while-revalidate cache for the active discounts list. Painted at mount
 // from localStorage so the home and deals page render instantly on repeat
@@ -106,7 +107,11 @@ export function useRestaurantDiscount(restaurantId) {
 /**
  * Fetch user's redemption for a specific discount
  */
-export function useUserRedemption(discountId, userId) {
+// `discount` (facoltativo): la riga dello sconto, se chi chiama ce l'ha. Serve
+// solo a sapere se è un drop senza chiederlo al DB (vedi celebrateClaim).
+export function useUserRedemption(discountId, userId, discount = null) {
+  const discountRef = useRef(discount)
+  useEffect(() => { discountRef.current = discount })
   const [redemption, setRedemption] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -239,7 +244,8 @@ export function useUserRedemption(discountId, userId) {
         .maybeSingle()
       if (recovered) {
         setRedemption(recovered)
-        return recovered
+        const dropWin = await celebrateClaim({ redemptionId: recovered.id, deal: discountRef.current })
+        return dropWin.shown ? { ...recovered, dropWin } : recovered
       }
       throw error
     }
@@ -247,7 +253,11 @@ export function useUserRedemption(discountId, userId) {
     // Il contatore delle prese lo alza il trigger all'INSERT: niente +1 da
     // qui (fix-verify-and-counters-2026-09-24.sql).
     setRedemption(data)
-    return data
+    // Drop: "Ce l'hai fatta, sei il numero X su 20" al posto del QR. Chi non
+    // passa lo sconto lo fa decidere al DB (vedi src/lib/dropWin.js). Il
+    // risultato torna in `dropWin`: con `shown` chi chiama non apre il QR.
+    const dropWin = await celebrateClaim({ redemptionId: data.id, deal: discountRef.current })
+    return dropWin.shown ? { ...data, dropWin } : data
   }, [discountId, userId])
 
   return { redemption, loading, generateRedemption }

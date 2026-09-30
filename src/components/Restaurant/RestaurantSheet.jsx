@@ -126,7 +126,7 @@ function FloatingDiscountBar({ discounts: discountsFromParent, restaurantId, res
   const discount = usableDiscounts.find((d) => d.id === activeDealId) || primary
   const otherDiscounts = usableDiscounts.filter((d) => d.id !== discount?.id)
 
-  const { redemption, loading: redemptionLoading, generateRedemption } = useUserRedemption(discount?.id, user?.id)
+  const { redemption, loading: redemptionLoading, generateRedemption } = useUserRedemption(discount?.id, user?.id, discount)
 
   if (!discount && discountLoading) return null
   if (!discount || dismissed) return null
@@ -152,6 +152,12 @@ function FloatingDiscountBar({ discounts: discountsFromParent, restaurantId, res
     setGenerating(true)
     try {
       const result = await generateRedemption()
+      // Drop appena preso: dopo la festa il QR non si apre, il popup si
+      // chiude (lo sconto è in «I miei vantaggi»; vedi src/lib/dropWin.js).
+      if (result?.dropWin?.shown) {
+        setPopupOpen(false)
+        return null
+      }
       if (result && checkValidity(discount) !== 'valid_now') {
         setBlockedMessage(discountBlockedMessage(discount))
         return null

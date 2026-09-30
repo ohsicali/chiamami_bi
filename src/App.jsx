@@ -15,6 +15,7 @@ import { prewarmExplore, scheduleExplorePrewarm } from './lib/prewarmExplore'
 import WelcomeTourGate from './components/Onboarding/WelcomeTourGate'
 import RedemptionFeedbackGate from './components/Feedback/RedemptionFeedbackGate'
 import BirthDateGate from './components/Onboarding/BirthDateGate'
+import DropWinGate from './components/Discount/DropWinGate'
 
 // CookieConsent is rendered after first paint via requestIdleCallback so it
 // doesn't compete with the LCP. The library + its CSS adds ~20 kB to the
@@ -311,6 +312,10 @@ export default function App() {
     {/* Sconto convalidato dal locale: festa, stelle e feedback per Bi
         (regole in src/lib/redemptionFeedback.js). */}
     <RedemptionFeedbackGate />
+
+    {/* Drop appena preso: Bi applaude, "sei il numero X su 20", poi il QR
+        (src/lib/dropWin.js). */}
+    <DropWinGate />
 
     {/* Data di nascita per chi non l'ha ancora messa: una volta per visita
         (regole in src/lib/birthDate.js). */}

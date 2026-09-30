@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -47,11 +47,24 @@ export default function WelcomeTourGate() {
     return () => clearTimeout(t)
   }, [user, userId, pathname, open])
 
+  // Chi ha aperto il tutorial e aspetta che si chiuda (openUseTour): lo si
+  // avvisa alla chiusura. Se un tutorial è già aperto la richiesta non si
+  // prende, e chi la fa va avanti subito.
+  const openRef = useRef(false)
+  const onClosedRef = useRef(null)
+  useEffect(() => { openRef.current = open }, [open])
   useEffect(() => {
-    const onOpen = (e) => setOpenAs((cur) => cur ?? {
-      source: e?.detail?.source || 'settings',
-      origin: e?.detail?.origin || null,
-    })
+    const onOpen = (e) => {
+      if (openRef.current) return
+      openRef.current = true
+      e?.detail?.take?.()
+      onClosedRef.current = e?.detail?.onClosed || null
+      setOpenAs({
+        source: e?.detail?.source || 'settings',
+        origin: e?.detail?.origin || null,
+        topic: e?.detail?.topic || null,
+      })
+    }
     window.addEventListener(OPEN_TOUR_EVENT, onOpen)
     return () => window.removeEventListener(OPEN_TOUR_EVENT, onOpen)
   }, [])
@@ -62,11 +75,18 @@ export default function WelcomeTourGate() {
 
   // Arrivato in fondo si va alla home (l'animazione di chiusura sta in
   // WelcomeTour); chi salta resta sulla pagina dov'era.
+  // "Come si usa lo sconto" (dopo un drop preso): si resta dove si era, e
+  // il tutorial di benvenuto non si segna come visto.
   const handleClose = ({ completed, step }) => {
-    markTourSeen(userId)
-    track(completed ? 'onboarding_completed' : 'onboarding_skipped', { step, source })
-    if (completed && pathname !== '/') navigate('/')
+    const topic = openAs?.topic || null
+    if (!topic) markTourSeen(userId)
+    track(completed ? 'onboarding_completed' : 'onboarding_skipped', { step, source, topic })
+    if (completed && !topic && pathname !== '/') navigate('/')
     setOpenAs(null)
+    openRef.current = false
+    const onClosed = onClosedRef.current
+    onClosedRef.current = null
+    onClosed?.({ completed })
   }
 
   return (
@@ -77,6 +97,7 @@ export default function WelcomeTourGate() {
             key="welcome-tour"
             name={greetingName(user, profile)}
             origin={openAs?.origin}
+            topic={openAs?.topic}
             onClose={handleClose}
           />
         )}
