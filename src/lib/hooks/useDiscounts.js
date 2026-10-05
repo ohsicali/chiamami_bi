@@ -277,19 +277,20 @@ let activeDiscountsInFlight = null
 // Chi ha una sessione li chiede a parte, filtrati sulla PROPRIA email in
 // `discount_testers` — anche un admin, che per RLS li vedrebbe tutti, qui
 // riceve solo quelli a cui è invitato. Per quasi tutti la risposta è vuota:
-// il "niente" resta buono qualche minuto, così non è una query in più a
-// ogni pagina.
-const NO_TESTS_TTL = 5 * 60 * 1000
+// il "niente" resta buono un paio di minuti, così non è una query in più a
+// ogni cambio di pagina. Solo in memoria, non in sessionStorage: chi ricarica
+// o riapre il sito chiede di nuovo. Il 05/10 Beatrice era entrata 49 s prima
+// che lo sconto di prova fosse creato e, ricaricando, ha continuato a non
+// vederlo per 5 minuti.
+const NO_TESTS_TTL = 2 * 60 * 1000
+const noTestsAt = new Map()
 async function fetchMyTestDiscounts() {
   let user = null
   try { user = (await supabase.auth.getSession()).data.session?.user || null } catch { /* offline */ }
   const email = user?.email?.toLowerCase()
   if (!email) return []
-  const key = `cb_no_test_discounts:${user.id}`
-  try {
-    const ts = Number(sessionStorage.getItem(key))
-    if (ts && Date.now() - ts < NO_TESTS_TTL) return []
-  } catch { /* private mode */ }
+  const ts = noTestsAt.get(user.id)
+  if (ts && Date.now() - ts < NO_TESTS_TTL) return []
   const { data, error } = await supabase
     .from('discounts')
     .select(`${ACTIVE_DISCOUNTS_SELECT}, testers:discount_testers!inner(email)`)
@@ -300,7 +301,7 @@ async function fetchMyTestDiscounts() {
     .order('created_at', { ascending: false })
   if (error) return []
   if (!data?.length) {
-    try { sessionStorage.setItem(key, String(Date.now())) } catch { /* private mode */ }
+    noTestsAt.set(user.id, Date.now())
     return []
   }
   // `testers` serviva solo al filtro: fuori dall'oggetto sconto.
