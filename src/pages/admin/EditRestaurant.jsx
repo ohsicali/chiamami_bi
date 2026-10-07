@@ -385,7 +385,7 @@ export default function EditRestaurant() {
             {isDesktop && (
               <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                 <a
-                  href={form.slug ? `/r/${form.slug}` : '#'}
+                  href={form.slug ? `/restaurant/${form.slug}` : '#'}
                   target="_blank"
                   rel="noreferrer"
                   className="adm-btn"
@@ -532,7 +532,7 @@ export default function EditRestaurant() {
       <Sheet open={moreOpen} onClose={() => setMoreOpen(false)} title={form.name || 'Ristorante'}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
           <a
-            href={form.slug ? `/r/${form.slug}` : '#'}
+            href={form.slug ? `/restaurant/${form.slug}` : '#'}
             target="_blank"
             rel="noreferrer"
             className="adm-bigpick"

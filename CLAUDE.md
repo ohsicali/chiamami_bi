@@ -585,6 +585,26 @@ verso "/": doppioni della home.
 - I sitelink li sceglie Google da solo e non si possono imporre; quelli dello
   screenshot di TheFork erano un annuncio Google Ads (estensioni sitelink).
 
+## Indicizzazione Google — Search Console (07/10)
+Risposta ai cinque motivi di "Perché le pagine non sono indicizzate":
+- **Schede dei locali per Google**: Googlebot riceve `api/og-restaurant.js`
+  (rewrite per user-agent in `vercel.json`), anche quando "disegna" la pagina.
+  Era nome + tagline → "Scansionata, ma non indicizzata". Ora ha recensione e
+  consiglio di Bi, dati, foto, altri locali e link alle sezioni (test in
+  `tests/og-restaurant.test.mjs`). Un campo nuovo della scheda che conta per
+  chi cerca va aggiunto anche lì. Slug inesistente → 404 + noindex; DB giù → 503.
+- **robots.txt** lascia `/api/public` e `/api/img`: senza, Google non poteva
+  scaricare i dati e le foto della home e delle sezioni. `/ingest`,
+  `/preferenze-email`, `/chiedi/` restano fuori.
+- **Indirizzi sconosciuti**: la Route `*` mostra `NotFoundPage` (noindex), non
+  rimanda più alla home via JavaScript. `/r/:slug` (link del pannello) →
+  308 su `/restaurant/:slug`; `chiamami-bi.vercel.app` → 308 su chiamamibi.com
+  (tranne `/api/` e `/ingest/`).
+- `/privacy` e `/terms` hanno il loro HTML con canonical (`seoPages.js`).
+- Restano **normali** in Search Console: redirect di `http://`, `www.`, `/deals`;
+  le pagine private bloccate da robots; URL con `?utm_`. `www` risponde 307 da
+  Vercel (impostazione del dominio, non del codice): meglio 308.
+
 ## Connettori disponibili — USALI SE ATTIVI
 - **GitHub** — PR, issues, merge (funziona via `gh` CLI, testato e operativo)
 - **Supabase** — se il connettore è attivo, esegui query SQL direttamente. Se non funziona, fornisci SQL all'utente da eseguire nel dashboard Supabase. CLI disponibile (`npx supabase`) ma richiede login/token.

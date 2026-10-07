@@ -62,3 +62,15 @@ test('seoMeta dà a MetaTags gli stessi valori', () => {
   assert.equal(m.title, SEO_PAGES['/sconti'].title)
   assert.equal(m.canonical, `${SITE_URL}/sconti`)
 })
+
+test('robots.txt lascia a Google dati e foto con cui disegna le pagine', () => {
+  const robots = readFileSync(new URL('../public/robots.txt', import.meta.url), 'utf8')
+  assert.match(robots, /^Allow: \/api\/public$/m)
+  assert.match(robots, /^Allow: \/api\/img$/m)
+})
+
+test('un indirizzo sconosciuto non rimanda alla home con JavaScript', () => {
+  const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
+  assert.match(app, /<Route path="\*" element={<NotFoundPage \/>} \/>/)
+  assert.ok(vercel.redirects.some((r) => r.source === '/r/:slug' && r.destination === '/restaurant/:slug' && r.permanent))
+})

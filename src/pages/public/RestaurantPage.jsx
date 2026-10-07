@@ -112,6 +112,7 @@ export default function RestaurantPage() {
   if (!restaurant) {
     return (
       <div className="fixed inset-0 z-50 bg-bg">
+        <MetaTags title="Ristorante non trovato — ChiamamiBi" noindex />
         <div className="flex h-full flex-col items-center justify-center px-6 text-center">
           <div className="mb-4 text-6xl">🍽️</div>
           <h1

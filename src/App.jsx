@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, matchPath, Link } from 'react-router-dom'
+import { Routes, Route, matchPath, Link } from 'react-router-dom'
 import { useLocation } from 'react-router-dom'
 import { lazy, Suspense, useEffect, useRef, useState, Component } from 'react'
 import { PageLoader } from './components/UI/LoadingSpinner'
@@ -104,6 +104,7 @@ const PrivacyPage = lazy(() => import('./pages/public/PrivacyPage'))
 const EmailPreferencesPage = lazy(() => import('./pages/public/EmailPreferencesPage'))
 const FeedbackPage = lazy(() => import('./pages/public/FeedbackPage'))
 const TermsPage = lazy(() => import('./pages/public/TermsPage'))
+const NotFoundPage = lazy(() => import('./pages/public/NotFoundPage'))
 const AuthCallback = lazy(() => import('./pages/public/AuthCallback'))
 const ResetPasswordPage = lazy(() => import('./pages/public/ResetPasswordPage'))
 const SettingsPage = lazy(() => import('./pages/public/SettingsPage'))
@@ -220,7 +221,7 @@ export default function App() {
   // la scheda copre tutto lo schermo. Da lì "indietro" porta a `/`, il feed,
   // che la mappa non la usa.
   // NB: `isEsplora` non va toccato — governa anche il blocco <Routes>, e
-  // /restaurant/:slug non ha una Route propria: finirebbe sul redirect "*".
+  // /restaurant/:slug non ha una Route propria: finirebbe sulla pagina 404 ("*").
   // È `state` e non `ref` di proposito: il valore decide cosa renderizzare, e
   // un ref cambiato non farebbe ri-renderizzare (lo segnala anche eslint).
   const [mapWasVisited, setMapWasVisited] = useState(location.pathname === '/esplora')
@@ -303,7 +304,7 @@ export default function App() {
           <Route path="/feedback" element={<FeedbackPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
         </div>
       )}

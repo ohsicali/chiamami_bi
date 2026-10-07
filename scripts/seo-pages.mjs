@@ -1,5 +1,5 @@
 // Dopo `vite build`: una copia di dist/index.html per ogni sezione principale
-// (/esplora, /sconti, /list, /about, /partner) con titolo, descrizione e
+// (/esplora, /sconti, /list, /about, /partner, /privacy, /terms) con titolo, descrizione e
 // canonical suoi già scritti nell'HTML, in dist/seo/<nome>.html. Le rewrite in
 // vercel.json servono quella copia per l'indirizzo della sezione; il resto del
 // sito continua a ricevere index.html.

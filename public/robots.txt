@@ -15,6 +15,13 @@ Disallow: /profile/
 Disallow: /saved
 Disallow: /settings
 Disallow: /api/
+# Google deve poter scaricare dati e foto per disegnare le pagine:
+# l'app li prende da qui (vedi src/lib/publicQueries.js e proxyImg).
+Allow: /api/public
+Allow: /api/img
+Disallow: /ingest
+Disallow: /preferenze-email
+Disallow: /chiedi/
 Disallow: /*?*utm_
 Disallow: /*?*ref=
 
