@@ -271,7 +271,7 @@ export default function RestaurantDrawer({ restaurantId, onClose, onSaved }) {
               </div>
               <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                 <a
-                  href={form?.slug ? `/r/${form.slug}` : '#'}
+                  href={form?.slug ? `/restaurant/${form.slug}` : '#'}
                   target="_blank"
                   rel="noreferrer"
                   style={{

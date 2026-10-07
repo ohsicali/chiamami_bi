@@ -986,7 +986,7 @@ function RestaurantRow({
             <EditIcon w={13} />
           </button>
           <a
-            href={`/r/${r.slug}`}
+            href={`/restaurant/${r.slug}`}
             target="_blank"
             rel="noreferrer"
             onClick={(e) => e.stopPropagation()}

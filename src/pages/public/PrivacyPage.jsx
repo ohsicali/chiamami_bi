@@ -2,18 +2,14 @@ import Footer from '../../components/Layout/Footer'
 import LegalHeader from '../../components/Layout/LegalHeader'
 import LegalSection from '../../components/Layout/LegalSection'
 import MetaTags from '../../components/SEO/MetaTags'
+import { seoMeta } from '../../lib/seoPages'
 
 const linkStyle = { color: 'var(--color-corallo-ink)', fontWeight: 600, textDecoration: 'underline' }
 
 export default function PrivacyPage() {
   return (
     <div className="min-h-dvh md:min-h-[calc(100dvh-80px)] flex flex-col" style={{ background: 'var(--color-page)' }}>
-      <MetaTags
-        title="Privacy Policy — ChiamamiBi"
-        description="Informativa sulla privacy di ChiamamiBi: come trattiamo i dati personali in conformità al GDPR."
-        url="https://chiamamibi.com/privacy"
-        canonical="https://chiamamibi.com/privacy"
-      />
+      <MetaTags {...seoMeta('/privacy')} />
       <LegalHeader />
 
       <div className="flex-1 max-w-screen-md mx-auto w-full px-5 py-8 md:py-12">

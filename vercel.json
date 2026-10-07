@@ -77,7 +77,14 @@
     }
   ],
   "redirects": [
-    { "source": "/deals", "destination": "/sconti", "permanent": true }
+    {
+      "source": "/:path((?!api/|ingest/).*)",
+      "has": [{ "type": "host", "value": "chiamami-bi.vercel.app" }],
+      "destination": "https://chiamamibi.com/:path",
+      "permanent": true
+    },
+    { "source": "/deals", "destination": "/sconti", "permanent": true },
+    { "source": "/r/:slug", "destination": "/restaurant/:slug", "permanent": true }
   ],
   "rewrites": [
     { "source": "/api/verify-recovery-otp", "destination": "/api/recovery-otp" },
@@ -100,6 +107,8 @@
     { "source": "/list", "destination": "/seo/list.html" },
     { "source": "/about", "destination": "/seo/about.html" },
     { "source": "/partner", "destination": "/seo/partner.html" },
+    { "source": "/privacy", "destination": "/seo/privacy.html" },
+    { "source": "/terms", "destination": "/seo/terms.html" },
     { "source": "/((?!api/).*)", "destination": "/" }
   ]
 }

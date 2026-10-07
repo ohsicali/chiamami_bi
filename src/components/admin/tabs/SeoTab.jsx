@@ -94,7 +94,7 @@ export default function SeoTab({ form, onChange, restaurantId }) {
     }
   }
 
-  const canonical = form.slug ? `https://chiamamibi.com/r/${form.slug}` : 'https://chiamamibi.com/r/…'
+  const canonical = form.slug ? `https://chiamamibi.com/restaurant/${form.slug}` : 'https://chiamamibi.com/restaurant/…'
 
   return (
     <div>

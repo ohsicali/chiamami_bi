@@ -42,6 +42,19 @@ export const SEO_PAGES = {
     title: 'Diventa partner ChiamamiBi — Porta il tuo ristorante nella guida di Bi',
     description: 'Vuoi entrare nella guida ristoranti di Bi a Torino? Candidati come partner: visibilità a 3M+ persone al mese, recensione curata, sconti e drop dedicati.',
   },
+  // Pagine legali: sono nella sitemap, quindi anche loro vogliono il proprio
+  // canonical già nell'HTML. Con quello della home (index.html) Search Console
+  // le dava come "Pagina alternativa con tag canonical appropriato".
+  '/privacy': {
+    name: 'Privacy',
+    title: 'Privacy Policy — ChiamamiBi',
+    description: 'Informativa sulla privacy di ChiamamiBi: come trattiamo i dati personali in conformità al GDPR.',
+  },
+  '/terms': {
+    name: 'Termini e condizioni',
+    title: 'Termini e Condizioni — ChiamamiBi',
+    description: 'Termini di utilizzo del servizio ChiamamiBi: regole di accesso, contenuti, sconti e responsabilità.',
+  },
 }
 
 // Le props per <MetaTags> di una sezione.

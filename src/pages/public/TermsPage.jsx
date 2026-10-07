@@ -2,18 +2,14 @@ import Footer from '../../components/Layout/Footer'
 import LegalHeader from '../../components/Layout/LegalHeader'
 import LegalSection from '../../components/Layout/LegalSection'
 import MetaTags from '../../components/SEO/MetaTags'
+import { seoMeta } from '../../lib/seoPages'
 
 const linkStyle = { color: 'var(--color-corallo-ink)', fontWeight: 600, textDecoration: 'underline' }
 
 export default function TermsPage() {
   return (
     <div className="min-h-dvh md:min-h-[calc(100dvh-80px)] flex flex-col" style={{ background: 'var(--color-page)' }}>
-      <MetaTags
-        title="Termini e Condizioni — ChiamamiBi"
-        description="Termini di utilizzo del servizio ChiamamiBi: regole di accesso, contenuti, sconti e responsabilità."
-        url="https://chiamamibi.com/terms"
-        canonical="https://chiamamibi.com/terms"
-      />
+      <MetaTags {...seoMeta('/terms')} />
       <LegalHeader />
 
       <div className="flex-1 max-w-screen-md mx-auto w-full px-5 py-8 md:py-12">
