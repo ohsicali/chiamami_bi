@@ -64,12 +64,16 @@ export function applyRedemptionChange(rows, payload) {
  */
 export function deriveRedemptionStats(rows, now) {
   const byDiscount = {}
+  // Le righe di ogni sconto, per i conti dei drop coi giorni contati (da
+  // usare / persi, src/lib/dropStats.js): solo riferimenti, niente copie.
+  const rowsByDiscount = {}
   const today = { taken: 0, used: 0 }
   const events = []
   const usedEvents = []
   const dayStart = startOfDay(now)
   for (const r of rows.values()) {
     const c = byDiscount[r.discount_id] || (byDiscount[r.discount_id] = { taken: 0, used: 0 })
+    ;(rowsByDiscount[r.discount_id] || (rowsByDiscount[r.discount_id] = [])).push(r)
     c.taken += 1
     if (ts(r.generated_at) >= dayStart) today.taken += 1
     events.push({ key: `taken:${r.id}`, kind: 'taken', at: r.generated_at, row: r })
@@ -86,6 +90,7 @@ export function deriveRedemptionStats(rows, now) {
   usedEvents.sort(newestFirst)
   return {
     byDiscount,
+    rowsByDiscount,
     today,
     events,
     usedEvents,

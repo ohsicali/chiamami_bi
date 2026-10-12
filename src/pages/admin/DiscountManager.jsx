@@ -10,6 +10,7 @@ import EmptyState from '../../components/admin/EmptyState'
 import DiscountEditor from '../../components/admin/DiscountEditor'
 import { isExpired as isDiscountExpired, discountEndsAt, maxQuantity, chooseFeaturedDeal, canFeatureInHome } from '../../lib/discounts'
 import { useAdminRedemptions } from '../../lib/hooks/useAdminRedemptions'
+import { dropPeopleFromRows, dropPeopleNotes, dropPeopleSummary } from '../../lib/dropStats'
 import LiveRedemptionsPanel from '../../components/admin/LiveRedemptionsPanel'
 import { toLocalInput, fromLocalInput, publishAtError, formatPublishAt } from '../../lib/scheduledPublish'
 
@@ -112,14 +113,16 @@ function countdown(target) {
   return { label: 'Al termine', value: `${h}h ${m}m` }
 }
 
-function DropCard({ d, testers, wait, selected, notifyLog, notifying, active, partnerTotal, flash, home, onSelect, onEdit, onNotify, onToggleActive, onHome, onDelete }) {
+function DropCard({ d, testers, people, selected, notifyLog, notifying, active, partnerTotal, flash, home, onSelect, onEdit, onNotify, onToggleActive, onHome, onDelete }) {
   const isDrop = d.is_drop
   const isFeatured = d.is_featured && !d.is_drop
   const ttl = countdown(discountEndsAt(d))
   // "Presi" = QR/codice generato, "utilizzati" = convalidato dal locale.
   // La barra dei posti conta i presi: è su quelli che il sito pubblico
   // decide "esaurito" (vedi `claimedCount` in lib/discounts.js).
-  const taken = d.generated_count || 0
+  // Drop coi giorni contati (12/10): i posti sono quelli occupati adesso
+  // (usati + da usare); chi l'ha perso ha lasciato il posto alla lista.
+  const taken = people ? people.taken : d.generated_count || 0
   const used = d.redeemed_count || 0
   const limit = maxQuantity(d)
   const pct = limit ? Math.min(100, Math.round((taken / limit) * 100)) : null
@@ -308,24 +311,28 @@ function DropCard({ d, testers, wait, selected, notifyLog, notifying, active, pa
               {usedPct}% convalidati
             </span>
           )}
-          {/* Drop coi giorni contati (12/10): quanti giorni ha chi lo prende,
-              chi aspetta in lista e quanti posti sono passati di mano. */}
+          {/* Drop coi giorni contati (12/10): chi deve ancora usarlo, chi
+              l'ha perso (tempo scaduto) e chi aspetta in lista — gli stessi
+              numeri che il locale vede in /verify (src/lib/dropStats.js). */}
+          {people && (
+            <>
+              <Counter label="Da usare" value={people.toUse} />
+              <Counter label="In lista" value={people.waiting} tone={people.waiting > 0 ? 'coral' : null} />
+              <Counter label="Persi" value={people.lost} />
+            </>
+          )}
           {isDrop && d.claim_window_days > 0 && (
             <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-corallo-ink, #C53A33)' }}>
               ⏳ {d.claim_window_days} giorni per usarlo
             </span>
           )}
-          {wait?.waiting > 0 && (
-            <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--color-ink, #22181C)' }}>
-              🔔 {wait.waiting} in lista d’attesa
-            </span>
-          )}
-          {wait?.promoted > 0 && (
-            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
-              {wait.promoted} {wait.promoted === 1 ? 'posto passato' : 'posti passati'} dalla lista
-            </span>
-          )}
         </div>
+        {people && dropPeopleNotes(people).length > 1 && (
+          <div style={{ fontSize: 11, fontWeight: 600, lineHeight: 1.45, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', marginTop: 6 }}>
+            {/* La prima riga ("chi lo prende ha 7 giorni…") l'admin la sa già. */}
+            {dropPeopleNotes(people).slice(1).join(' ')}
+          </div>
+        )}
         {pct !== null && (
           <div style={{ marginTop: 10 }}>
             <div
@@ -357,7 +364,10 @@ function DropCard({ d, testers, wait, selected, notifyLog, notifying, active, pa
                 justifyContent: 'space-between',
               }}
             >
-              <span>{taken} / {limit} posti presi</span>
+              <span>
+                {taken} / {limit} posti presi
+                {people?.soldOut && <b style={{ color: 'var(--color-corallo-ink, #C53A33)', marginLeft: 6 }}>· SOLD OUT</b>}
+              </span>
               <span>{pct}%</span>
             </div>
           </div>
@@ -468,6 +478,7 @@ function DropCard({ d, testers, wait, selected, notifyLog, notifying, active, pa
    `key` nuova rimonta lo span e fa ripartire l'animazione. */
 function Counter({ label, value, tone, flashKey }) {
   const green = tone === 'green'
+  const coral = tone === 'coral'
   return (
     <span
       key={flashKey || 'still'}
@@ -477,7 +488,7 @@ function Counter({ label, value, tone, flashKey }) {
         gap: 5,
         padding: '4px 10px',
         borderRadius: 999,
-        background: green ? '#E9F8EF' : 'var(--color-cream, #F5F0E4)',
+        background: green ? '#E9F8EF' : coral ? '#FDEDEB' : 'var(--color-cream, #F5F0E4)',
         fontSize: 11,
         fontWeight: 700,
         color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
@@ -485,7 +496,7 @@ function Counter({ label, value, tone, flashKey }) {
       }}
     >
       {label}
-      <b style={{ fontSize: 14, fontWeight: 900, color: green ? '#2C7A4A' : 'var(--color-ink, #22181C)' }}>{value}</b>
+      <b style={{ fontSize: 14, fontWeight: 900, color: green ? '#2C7A4A' : coral ? 'var(--color-corallo-ink, #C53A33)' : 'var(--color-ink, #22181C)' }}>{value}</b>
     </span>
   )
 }
@@ -1614,7 +1625,9 @@ export default function DiscountManager() {
                 key={d.id}
                 d={d}
                 testers={testersByDiscount[d.id]}
-                wait={waitByDiscount[d.id]}
+                people={d.is_drop && d.claim_window_days > 0
+                  ? dropPeopleSummary(dropPeopleFromRows(d, live.rowsByDiscount?.[d.id], waitByDiscount[d.id], new Date(live.now)))
+                  : null}
                 selected={selectedIds.has(d.id)}
                 notifyLog={notifyLogs[`${d.is_drop ? 'drop' : 'discount'}:${d.id}`]}
                 notifying={notifyingId === d.id}

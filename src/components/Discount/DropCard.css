@@ -306,6 +306,19 @@
   cursor: pointer;
 }
 .dropcard--narrow .dropcard__ctanote { font-size: 9.5px; margin-top: 7px; }
+/* Drop esaurito coi giorni contati (12/10): come funziona la lista d'attesa
+   deve leggersi bene, non stare in una riga da 9px sotto il bottone. */
+.dropcard__ctanote--waitlist,
+.dropcard__ctanote--waiting {
+  font-size: calc(11 * var(--dc-k));
+  font-weight: 600;
+  color: #fff;
+  background: rgba(60, 10, 6, 0.16);
+  border-radius: calc(12 * var(--dc-k));
+  padding: calc(8 * var(--dc-k)) calc(10 * var(--dc-k));
+}
+.dropcard--narrow .dropcard__ctanote--waitlist,
+.dropcard--narrow .dropcard__ctanote--waiting { font-size: 11px; padding: 8px 9px; }
 
 /* Il titolo della taglia larga non esiste finché la card non è larga. */
 .dropcard__headline { display: none; }
