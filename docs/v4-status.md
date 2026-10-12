@@ -40,7 +40,7 @@ dove siamo. Aggiorna a ogni step importante.
 | Avvisi agli admin su Telegram (sconto usato, recensione, suggerimento, candidatura) | — | 🚧 In review | Branch `claude/sleepy-ride-2d13rk`. SQL `supabase/admin-telegram-2026-09-30.sql` **già eseguito** il 30/09 (provato in transazione annullata: i 4 messaggi, suggerimento anon incluso; con l'invio in errore la convalida passa). Bot **@LaGuidaDiBi_bot** e gruppo **"La Guida di Bi"** configurati nel Vault il 30/09; messaggio di prova arrivato. Se il gruppo diventa supergruppo l'id cambia (`-100…`): rifare getUpdates e aggiornare `telegram_admin_chat_id`. Vedi CLAUDE.md. |
 | Drop coi giorni contati — 7 giorni per usarlo, lista d'attesa, email a tappe | — | 🚧 In review | PR #340, branch `claude/drop-giorni-contati`. SQL `supabase/drop-claim-window-2026-10-12.sql` **eseguito il 12/10** dal connettore, tranne REVOKE/DROP (il connettore vuole una conferma che non arriva): quelli sono in `supabase/drop-claim-window-permessi-2026-10-12.sql`, **eseguito dal proprietario nel SQL Editor il 12/10** (verificato: giro solo service role, lista scritta solo dalle RPC, `my_claim_rank` con `expires_at`). Dopo il deploy: `supabase/drop-claims-cron-2026-10-12.sql`. Vedi CLAUDE.md "Drop coi giorni contati" e EMAIL-FLOWS §7f. |
 | Feedback dopo la convalida (festa, stelle, Bi che ringrazia, email 30 min / 1 giorno, recensioni in /verify) | #320 | ✅ Merged (9d3cf06) | SQL `redemption-feedback-2026-09-29.sql`, `verify-feedback-list-2026-09-29.sql` e `redemption-feedback-cron-2026-09-29.sql` **tutti eseguiti** il 29/09. Giro email attivo (pg_cron `chiamamibi-feedback-asks`, ogni 10 min; prima chiamata: 200). Vedi sezione "29/09 — feedback" sotto e CLAUDE.md. |
-| Drop: chi l'ha preso e chi è in lista in /verify e nel pannello, «sei il n° 134» | — | 🚧 In review | Branch `claude/drop-lista-verify`. SQL `supabase/verify-drops-overview-2026-10-12.sql` **eseguito il 12/10** col connettore (provato come anon in transazione annullata con un device token finto di Piadora: 23/50 presi, 0 usati, 23 da usare, 0 in lista; token sbagliato → `unauthorized`). Vedi sezione "12/10 — lista d'attesa" sotto e CLAUDE.md "Drop coi giorni contati". |
+| Drop: chi l'ha preso e chi è in lista in /verify e nel pannello, «sei il n° 134» | — | 🚧 In review | PR #344, branch `claude/drop-lista-verify`. SQL `supabase/verify-drops-overview-2026-10-12.sql` e `supabase/drop-claims-open-until-2026-10-12.sql` **eseguiti il 12/10** col connettore (provato come anon in transazione annullata con un device token finto di Piadora: 23/50 presi, 0 usati, 23 da usare, 0 in lista; token sbagliato → `unauthorized`). Vedi sezione "12/10 — lista d'attesa" sotto e CLAUDE.md "Drop coi giorni contati". |
 
 ## 12/10 — lista d'attesa: i numeri al locale e all'admin, il posto in grande
 
@@ -69,6 +69,14 @@ Richiesta del proprietario dopo il merge di #340.
   (era 9,5 px) e dice che non è finita: chi l'ha preso ha 7 giorni, se non lo usa
   il posto passa al primo in lista, più sei in alto prima tocca a te, quanti sono
   già in lista.
+- **Il drop esaurito coi giorni contati resta nel Bi Club** anche dopo un drop
+  nuovo, finché un posto può ancora liberarsi (deciso dal proprietario, 12/10):
+  nuova colonna `discounts.claims_open_until` (la scadenza più lontana fra i
+  riscatti ancora da usare) tenuta dal trigger `tr_claims_open_until`. SQL
+  `supabase/drop-claims-open-until-2026-10-12.sql` **eseguito il 12/10** col
+  connettore, dopo la prova in transazione annullata (backfill = max scadenza,
+  scende quando la riga più lontana scade, NULL quando non resta nessuno, NULL
+  sui drop senza giorni contati). Piadora: 19/10 alle 19:24.
 - **«Sei il numero 134 nella lista d'attesa»**: appena ci si mette in lista
   (home telefono e computer, Bi Club) si apre una card corallo con Bi che saluta,
   il numero che sale, "se chi ha preso il drop non lo usa entro 7 giorni… passerai

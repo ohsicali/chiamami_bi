@@ -210,7 +210,11 @@ solo finché è l'ultimo drop uscito**: appena esce un drop nuovo (anche con
 posti liberi) sparisce da home e Bi Club — uscito Piadora, Borghese via
 (deciso dal proprietario). Un drop programmato non ancora iniziato non lo
 scalza. Sparisce anche se scade o viene disattivato. Dal 12/10 un drop esaurito **coi giorni contati** non ha il
-bottone spento ma «Mettiti in lista» (vedi "Drop coi giorni contati").
+bottone spento ma «Mettiti in lista» (vedi "Drop coi giorni contati"), e
+**resta nel Bi Club anche dopo un drop nuovo finché un posto può ancora
+liberarsi** (`canFreeSeat`: qualcuno che l'ha preso ha ancora giorni per
+usarlo, colonna `discounts.claims_open_until` tenuta dal DB — deciso dal
+proprietario il 12/10). La vetrina della home resta all'ultimo drop uscito.
 - **Home** (tutte e due, `HomeFeedV4` e `HomeDesktopClassic`): lo sconto in
   evidenza lo sceglie `pickFeaturedDeal()` / `chooseFeaturedDeal()` in
   `src/lib/discounts.js`. **Vince l'ultima cosa successa** (deciso il 30/09):
@@ -457,6 +461,12 @@ e, al posto del bottone spento, **«Mettiti in lista»**.
   admin leggono le stesse parole: `src/lib/dropStats.js` (test in
   `tests/drop-claims.test.mjs`). /verify mostra **tutti** gli sconti attivi
   del locale, il drop per primo (prima uno solo, a caso fra drop e convenzione).
+- **Il drop esaurito resta in vista finché un posto può liberarsi** (12/10):
+  `discounts.claims_open_until` = la scadenza più lontana fra i riscatti
+  ancora da usare, scritta dal trigger `tr_claims_open_until` a ogni riscatto
+  nuovo/usato/scaduto (SQL `supabase/drop-claims-open-until-2026-10-12.sql`,
+  **eseguito**). `filterShownDrops` tiene l'esaurito se `canFreeSeat`, anche
+  quando è uscito un drop più nuovo.
 - **«Sei il numero 134 nella lista d'attesa»** (12/10): appena ci si mette in
   lista si apre una card corallo col numero in grande, "se non lo usano entro 7
   giorni passerai tu" e "Buona fortuna!" (`WaitlistJoined`, parole in
