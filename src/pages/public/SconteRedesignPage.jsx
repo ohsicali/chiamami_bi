@@ -102,9 +102,9 @@ function SconteRedesignPageInner() {
   // selezionata: nascondeva Shoro (Poirino) e Birrificio (Anzola) a chi aveva
   // Torino selezionata — 6 sconti attivi in admin, 4 visibili qui.
   // La selezione è corretta solo in home (unica vetrina curata).
-  // Il drop esaurito più recente resta in lista con lo stato "sold out"
-  // nella card (30/09: dal 28/09 sparivano); gli esauriti più vecchi no
-  // (vedi `filterShownDrops`). Il conteggio nel tab e "N attivi" restano
+  // Il drop esaurito resta in lista con lo stato "sold out" solo finché è
+  // l'ultimo drop uscito: quando ne esce uno nuovo sparisce (12/10, vedi
+  // `filterShownDrops`). Il conteggio nel tab e "N attivi" restano
   // sulla definizione stretta di "attivo".
   const drops = useMemo(() => sortByExpiry(filterShownDrops(allRaw)), [allRaw])
   const conv = useMemo(() => filterActiveConventions(allRaw), [allRaw])

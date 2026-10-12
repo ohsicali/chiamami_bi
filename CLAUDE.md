@@ -205,8 +205,11 @@ nuovo visibile**: un drop esaurito resta con la scritta "sold out" e il
 bottone "Esaurito" spento. **Ne resta uno solo, l'ultimo uscito**
 (`filterShownDrops`, per `drop_starts_at`): il 30/09 Gelateria Borghese sì,
 Shoro −30% (esaurito dal 22/09) no — deciso dal proprietario. Quando va
-esaurito un drop più nuovo prende lui il posto. Sparisce anche se scade o
-viene disattivato. Dal 12/10 un drop esaurito **coi giorni contati** non ha il
+esaurito un drop più nuovo prende lui il posto. **Dal 12/10 l'esaurito resta
+solo finché è l'ultimo drop uscito**: appena esce un drop nuovo (anche con
+posti liberi) sparisce da home e Bi Club — uscito Piadora, Borghese via
+(deciso dal proprietario). Un drop programmato non ancora iniziato non lo
+scalza. Sparisce anche se scade o viene disattivato. Dal 12/10 un drop esaurito **coi giorni contati** non ha il
 bottone spento ma «Mettiti in lista» (vedi "Drop coi giorni contati").
 - **Home** (tutte e due, `HomeFeedV4` e `HomeDesktopClassic`): lo sconto in
   evidenza lo sceglie `pickFeaturedDeal()` / `chooseFeaturedDeal()` in

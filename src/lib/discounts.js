@@ -140,17 +140,19 @@ function dropStarted(d, now) {
 }
 
 /**
- * I drop da MOSTRARE (home e Bi Club): tutti quelli attivi più UN SOLO drop
- * esaurito, l'ultimo uscito. Deciso dal proprietario il 30/09: il drop
- * appena finito resta col "sold out" (Gelateria Borghese), quelli esauriti
- * prima no (Shoro −30%, esaurito dal 22/09) — altrimenti la vetrina si
- * riempirebbe di drop che non si possono più prendere. Quando un nuovo drop
- * va esaurito prende lui il posto, senza toccare niente a mano.
+ * I drop da MOSTRARE (home e Bi Club): tutti quelli attivi più, al massimo,
+ * UN drop esaurito — e solo se è l'ultimo drop uscito. Deciso dal
+ * proprietario il 30/09: il drop appena finito resta col "sold out"
+ * (Gelateria Borghese), quelli esauriti prima no (Shoro −30%, esaurito dal
+ * 22/09). Il 12/10: quando esce un drop nuovo, l'esaurito sparisce anche se
+ * il nuovo ha ancora posti (Piadora uscito → Borghese via dal Bi Club). Un
+ * drop programmato che non è ancora iniziato non lo scalza.
  */
 export function filterShownDrops(list, now = new Date()) {
   const visible = filterVisibleDrops(list, now)
-  const soldOut = visible.filter((d) => isSoldOut(d))
-  const latest = soldOut.reduce((best, d) => (!best || dropStartMs(d) > dropStartMs(best) ? d : best), null)
+  const latest = visible
+    .filter((d) => dropStarted(d, now))
+    .reduce((best, d) => (!best || dropStartMs(d) > dropStartMs(best) ? d : best), null)
   return visible.filter((d) => !isSoldOut(d) || d === latest)
 }
 
