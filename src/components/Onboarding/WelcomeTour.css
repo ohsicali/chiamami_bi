@@ -1273,3 +1273,41 @@
   font-weight: 700;
   color: var(--color-ink-70);
 }
+
+/* ── Drop coi giorni contati (12/10) ──────────────────────────────────
+   In alto il drop preso con la barra del tempo che si svuota; sotto un
+   drop esaurito e «Mettiti in lista». */
+.wt-time-bar i { transition: transform 60ms linear; }
+.wt-soldout {
+  position: relative;
+  padding: 12px 14px;
+  border-radius: var(--radius-lg);
+  background: #fff;
+  box-shadow: var(--shadow-lg);
+}
+.wt-soldout .wt-deal-row span { color: var(--color-ink-55); }
+.wt-badge-off { filter: grayscale(1); opacity: 0.55; }
+.wt-list-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--color-ink);
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 800;
+  overflow: hidden;
+  transition: background-color var(--dur-menu) var(--ease-out), color var(--dur-menu) var(--ease-out);
+}
+.wt-list-btn.is-on {
+  background: var(--color-corallo-wash, #fdedeb);
+  color: var(--color-corallo-ink, #c53a33);
+}
+.wt-finger.wt-finger-list { left: 55%; bottom: 12px; }
+@media (prefers-reduced-motion: reduce) {
+  .wt-time-bar i, .wt-list-btn { transition: none; }
+}

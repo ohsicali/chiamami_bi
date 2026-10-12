@@ -20,6 +20,10 @@ import DiscountDetailPopup from '../../components/Discount/DiscountDetailPopup'
 import { checkValidity, formatShortPill, formatDays } from '../../lib/validity'
 import { filterActiveDrops, filterShownDrops, filterActiveConventions, sortByExpiry, msUntilEnd, isSoldOut, claimRefusal } from '../../lib/discounts'
 import DropCard from '../../components/Discount/DropCard'
+import MyDropCard from '../../components/Discount/MyDropCard'
+import { useDropWaitlist } from '../../lib/hooks/useDropWaitlist'
+import { dropCtaState, waitlistJoinMessage } from '../../lib/dropWaitlist'
+import { claimDeadline, claimWindowDays, formatClaimDeadlineShort, hasClaimWindow } from '../../lib/dropClaim'
 import AdSlot from '../../components/Ads/AdBanner'
 import { LIST_AD_AFTER } from '../../lib/adSlots'
 import { formatDiscountValue, formatDiscountBadge, discountContextWord } from '../../lib/utils/discountFormat'
@@ -89,7 +93,7 @@ function SconteRedesignPageInner() {
 
   const { discounts: allRaw, activeDrops: allActiveDrops, featured: allFeatured, regular: allRegular, loading } =
     useActiveDiscounts()
-  const { active: allMyActive, used: allMyUsed, loading: myLoading } = useMyDiscounts(user?.id)
+  const { active: allMyActive, used: allMyUsed, expired: allMyExpired, loading: myLoading } = useMyDiscounts(user?.id)
 
   // BLOCCO 0 — nessun filtro città qui, ed è deliberato.
   // Il Bi Club è il catalogo completo: ogni sconto attivo compare sempre,
@@ -113,13 +117,16 @@ function SconteRedesignPageInner() {
   // ("Apri QR" / "Già usato") instead of hiding entries the user already took.
   const redemptionByDealId = useMemo(() => {
     const map = new Map()
+    // Un drop non usato in tempo (12/10): la card dice "Tempo scaduto",
+    // non "Sblocca" (il DB rifiuterebbe comunque un secondo riscatto).
+    ;(allMyExpired || []).forEach((r) => map.set(r.discount_id, r))
     allMyActive.forEach((r) => map.set(r.discount_id, { ...r, status: r.status || 'generated' }))
     allMyUsed.forEach((r) => {
       // Used wins over generated when both exist (shouldn't happen, defensive)
       map.set(r.discount_id, { ...r, status: r.status || 'redeemed' })
     })
     return map
-  }, [allMyActive, allMyUsed])
+  }, [allMyActive, allMyUsed, allMyExpired])
 
   // Drop sempre visibili nel catalogo (anche se già presi) — la card cambia CTA.
   // Convenzioni: si nascondono quando già prese (sono tante, eviterebbe duplicazioni).
@@ -147,6 +154,10 @@ function SconteRedesignPageInner() {
   const [authGate, setAuthGate] = useState(null) // pendingDiscountId | null
   const [toast, setToast] = useState(null) // { text, goMiei? } | null
   const [infoDeal, setInfoDeal] = useState(null) // deal | null per dialog dettagli
+
+  // Lista d'attesa dei drop esauriti coi giorni contati (12/10): chi l'ha
+  // preso ha N giorni per usarlo, poi il posto passa al primo in lista.
+  const waitlist = useDropWaitlist(drops, user?.id)
 
   // Il riscatto si salva sempre — si può sbloccare in anticipo, resta in
   // "I miei vantaggi" — ma il QR si mostra solo se lo sconto è valido ORA,
@@ -241,8 +252,12 @@ function SconteRedesignPageInner() {
     const all = allRaw || []
     const deal = all.find((d) => d.id === pending)
     if (deal) {
+      // Drop esaurito coi giorni contati: chi era entrato per mettersi in
+      // lista ci finisce adesso, invece di provare uno sblocco che il DB
+      // rifiuterebbe.
+      const wantsList = hasClaimWindow(deal) && isSoldOut(deal) && !redemptionByDealId.has(deal.id)
       // small delay so the page mounts first
-      setTimeout(() => claimDeal(deal), 50)
+      setTimeout(() => (wantsList ? joinWaitlist(deal) : claimDeal(deal)), 50)
     }
     // ensure we're in "miei" tab afterwards
     setTab('miei')
@@ -306,9 +321,11 @@ function SconteRedesignPageInner() {
       const { supabase } = await import('../../lib/supabase')
       // maybeSingle: 0 rows is the normal first-unlock case, .single() makes
       // that look like an error response and obscures real failures.
+      // `*`: col riscatto serve anche `expires_at` (drop coi giorni
+      // contati), per la barra del tempo nel foglio del QR.
       const { data: existing } = await supabase
         .from('discount_redemptions')
-        .select('id, qr_code, short_code, status')
+        .select('*')
         .eq('discount_id', deal.id)
         .eq('user_id', user.id)
         .order('generated_at', { ascending: false })
@@ -316,6 +333,7 @@ function SconteRedesignPageInner() {
         .maybeSingle()
 
       if (existing?.qr_code) {
+        if (existing.status === 'expired') { setToast({ text: 'Il tempo per usare questo drop è scaduto.' }); return }
         showClaimedQR(deal, existing)
         return
       }
@@ -422,6 +440,21 @@ function SconteRedesignPageInner() {
     setQrPopup({ redemption, deal })
   }
 
+  // «Mettiti in lista» su un drop esaurito (12/10). Da sloggati si apre la
+  // porta come per lo sblocco: al rientro (autoClaim sopra) si entra in lista.
+  const joinWaitlist = async (deal) => {
+    if (!user) { setAuthGate(deal.id); return }
+    const result = await waitlist.join(deal)
+    const msg = waitlistJoinMessage(result)
+    if (msg.claim) { claimDeal(deal); return }
+    setToast({ text: msg.text, goMiei: result?.status === 'already_claimed' })
+  }
+  const leaveWaitlist = async (deal) => {
+    if (!window.confirm('Vuoi uscire dalla lista d’attesa? Se rientri, ti rimetti in fondo alla fila.')) return
+    const result = await waitlist.leave(deal)
+    setToast({ text: result?.status === 'error' ? 'Non sono riuscito a toglierti dalla lista. Riprova.' : 'Sei uscito dalla lista d’attesa.' })
+  }
+
   // Wrapper per il claim usato dal nuovo DiscountDetailPopup.
   // Ritorna { id, qr_code } | null se l'utente non è loggato (AuthGate aperto).
   const claimFromPopup = useCallback(async (deal) => {
@@ -434,7 +467,7 @@ function SconteRedesignPageInner() {
       const { supabase } = await import('../../lib/supabase')
       const { data: existing } = await supabase
         .from('discount_redemptions')
-        .select('id, qr_code, short_code, status')
+        .select('*')
         .eq('discount_id', deal.id)
         .eq('user_id', user.id)
         .order('generated_at', { ascending: false })
@@ -563,6 +596,9 @@ function SconteRedesignPageInner() {
               onOpenQR={openMyQR}
               onCardClick={goTo}
               onInfo={(d) => setInfoDeal(d)}
+              waitlist={waitlist}
+              onJoinWaitlist={joinWaitlist}
+              onLeaveWaitlist={leaveWaitlist}
             />
           )}
           {tab === 'miei' && sub === 'disponibili' && (
@@ -570,6 +606,7 @@ function SconteRedesignPageInner() {
               loading={myLoading}
               user={user}
               items={myActive}
+              expired={allMyExpired || []}
               onOpenQR={openMyQR}
               onGoCatalogo={() => setTab('disponibili')}
             />
@@ -770,7 +807,7 @@ function ClubGuide({ user, countPronti, countTuttiIMiei, onGoMiei }) {
   )
 }
 
-function CatalogoView({ loading, myLoading, user, countPronti, countTuttiIMiei, convTakenCount, onGoMiei, drops, conv, claiming, redemptionByDealId, onClaim, onOpenQR, onCardClick, onInfo }) {
+function CatalogoView({ loading, myLoading, user, countPronti, countTuttiIMiei, convTakenCount, onGoMiei, drops, conv, claiming, redemptionByDealId, onClaim, onOpenQR, onCardClick, onInfo, waitlist, onJoinWaitlist, onLeaveWaitlist }) {
   // Il catalogo (`loading`) arriva quasi subito dalla cache locale, "I miei
   // riscatti" (`myLoading`) no — è una fetch di rete senza cache. Dipingere
   // le card prima che risponda vuol dire mostrare "Sblocca sconto" su un
@@ -833,6 +870,9 @@ function CatalogoView({ loading, myLoading, user, countPronti, countTuttiIMiei, 
           onClaim={onClaim}
           onOpenQR={onOpenQR}
           onCardClick={onCardClick}
+          waitlist={waitlist}
+          onJoinWaitlist={onJoinWaitlist}
+          onLeaveWaitlist={onLeaveWaitlist}
         />
       )}
 
@@ -906,7 +946,7 @@ function CatalogoView({ loading, myLoading, user, countPronti, countTuttiIMiei, 
 
 const DROPS_PER_PAGE = 6
 
-function DropSection({ drops, claiming, redemptionByDealId, onClaim, onOpenQR, onCardClick }) {
+function DropSection({ drops, claiming, redemptionByDealId, onClaim, onOpenQR, onCardClick, waitlist, onJoinWaitlist, onLeaveWaitlist }) {
   const [page, setPage] = useState(0)
   const pageCount = Math.ceil(drops.length / DROPS_PER_PAGE)
   const paginated = pageCount > 1
@@ -930,21 +970,22 @@ function DropSection({ drops, claiming, redemptionByDealId, onClaim, onOpenQR, o
       <div className={`sc-drops sc-drops--${layout}`}>
         {visible.map((d) => {
           const redemption = redemptionByDealId?.get(d.id) || null
-          const status = redemption?.status
-          const isSaved = status === 'generated'
-          const isUsed = status === 'redeemed'
-          const busy = claiming === d.id
-          const soldOut = isSoldOut(d)
+          const busy = claiming === d.id || waitlist?.busyId === d.id
+          // Cosa dice il bottone: sblocca, apri il QR, già usato, tempo
+          // scaduto, esaurito — o, sui drop coi giorni contati, «Mettiti in
+          // lista» / «In lista · sei il n° 3» (src/lib/dropWaitlist.js).
+          const cta = dropCtaState({ deal: d, redemption, wait: waitlist?.byId?.[d.id] })
 
-          let label = '🔓 Sblocca sconto'
+          let label = cta.label
           let action = () => onClaim(d)
-          let disabled = busy
+          if (cta.kind === 'open') action = () => onOpenQR({ ...redemption, discount: d })
+          else if (cta.kind === 'waitlist') action = () => onJoinWaitlist?.(d)
+          else if (cta.disabled) action = () => {}
           if (busy) label = 'Un attimo…'
-          else if (isUsed) { label = 'Già usato'; disabled = true; action = () => {} }
-          else if (isSaved) { label = 'Apri il QR'; action = () => onOpenQR({ ...redemption, discount: d }) }
-          // Esaurito e non ancora preso da questo utente: nessuno sblocco
-          // possibile, la card resta ma il bottone lo dice chiaro.
-          else if (soldOut) { label = 'Esaurito'; disabled = true; action = () => {} }
+
+          const note = cta.canLeave
+            ? <>{cta.note} <button type="button" className="dropcard__ctanote-link" onClick={(e) => { e.stopPropagation(); onLeaveWaitlist?.(d) }}>Esci dalla lista</button></>
+            : cta.note
 
           const validityStatus = checkValidity(d)
 
@@ -957,7 +998,9 @@ function DropSection({ drops, claiming, redemptionByDealId, onClaim, onOpenQR, o
               // preso/usato — lo stato resta leggibile dal bottone
               // ("Apri il QR" / "Già usato"), non serve spegnere la card.
               ctaLabel={label}
-              ctaDisabled={disabled}
+              ctaDisabled={busy || cta.disabled}
+              ctaTone={cta.tone}
+              ctaNote={note}
               validityNote={validityStatus === 'valid_now' ? null : formatShortPill(d, validityStatus)}
               onUnlock={action}
               onDiscover={() => onCardClick(d.restaurant)}
@@ -1181,7 +1224,7 @@ function ProductDots({ items }) {
  * l'unica cosa che conta è aprirlo). Ogni card nasce con `locked={false}`,
  * quindi già nello stato "Apri QR" invece di "Sblocca".
  */
-function MieiDisponibiliView({ loading, user, items, onOpenQR, onGoCatalogo }) {
+function MieiDisponibiliView({ loading, user, items, expired = [], onOpenQR, onGoCatalogo }) {
   if (!user) {
     return (
       <div className="sc-empty">
@@ -1203,32 +1246,101 @@ function MieiDisponibiliView({ loading, user, items, onOpenQR, onGoCatalogo }) {
       </div>
     )
   }
+  // I drop scaduti delle ultime due settimane (useMyDiscounts).
+  const recentLost = expired
   if (items.length === 0) {
     return (
-      <div className="sc-empty">
-        <div className="sc-ic">🏷️</div>
-        <strong>Nessuno sconto da usare</strong>
-        <p>Quando sblocchi uno sconto da «Tutti gli sconti» lo ritrovi qui, con il QR da mostrare al locale.</p>
-        <button type="button" className="sc-empty-cta" onClick={onGoCatalogo}>Guarda gli sconti</button>
-      </div>
+      <>
+        <div className="sc-empty">
+          <div className="sc-ic">🏷️</div>
+          <strong>Nessuno sconto da usare</strong>
+          <p>Quando sblocchi uno sconto da «Tutti gli sconti» lo ritrovi qui, con il QR da mostrare al locale.</p>
+          <button type="button" className="sc-empty-cta" onClick={onGoCatalogo}>Guarda gli sconti</button>
+        </div>
+        <LostDrops items={recentLost} />
+      </>
     )
   }
 
+  // I drop coi giorni contati in cima, corallo e con la barra del tempo
+  // (deciso il 12/10); arrivano già ordinati, il più vicino a scadere per
+  // primo (splitMyRedemptions). Sotto, le card di sempre.
+  const timed = items.filter((r) => claimDeadline(r))
+  const rest = items.filter((r) => !claimDeadline(r))
+
   return (
-    <section className="sc-section">
+    <>
+      {timed.length > 0 && (
+        <section className="sc-section">
+          <div className="sc-section-head">
+            <strong>{timed.length === 1 ? 'Il tuo drop' : 'I tuoi drop'}</strong>
+            <small>Hai {claimWindowDays(timed[0].discount) || 7} giorni da quando lo sblocchi · poi passa a chi è in lista</small>
+          </div>
+          <div className="sc-mydrops">
+            {timed.map((r) => (
+              <MyDropCard key={r.id} redemption={r} onOpenQR={onOpenQR} />
+            ))}
+          </div>
+        </section>
+      )}
+      {rest.length > 0 && (
+        <section className="sc-section">
+          <div className="sc-section-head">
+            <strong>Pronti da usare</strong>
+            <small>Li hai sbloccati tu · al locale tocca «Apri QR» e mostralo</small>
+          </div>
+          <div className="sc-conv-list">
+            {rest.map((r) => (
+              <ConvCard
+                key={r.id}
+                deal={r.discount}
+                locked={false}
+                onOpenQR={() => onOpenQR(r)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+      <LostDrops items={recentLost} />
+    </>
+  )
+}
+
+/**
+ * I drop presi e non usati in tempo (12/10): spenti, in fondo, col motivo.
+ * Senza, chi aveva un drop in «I miei vantaggi» lo vedeva sparire e basta.
+ */
+function LostDrops({ items }) {
+  if (!items?.length) return null
+  return (
+    <section className="sc-section sc-lost">
       <div className="sc-section-head">
-        <strong>Pronti da usare</strong>
-        <small>Li hai sbloccati tu · al locale tocca «Apri QR» e mostralo</small>
+        <strong>Scaduti</strong>
+        <small>Drop non usati in tempo: il posto è passato a chi era in lista</small>
       </div>
-      <div className="sc-conv-list">
-        {items.map((r) => (
-          <ConvCard
-            key={r.id}
-            deal={r.discount}
-            locked={false}
-            onOpenQR={() => onOpenQR(r)}
-          />
-        ))}
+      <div className="sc-used-list">
+        {items.map((r) => {
+          const deal = r.discount
+          const rest = deal?.restaurant
+          const days = claimWindowDays(deal) || 7
+          return (
+            <div key={r.id} className="sc-used-row sc-lost-row">
+              <div className="sc-ph-mini">
+                <PhotoOrEmoji src={getPhoto(rest)} alt="" emoji="⌛" fallbackStyle={{ fontSize: 18 }} />
+              </div>
+              <div className="sc-info">
+                <h4>{rest?.name || deal?.title || 'Drop'}</h4>
+                <div className="sc-sub">
+                  <s>{formatDiscountBadge(deal)}</s> · non usato entro {days} {days === 1 ? 'giorno' : 'giorni'}
+                </div>
+              </div>
+              <div className="sc-when">
+                <strong>Scaduto</strong>
+                {r.expires_at ? formatClaimDeadlineShort(r.expires_at) : ''}
+              </div>
+            </div>
+          )
+        })}
       </div>
     </section>
   )

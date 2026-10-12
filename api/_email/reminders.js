@@ -117,6 +117,10 @@ export function planReminders({
   const inTasca = new Map()
   for (const r of pending) {
     if (!r?.user_id || !r.discount) continue
+    // Drop coi giorni contati (12/10): hanno le loro email a tappe, "ti
+    // restano 4 giorni" e così via (dropClaims.js). Niente doppioni qui, e
+    // non contano nemmeno nel "hai altri N sconti".
+    if (r.expires_at) continue
     if (redeemed.has(`${r.user_id}:${r.discount_id}`)) continue
     if (!stillUsable(r.discount, now)) continue
     const perUser = inTasca.get(r.user_id) || new Map()
@@ -215,7 +219,10 @@ export async function loadReminderInput(admin, now = new Date()) {
 
   const pending = await allRows(() => admin
     .from('discount_redemptions')
-    .select(`id, user_id, discount_id, short_code, qr_code, generated_at, discount:discounts(${DISCOUNT_FIELDS}, restaurant:restaurants(${RESTAURANT_FIELDS}))`)
+    // `*` per il riscatto: serve anche `expires_at` (12/10), che esiste solo
+    // dopo drop-claim-window-2026-10-12.sql — un elenco esplicito farebbe
+    // fallire il giro prima di quell'SQL.
+    .select(`*, discount:discounts(${DISCOUNT_FIELDS}, restaurant:restaurants(${RESTAURANT_FIELDS}))`)
     .eq('status', 'generated')
     .gte('generated_at', since)
     .order('generated_at', { ascending: true }))

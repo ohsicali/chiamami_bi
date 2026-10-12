@@ -367,20 +367,26 @@ export function offerCard({ value, restaurantName, perk, meta, countdown }) {
  * @param {number} [o.taken]      quanti sono stati presi
  * @param {number} [o.left]       quanti ne restano (null = senza tetto)
  * @param {string} o.href
+ * @param {string} [o.pill]       la pillola scritta da chi chiama (al posto di "DROP LIVE")
+ * @param {object} [o.timer]      il drop già preso coi giorni contati (12/10): al posto
+ *                                della barra dei posti, quella del tempo che resta —
+ *                                { pct: 0–100 di tempo rimasto, left: "4 giorni",
+ *                                  until: "lunedì 19 ottobre alle 21:00" }
  */
 export function dropCard({
   badge, restaurantName, perk, meta, countdown, taken = null, left = null,
   photoUrl, cuisine, href, label = '\u{1F513} Prendilo adesso',
   footnote = 'Prendi il codice, ordina, mostralo alla cassa.',
+  pill: pillText = null, timer = null,
 }) {
   const CARD_W = WIDTH - 32
   const photo = photoUrl
     ? `<img src="${esc(croppedPhoto(photoUrl, { ...DROP_PHOTO, retina: false }).url)}" width="${CARD_W}" alt="${esc(restaurantName)}" style="display:block;width:100%;height:auto;border:0;outline:none;" />`
     : tintTile({ h: Math.round((CARD_W * 9) / 16), emoji: emojiFor(cuisine), size: 44 })
 
-  const pill = countdown
+  const pill = pillText || (countdown
     ? `● DROP LIVE · SCADE TRA ${String(countdown).toUpperCase()}`
-    : '● DROP LIVE'
+    : '● DROP LIVE')
 
   // La barra dei posti. È una tabella dentro una tabella e non un
   // <progress>, che nessun client di posta disegna. Si mette solo se il
@@ -399,6 +405,21 @@ export function dropCard({
             <td align="right" style="font-family:${FONT_BODY};font-size:11.5px;line-height:1.3;font-weight:800;color:${COLORS.white};">${left} ${left === 1 ? 'rimasto' : 'rimasti'}</td>
           </tr></table>` : ''
 
+  // La barra del tempo: bianca sul corallo (non menta: il menta è il colore
+  // del posto preso, qui si guarda quanto ne resta), piena appena preso e
+  // sempre più corta. Un minimo di 4% perché all'ultima ora resti visibile.
+  const timePct = timer ? Math.max(4, Math.min(100, Math.round(Number(timer.pct) || 0))) : 0
+  const timeBar = timer ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;margin:14px 0 0;"><tr>
+            <td align="left" style="font-family:${FONT_BODY};font-size:10px;line-height:1.3;font-weight:800;letter-spacing:.08em;color:${COLORS.onCoral};">⏳ TEMPO PER USARLO</td>
+            <td align="right" style="font-family:${FONT_BODY};font-size:12px;line-height:1.3;font-weight:800;color:${COLORS.white};">${esc(timer.left || '')}</td>
+          </tr></table>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;margin:7px 0 0;"><tr>
+            <td style="background-color:${COLORS.onCoralTrack};border-radius:999px;height:9px;line-height:9px;font-size:0;">
+              <table role="presentation" width="${timePct}%" cellpadding="0" cellspacing="0" border="0" style="width:${timePct}%;"><tr><td style="background-color:${COLORS.white};border-radius:999px;height:9px;line-height:9px;font-size:0;">&nbsp;</td></tr></table>
+            </td>
+          </tr></table>
+          ${timer.until ? `<div style="margin:7px 0 0;font-family:${FONT_BODY};font-size:11.5px;line-height:1.4;font-weight:600;color:${COLORS.onCoral};">Vale fino a ${esc(timer.until)}</div>` : ''}` : ''
+
   const badgeStyle = `background-color:${COLORS.mint};background-image:linear-gradient(140deg,${COLORS.mint},${COLORS.mint2});color:${COLORS.ink};font-family:${FONT_BODY};font-size:17px;line-height:1.1;font-weight:800;letter-spacing:-.4px;border-radius:12px;padding:8px 14px;`
   const badgeFloat = badge
     ? `<!--[if !mso]><!--><div style="position:relative;font-size:0;line-height:0;"><div style="position:absolute;right:14px;bottom:-18px;${badgeStyle}border:3px solid ${COLORS.corallo};">${esc(badge)}</div></div><!--<![endif]-->`
@@ -416,7 +437,7 @@ export function dropCard({
         <div style="margin:9px 0 0;font-family:${FONT_DISPLAY};font-size:25px;line-height:1.1;font-weight:800;letter-spacing:-.5px;color:${COLORS.white};">${esc(restaurantName)}</div>
         ${perk ? `<div style="margin:5px 0 0;font-family:${FONT_BODY};font-size:14px;line-height:1.35;font-weight:700;color:${COLORS.white};">${esc(perk)}</div>` : ''}
         ${meta ? `<div style="margin:2px 0 0;font-family:${FONT_BODY};font-size:11px;line-height:1.4;font-weight:500;color:${COLORS.onCoralSoft};">${esc(meta)}</div>` : ''}
-        ${bar}
+        ${timer ? timeBar : bar}
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;margin:15px 0 0;"><tr>
           <td align="center" bgcolor="${COLORS.ink}" style="background:${COLORS.ink};border-radius:999px;">
             <a href="${esc(href)}" style="display:block;padding:14px 20px;font-family:${FONT_BODY};font-size:15px;line-height:1.2;font-weight:800;color:${COLORS.white};text-decoration:none;border-radius:999px;">${esc(label)}</a>
@@ -454,6 +475,27 @@ export function conventionOffer({ value, perk, conditions, validity = '' }) {
         </tr></table>
         ${validity ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:13px 0 0;"><tr>
           <td style="background-color:${COLORS.mint};border-radius:999px;padding:5px 12px;font-family:${FONT_BODY};font-size:10.5px;line-height:1.35;font-weight:800;letter-spacing:.06em;color:${COLORS.ink};">✓ ${esc(String(validity).toLocaleUpperCase('it-IT'))}</td>
+        </tr></table>` : ''}
+      </td></tr>
+    </table>
+  </td></tr>`
+}
+
+/**
+ * Il drop preso e non usato in tempo (12/10). Niente corallo: il corallo è
+ * il drop vivo, e questo non lo è più. Crema spento, il valore barrato e il
+ * chip che dice perché.
+ */
+export function expiredClaim({ value, restaurantName, perk, chip }) {
+  return `<tr><td style="padding:16px 20px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;background-color:${COLORS.creamDeep};border-radius:14px;">
+      <tr><td style="padding:16px 18px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+          ${value ? `<td valign="middle" style="font-family:${FONT_DISPLAY};font-size:30px;line-height:1;font-weight:800;letter-spacing:-1px;color:${COLORS.ink45};padding-right:12px;white-space:nowrap;text-decoration:line-through;">${esc(value)}</td>` : ''}
+          <td valign="middle" style="font-family:${FONT_BODY};font-size:14px;line-height:1.35;font-weight:700;color:${COLORS.ink70};">${esc(restaurantName)}${perk ? `<span style="display:block;font-size:12px;font-weight:500;color:${COLORS.ink45};margin-top:2px;">${esc(perk)}</span>` : ''}</td>
+        </tr></table>
+        ${chip ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:13px 0 0;"><tr>
+          <td style="background-color:${COLORS.white};border:1px solid ${COLORS.line};border-radius:999px;padding:5px 12px;font-family:${FONT_BODY};font-size:10.5px;line-height:1.35;font-weight:800;letter-spacing:.06em;color:${COLORS.ink70};">⌛ ${esc(String(chip).toLocaleUpperCase('it-IT'))}</td>
         </tr></table>` : ''}
       </td></tr>
     </table>

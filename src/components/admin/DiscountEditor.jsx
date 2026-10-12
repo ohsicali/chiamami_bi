@@ -7,6 +7,7 @@ import { Card, Choices, Field, Sheet, ToggleRow } from './ui'
 import { proxyImg } from '../../lib/supabase'
 import { toLocalInput, fromLocalInput, defaultPublishInput, formatPublishAt } from '../../lib/scheduledPublish'
 import { formatDays, formatSlots } from '../../lib/validity'
+import { DEFAULT_CLAIM_WINDOW_DAYS } from '../../lib/dropClaim'
 
 /**
  * L'editor di uno sconto, a tutto schermo (30/09).
@@ -287,6 +288,7 @@ export default function DiscountEditor({
                     )}
                   </div>
                 </Field>
+                {form.kind === 'drop' && <ClaimWindowField form={form} set={set} editing={editing} />}
               </Card>
 
               {/* 06 — Come esce */}
@@ -597,6 +599,59 @@ function shortAddress(a) {
   return String(a || '').split(',')[0].trim()
 }
 
+/**
+ * Quanti giorni ha chi prende il drop per usarlo (12/10). Da quando lo
+ * sblocca; passati senza usarlo il codice non vale più e il posto va al
+ * primo della lista d'attesa (supabase/drop-claim-window-2026-10-12.sql).
+ * Vale per i riscatti fatti da qui in poi: chi l'ha già preso tiene i suoi.
+ */
+function ClaimWindowField({ form, set, editing }) {
+  const days = parseInt(form.claim_window_days, 10) || 0
+  const start = form.starts_at ? new Date(form.starts_at).getTime() : null
+  const end = !form.no_end_date && form.ends_at ? new Date(form.ends_at).getTime() : null
+  // Il drop che finisce prima dei giorni di chi lo prende: alla fine del
+  // drop il codice smette di valere per tutti.
+  const short = days > 0 && end && start && end - start < days * 86_400_000
+  return (
+    <Field
+      label="Giorni per usarlo"
+      hint="da quando lo sblocca: poi il posto passa al primo in lista d'attesa"
+      htmlFor="de-claim-days"
+      style={{ marginTop: 16 }}
+    >
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        <input
+          id="de-claim-days"
+          className="adm-input"
+          type="number"
+          inputMode="numeric"
+          min="1"
+          max="60"
+          value={form.claim_window_days ?? ''}
+          onChange={(e) => set({ claim_window_days: e.target.value })}
+          placeholder="Nessun limite"
+          style={{ width: 130 }}
+        />
+        {[3, 5, DEFAULT_CLAIM_WINDOW_DAYS, 14].map((n) => (
+          <button key={n} type="button" className="adm-chip" aria-pressed={days === n} onClick={() => set({ claim_window_days: String(n) })}>{n} giorni</button>
+        ))}
+        <button type="button" className="adm-chip" aria-pressed={!days} onClick={() => set({ claim_window_days: '' })}>Nessun limite</button>
+      </div>
+      <p style={{ margin: '8px 0 0', fontSize: 12.5, lineHeight: 1.45, color: 'var(--adm-muted)' }}>
+        {days > 0
+          ? `Chi lo prende ha ${days} ${days === 1 ? 'giorno' : 'giorni'} per usarlo e riceve le email a 4 giorni, 2 giorni e 24 ore. Se non lo usa, il codice non vale più e il posto va al primo in lista: chi trova il drop esaurito può mettersi in lista.`
+          : 'Senza limite: chi lo prende lo tiene finché il drop è attivo, e quando è esaurito non c’è la lista d’attesa (come i drop usciti prima del 12/10).'}
+        {editing && days > 0 ? ' Cambiarlo vale per chi lo prende da adesso: chi l’ha già preso tiene la sua scadenza.' : ''}
+      </p>
+      {short && (
+        <p style={{ margin: '6px 0 0', fontSize: 12.5, lineHeight: 1.45, color: '#8A2B25', fontWeight: 600 }}>
+          Il drop finisce prima: chi lo prende verso la fine avrà meno di {days} giorni, perché alla fine del drop il codice smette di valere per tutti. Per dare a tutti i giorni pieni, togli la data di fine.
+        </p>
+      )}
+    </Field>
+  )
+}
+
 /* ------------------------------------------------------------------ */
 /*  Tipo di sconto → etichette dei campi                               */
 /* ------------------------------------------------------------------ */
@@ -643,15 +698,15 @@ function switchKind(f, kind) {
   const fromDrop = f.kind === 'drop'
   if (toDrop && f.starts_at && !f.starts_at.includes('T')) next.starts_at = `${f.starts_at}T19:00`
   if (toDrop && f.ends_at && !f.ends_at.includes('T')) next.ends_at = `${f.ends_at}T23:00`
-  // Un drop senza fine né posti non è un drop: si parte da tre giorni e
-  // dieci posti, che si cambiano sotto (Durata e posti).
+  // Un drop nuovo parte da dieci posti e 7 giorni per usarlo (12/10), senza
+  // data di fine: è il tempo di chi lo prende a contare, non quello del
+  // drop. Prima partiva da tre giorni di fine, che con i 7 giorni per
+  // usarlo avrebbero tolto a tutti metà del tempo. Si cambia sotto.
   if (toDrop && !f.ends_at) {
-    const d = new Date(Date.now() + 3 * 86400000)
-    const pad = (n) => String(n).padStart(2, '0')
-    next.ends_at = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T23:00`
-    next.no_end_date = false
+    next.no_end_date = true
   }
   if (toDrop && !f.max_uses) next.max_uses = '10'
+  if (toDrop && f.claim_window_days == null) next.claim_window_days = String(DEFAULT_CLAIM_WINDOW_DAYS)
   if (fromDrop && !toDrop && f.starts_at?.includes('T')) next.starts_at = f.starts_at.split('T')[0]
   if (fromDrop && !toDrop && f.ends_at?.includes('T')) next.ends_at = f.ends_at.split('T')[0]
   return next

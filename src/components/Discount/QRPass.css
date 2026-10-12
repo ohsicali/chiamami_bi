@@ -560,3 +560,12 @@
   .qrp-svg.is-loading { animation: none !important; }
 }
 .qrp-drawer-body > :first-child { margin-top: 0; }
+
+/* Il tempo per usare un drop preso (12/10): sotto la card, prima della
+   riga "valido una sola volta". */
+.qrp-timer {
+  margin-top: 12px;
+  padding: 11px 14px 12px;
+  border-radius: 14px;
+  background: var(--color-corallo-wash, #fdedeb);
+}

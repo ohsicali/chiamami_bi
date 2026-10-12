@@ -125,10 +125,10 @@ export function markTourSeen(userId) {
  *   WelcomeTour.jsx), niente animazione finale, si resta sulla pagina e non
  *   conta come tutorial visto.
  */
-export function openWelcomeTour({ source = 'settings', origin = null, topic = null, onClosed = null } = {}) {
+export function openWelcomeTour({ source = 'settings', origin = null, topic = null, days = null, onClosed = null } = {}) {
   let taken = false
   const take = () => { taken = true }
-  window.dispatchEvent(new CustomEvent(OPEN_TOUR_EVENT, { detail: { source, origin, topic, onClosed, take } }))
+  window.dispatchEvent(new CustomEvent(OPEN_TOUR_EVENT, { detail: { source, origin, topic, days, onClosed, take } }))
   return taken
 }
 
@@ -137,10 +137,13 @@ export function openWelcomeTour({ source = 'settings', origin = null, topic = nu
  * tutorial non può aprirsi (Gate non montato, o un altro già aperto): chi
  * aspetta per aprire il QR non deve restare appeso.
  */
-export function openUseTour({ source = 'first_claim' } = {}) {
+export function openUseTour({ source = 'first_claim', drop = false } = {}) {
   if (typeof window === 'undefined') return Promise.resolve()
   return new Promise((resolve) => {
-    const taken = openWelcomeTour({ source, topic: 'use', onClosed: resolve })
+    // `drop`: i giorni per usare il drop appena preso (12/10, di solito 7) —
+    // la versione che racconta anche il tempo che parte e la lista d'attesa.
+    const days = Number(drop) > 0 ? Number(drop) : null
+    const taken = openWelcomeTour({ source, topic: drop ? 'use-drop' : 'use', days, onClosed: resolve })
     if (!taken) resolve()
   })
 }

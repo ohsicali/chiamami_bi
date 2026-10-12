@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase, isSupabaseConfigured } from '../supabase'
 import { ACTIVE_DISCOUNTS_SELECT, fetchPublic, isAdminPath } from '../publicQueries'
 import { celebrateClaim } from '../dropWin'
+import { splitMyRedemptions } from '../dropClaim'
 
 // Stale-while-revalidate cache for the active discounts list. Painted at mount
 // from localStorage so the home and deals page render instantly on repeat
@@ -390,12 +391,16 @@ export function useActiveDiscounts() {
 export function useMyDiscounts(userId) {
   const [active, setActive] = useState([])
   const [used, setUsed] = useState([])
+  // Drop coi giorni contati non usati in tempo (12/10): non sono più da
+  // usare, ma chi li aveva deve capire dove sono finiti.
+  const [expired, setExpired] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!userId || !isSupabaseConfigured()) {
       setActive([])
       setUsed([])
+      setExpired([])
       setLoading(false)
       return
     }
@@ -412,9 +417,15 @@ export function useMyDiscounts(userId) {
           if (cancelled) return
           // Sconto non più leggibile (una prova da cui si è stati tolti):
           // il riscatto resta nel DB ma qui non c'è niente da mostrare.
-          const items = (data || []).filter(r => r.discount)
-          setActive(items.filter(r => r.status === 'generated'))
-          setUsed(items.filter(r => r.status === 'redeemed'))
+          // I drop coi giorni contati vanno in testa, il più vicino a
+          // scadere per primo; quelli scaduti a parte (src/lib/dropClaim.js).
+          const split = splitMyRedemptions(data || [])
+          setActive(split.active)
+          setUsed(split.used)
+          // I drop scaduti restano visibili due settimane: chi aveva un drop
+          // deve capire dove è finito, ma non per sempre.
+          const since = Date.now() - 14 * 86_400_000
+          setExpired(split.expired.filter((r) => new Date(r.expires_at).getTime() > since))
           setLoading(false)
         })
     }
@@ -443,7 +454,7 @@ export function useMyDiscounts(userId) {
     }
   }, [userId])
 
-  return { active, used, loading }
+  return { active, used, expired, loading }
 }
 
 /**

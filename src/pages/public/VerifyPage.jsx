@@ -1669,6 +1669,13 @@ function ScanResultView({ result, onReset, onClose }) {
   if (status === 'invalid_now') return <InvalidNowResult data={data} reason={result?.reason || data?.reason} onReset={handleReset} />
   if (status === 'already_redeemed') return <AlreadyUsedResult data={data} onReset={handleReset} />
   if (status === 'expired') {
+    // Drop coi giorni contati (12/10): chi l'ha preso aveva N giorni per
+    // usarlo, e sono passati. Il DB lo dice con `reason: 'claim_window'`.
+    if ((result?.reason || data?.reason) === 'claim_window') {
+      return <ResultCard tone="neutral" icon="⏱" title="Drop scaduto per questo cliente"
+        description="Chi prende un drop ha pochi giorni per usarlo (di solito 7) da quando lo sblocca: questo codice non è stato usato in tempo e non vale più. Il posto è già passato a chi era in lista."
+        onReset={handleReset} resetLabel="Nuova verifica" />
+    }
     return <ResultCard tone="neutral" icon="⏱" title="Sconto scaduto"
       description="La data di validità di questo sconto è passata."
       onReset={handleReset} resetLabel="Nuova verifica" />

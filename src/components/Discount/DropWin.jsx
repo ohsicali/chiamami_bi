@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion, animate, useReducedMotion } from 'framer-motion'
 import BiCharacter from '../Feedback/BiCharacter'
+import ClaimTimer from './ClaimTimer'
 import { dropWinCopy } from '../../lib/dropWin'
 import { EASE_OUT, SPRING_SOFT } from '../../lib/motion'
 import './DropWin.css'
@@ -17,7 +18,7 @@ import './DropWin.css'
  * coi bottoni o con Esc, non toccando a caso: il numero è il bello, non
  * deve sparire per un tocco mentre sale.
  */
-export default function DropWin({ rank, total, restaurantName, first = false, onClose }) {
+export default function DropWin({ rank, total, restaurantName, first = false, claim = null, windowDays = null, onClose }) {
   const reduce = useReducedMotion()
   const copy = useMemo(() => dropWinCopy({ rank, total, restaurantName }), [rank, total, restaurantName])
   const panelRef = useRef(null)
@@ -107,8 +108,25 @@ export default function DropWin({ rank, total, restaurantName, first = false, on
           transition={{ delay: reduce ? 0 : 0.6, duration: 0.3, ease: EASE_OUT }}
         >
           {copy.line} <b>{copy.outro}</b>
-          <small className="dw-where">Lo ritrovi in «I miei vantaggi»: il QR lo mostri alla cassa.</small>
+          <small className="dw-where">
+            {windowDays
+              ? `Lo ritrovi in «I miei vantaggi». Hai ${windowDays} ${windowDays === 1 ? 'giorno' : 'giorni'} per mostrare il QR alla cassa: poi il posto passa al primo in lista.`
+              : 'Lo ritrovi in «I miei vantaggi»: il QR lo mostri alla cassa.'}
+          </small>
         </motion.p>
+
+        {/* Drop coi giorni contati (12/10): da adesso parte il tempo. La
+            barra si riempie e comincia a scendere, secondo per secondo. */}
+        {claim && (
+          <motion.div
+            className="dw-timer"
+            initial={reduce ? false : { opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: reduce ? 0 : 0.75, duration: 0.3, ease: EASE_OUT }}
+          >
+            <ClaimTimer redemption={claim} deal={{ is_drop: true, claim_window_days: windowDays }} tone="coral" intro={!reduce} />
+          </motion.div>
+        )}
 
         <motion.div
           className="dw-actions"

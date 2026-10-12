@@ -5,6 +5,7 @@ import { formatDiscountBadge } from '../../lib/utils/discountFormat'
 import { formatShortCode } from '../../lib/shortCode'
 import { CHAT_MAINTENANCE } from '../../lib/chatMaintenance'
 import { TOUR_COVERED_EVENT } from '../../lib/welcomeTour'
+import { DEFAULT_CLAIM_WINDOW_DAYS } from '../../lib/dropClaim'
 import { DUR, EASE_OUT, SPRING_SNAP, SPRING_SOFT } from '../../lib/motion'
 import './WelcomeTour.css'
 
@@ -15,10 +16,11 @@ import './WelcomeTour.css'
  * Qui c'è solo il racconto:
  *   1. il benvenuto, a tutto corallo — deve far venire voglia di andare avanti;
  *   2. Esplora;
- *   3-6. gli sconti in quattro passi, perché sono la parte che conta e quella
- *        che da soli non si capiva: i due tipi → si sblocca e finisce in «I
- *        miei vantaggi» → su cosa e quando vale → alla cassa, sullo scontrino;
- *   7. i Salvati.
+ *   3-7. gli sconti in cinque passi, perché sono la parte che conta e quella
+ *        che da soli non si capiva: i due tipi → il drop preso ha 7 giorni, e
+ *        se è esaurito ci si mette in lista (12/10) → si sblocca e finisce in
+ *        «I miei vantaggi» → su cosa e quando vale → alla cassa, sullo scontrino;
+ *   8. i Salvati.
  * In fondo un'animazione di chiusura, e WelcomeTourGate porta alla home.
  *
  * Con `topic="use"` invece è "Come si usa lo sconto" (vedi buildUseSlides):
@@ -40,7 +42,13 @@ const DEMO_CONV = { discount_type: 'percentage', discount_value: '15' }
 const DEMO_UNLOCK = { discount_type: 'percentage', discount_value: '20' }
 const DEMO_CODE = 'K48213'
 
-function buildSlides(name, topic) {
+/** I giorni per usare un drop preso: quelli veri se li sappiamo, se no 7. */
+const giorni = (days) => {
+  const n = Number(days) > 0 ? Math.floor(Number(days)) : DEFAULT_CLAIM_WINDOW_DAYS
+  return `${n} ${n === 1 ? 'giorno' : 'giorni'}`
+}
+
+function buildSlides(name, topic, days = null) {
   const slides = [
     {
       key: 'welcome',
@@ -60,28 +68,35 @@ function buildSlides(name, topic) {
     },
     {
       key: 'deals',
-      eyebrow: 'Sconti · 1 di 4',
+      eyebrow: 'Sconti · 1 di 5',
       title: 'Nel Bi Club, due tipi di sconto.',
       body: 'I drop, in corallo, durano poco e i posti finiscono: se ti piace, non aspettare. Le convenzioni, color crema, restano e valgono nei giorni indicati.',
       Art: ArtDeals,
     },
     {
+      key: 'droptime',
+      eyebrow: 'Sconti · 2 di 5',
+      title: `Drop preso? Hai ${giorni(days)}.`,
+      body: `Se riesci a prendere un drop, da quel momento hai ${giorni(days)} per usarlo: la barra in «I miei vantaggi» ti dice quanto manca, e ti scrivo prima che scada. Se lo trovi esaurito, mettiti in lista: chi non lo usa in tempo lascia il posto al primo della fila.`,
+      Art: ArtDropTime,
+    },
+    {
       key: 'unlock',
-      eyebrow: 'Sconti · 2 di 4',
+      eyebrow: 'Sconti · 3 di 5',
       title: 'Prima lo sblocchi.',
       body: 'Nella sezione Sconti scegli quello che ti interessa e tocca «Sblocca sconto»: è gratis. Da quel momento è tuo e lo ritrovi in «I miei vantaggi».',
       Art: ArtUnlock,
     },
     {
       key: 'rules',
-      eyebrow: 'Sconti · 3 di 4',
+      eyebrow: 'Sconti · 4 di 5',
       title: 'Guarda su cosa e quando vale.',
       body: 'Ogni sconto dice su cosa si applica, in quali giorni, se a pranzo, a cena o tutti e due, e le condizioni. Il QR si apre solo quando lo sconto vale.',
       Art: ArtRules,
     },
     {
       key: 'checkout',
-      eyebrow: 'Sconti · 4 di 4',
+      eyebrow: 'Sconti · 5 di 5',
       title: 'Alla cassa, sullo scontrino.',
       body: 'Al momento del conto apri «I miei vantaggi» e mostra il QR in cassa, o detta il codice. Il locale lo convalida e lo sconto lo trovi sullo scontrino finale.',
       Art: ArtCheckout,
@@ -106,7 +121,7 @@ function buildSlides(name, topic) {
       Art: ArtAsk,
     })
   }
-  if (topic === 'use') return buildUseSlides()
+  if (topic === 'use' || topic === 'use-drop') return buildUseSlides({ drop: topic === 'use-drop', days })
   return slides
 }
 
@@ -120,47 +135,63 @@ function buildSlides(name, topic) {
  * Se cambia uno di questi passi nell'app (nomi dei bottoni, «Apri QR»,
  * «Info sconto»), va cambiato anche qui.
  */
-function buildUseSlides() {
-  return [
+function buildUseSlides({ drop = false, days = null } = {}) {
+  // Dopo un drop coi giorni contati (12/10) c'è una schermata in più, la
+  // seconda: il tempo per usarlo è partito, e cosa succede se scade.
+  const n = drop ? 5 : 4
+  const step = (i) => `Come si usa · ${i} di ${n}`
+  const slides = [
     {
       key: 'use-wallet',
-      eyebrow: 'Come si usa · 1 di 4',
+      eyebrow: step(1),
       title: 'Ora è nei tuoi vantaggi.',
-      body: 'Lo sconto che hai sbloccato è salvato in «I miei vantaggi», nel Bi Club. È tuo: non devi usarlo adesso, lo ritrovi lì quando vai al locale.',
+      body: drop
+        ? 'Il drop che hai preso è salvato in «I miei vantaggi», nel Bi Club, in cima a tutto: lo ritrovi lì quando vai al locale.'
+        : 'Lo sconto che hai sbloccato è salvato in «I miei vantaggi», nel Bi Club. È tuo: non devi usarlo adesso, lo ritrovi lì quando vai al locale.',
       Art: ArtUnlock,
     },
     {
       key: 'use-rules',
-      eyebrow: 'Come si usa · 2 di 4',
+      eyebrow: step(drop ? 3 : 2),
       title: 'Prima di andare, guarda quando vale.',
       body: 'In «Info sconto» trovi i giorni e gli orari in cui è valido, su cosa si applica e le condizioni. Controllali prima di uscire: fuori da quei giorni e orari il QR non si apre.',
       Art: ArtRules,
     },
     {
       key: 'use-show',
-      eyebrow: 'Come si usa · 3 di 4',
+      eyebrow: step(drop ? 4 : 3),
       title: 'Al locale, apri il QR.',
       body: 'Quando sei alla cassa apri «I miei vantaggi», tocca «Apri QR» sullo sconto e mostralo. Se la fotocamera non lo legge, detta il codice di sei caratteri.',
       Art: ArtOpenPass,
     },
     {
       key: 'use-validate',
-      eyebrow: 'Come si usa · 4 di 4',
+      eyebrow: step(drop ? 5 : 4),
       title: 'Il locale lo convalida.',
       body: 'Il locale scansiona il QR o scrive il codice: se lo sconto è valido lo convalida e ti applica la promozione, che trovi sullo scontrino. Poi dimmi com’è andata!',
       cta: 'Tutto chiaro',
       Art: ArtCheckout,
     },
   ]
+  if (drop) {
+    slides.splice(1, 0, {
+      key: 'use-time',
+      eyebrow: step(2),
+      title: `Hai ${giorni(days)} per usarlo.`,
+      body: `Il tempo è partito quando l’hai sbloccato: la barra in «I miei vantaggi» ti dice quanto manca, e ti scrivo quando restano 4 giorni, 2 e le ultime 24 ore. Se non lo usi in tempo il codice non vale più e il posto passa al primo in lista d’attesa.`,
+      Art: ArtDropTime,
+    })
+  }
+  return slides
 }
 
 // Quanto dura l'animazione di chiusura prima di passare alla home.
 const FINALE_MS = 2000
 const FINALE_MS_REDUCED = 900
 
-export default function WelcomeTour({ name, origin, topic = null, onClose }) {
+export default function WelcomeTour({ name, origin, topic = null, days = null, onClose }) {
   const reduce = useReducedMotion()
-  const slides = useMemo(() => buildSlides(name, topic), [name, topic])
+  const slides = useMemo(() => buildSlides(name, topic, days), [name, topic, days])
   const [[index, dir], setPage] = useState([0, 0])
   const [finishing, setFinishing] = useState(false)
   const panelRef = useRef(null)
@@ -616,6 +647,84 @@ function ArtDeals({ reduce }) {
           </div>
         </div>
         <span className="wt-conv-chip">valido a pranzo e a cena</span>
+      </motion.div>
+    </div>
+  )
+}
+
+// Il drop preso coi giorni contati (12/10): in alto il tuo, con la barra
+// che si svuota e il tempo che corre (accelerato: in pochi secondi passano
+// giorni); sotto un drop esaurito, il dito tocca «Mettiti in lista» e sei
+// in fila. 0 fermo · 1 il dito preme · 2 in lista.
+const DROPTIME_PHASES = [2400, 700, 2600]
+const WEEK_S = 7 * 86400
+
+function useFastCountdown(reduce) {
+  const [s, setS] = useState(WEEK_S)
+  useEffect(() => {
+    if (reduce) return undefined
+    // Un'ora ogni 60 ms: la settimana passa in una decina di secondi, poi da capo.
+    const t = setInterval(() => setS((v) => (v > 9 * 3600 ? v - 3600 : WEEK_S)), 60)
+    return () => clearInterval(t)
+  }, [reduce])
+  const d = Math.floor(s / 86400)
+  const h = String(Math.floor((s % 86400) / 3600)).padStart(2, '0')
+  return { label: `${d}g ${h}h`, fraction: s / WEEK_S }
+}
+
+function ArtDropTime({ reduce }) {
+  const phase = usePhases(DROPTIME_PHASES, reduce, 2)
+  const listed = phase >= 2
+  const { label, fraction } = useFastCountdown(reduce)
+  return (
+    <div className="wt-art-deals wt-art-droptime">
+      <motion.div className="wt-drop" {...pop(reduce, 0.05, { y: 16 })}>
+        <div className="wt-drop-head">
+          <span className="wt-drop-tag"><i className="wt-live" /> IL TUO DROP</span>
+          <span className="wt-drop-timer" aria-label="Tempo per usarlo">⏳ {reduce ? '6g 18h' : label}</span>
+        </div>
+        <div className="wt-deal-row">
+          <span className="wt-badge">{formatDiscountBadge(DEMO_DROP)}</span>
+          <div>
+            <strong>Pizzeria del Borgo</strong>
+            <span>hai 7 giorni per usarlo</span>
+          </div>
+        </div>
+        <div className="wt-drop-bar wt-time-bar" aria-hidden="true">
+          <i style={{ transform: `scaleX(${reduce ? 0.85 : fraction})` }} />
+        </div>
+        <span className="wt-drop-left">Poi il posto passa al primo in lista</span>
+      </motion.div>
+
+      <motion.div className="wt-soldout" {...pop(reduce, 0.3, { y: 16 })}>
+        <div className="wt-deal-row">
+          <span className="wt-badge is-small wt-badge-off">{formatDiscountBadge(DEMO_UNLOCK)}</span>
+          <div>
+            <strong>Osteria Sotto i Portici</strong>
+            <span>Sold out · tutti i posti presi</span>
+          </div>
+        </div>
+        <motion.span
+          className={`wt-list-btn ${listed ? 'is-on' : ''}`}
+          animate={phase === 1 && !reduce ? { scale: [1, 0.94, 1.04, 1] } : { scale: 1 }}
+          transition={{ duration: 0.45, ease: EASE_OUT }}
+        >
+          {listed ? '✓ In lista · sei il n° 2' : '🔔 Mettiti in lista'}
+          {phase === 1 && !reduce && <span className="wt-ripple" />}
+        </motion.span>
+        {!reduce && (
+          <motion.span
+            className="wt-finger wt-finger-list"
+            aria-hidden="true"
+            initial={false}
+            animate={
+              phase === 0 ? { opacity: 0, x: 50, y: 40, scale: 1 }
+                : phase === 1 ? { opacity: 1, x: 0, y: 0, scale: 0.82 }
+                  : { opacity: 0, x: 0, y: 0, scale: 1 }
+            }
+            transition={{ duration: 0.4, ease: EASE_OUT }}
+          />
+        )}
       </motion.div>
     </div>
   )

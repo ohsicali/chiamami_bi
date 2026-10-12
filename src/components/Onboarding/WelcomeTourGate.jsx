@@ -63,6 +63,7 @@ export default function WelcomeTourGate() {
         source: e?.detail?.source || 'settings',
         origin: e?.detail?.origin || null,
         topic: e?.detail?.topic || null,
+        days: e?.detail?.days || null,
       })
     }
     window.addEventListener(OPEN_TOUR_EVENT, onOpen)
@@ -98,6 +99,7 @@ export default function WelcomeTourGate() {
             name={greetingName(user, profile)}
             origin={openAs?.origin}
             topic={openAs?.topic}
+            days={openAs?.days}
             onClose={handleClose}
           />
         )}

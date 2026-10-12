@@ -1696,3 +1696,24 @@
   }
 }
 
+
+/* ── Drop coi giorni contati (12/10) ──────────────────────────────────
+   In «I miei vantaggi» i drop presi stanno in cima, corallo, con la barra
+   del tempo (MyDropCard). Sotto, i drop non usati in tempo: righe spente
+   col valore barrato, così chi aveva un drop capisce dove è finito. */
+.sc-mydrops {
+  display: grid;
+  gap: 12px;
+  padding: 0 16px;
+}
+@media (min-width: 768px) {
+  .sc-mydrops {
+    padding: 0;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 14px;
+  }
+}
+.sc-lost .sc-used-row { opacity: 0.78; }
+.sc-lost .sc-ph-mini img { filter: grayscale(1); }
+.sc-lost .sc-info .sc-sub s { color: var(--sc-ink-3); font-weight: 700; }
+.sc-lost .sc-when strong { color: var(--sc-ink-3); }

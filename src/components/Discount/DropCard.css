@@ -271,6 +271,42 @@
 
 .dropcard__btn:disabled { opacity: 0.6; cursor: default; }
 
+/* ── Lista d'attesa (12/10) ───────────────────────────────────────────
+   Il drop esaurito coi giorni contati non ha un bottone spento: chi l'ha
+   preso ha 7 giorni per usarlo, e se non lo usa il posto passa al primo in
+   lista. Il bottone resta scuro (è un'azione), con la campanella; quando
+   ci sei già diventa bianco e dice il tuo posto in fila. */
+.dropcard__btn--waitlist { background: var(--dc-ink); }
+.dropcard__btn--waiting {
+  background: #fff;
+  color: var(--dc-ink);
+  box-shadow: 0 6px 14px rgba(120, 20, 14, 0.18);
+}
+.dropcard__btn--waiting:disabled { opacity: 1; }
+
+.dropcard__ctanote {
+  margin-top: calc(8 * var(--dc-k));
+  font-size: calc(9.5 * var(--dc-k));
+  line-height: 1.4;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  text-wrap: pretty;
+}
+.dropcard__ctanote b { font-weight: 800; color: #fff; }
+.dropcard__ctanote-link {
+  font: inherit;
+  font-weight: 700;
+  color: #fff;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.dropcard--narrow .dropcard__ctanote { font-size: 9.5px; margin-top: 7px; }
+
 /* Il titolo della taglia larga non esiste finché la card non è larga. */
 .dropcard__headline { display: none; }
 
@@ -599,6 +635,11 @@
     gap: clamp(8px, 0.9cqi, 12px);
   }
   .dropcard:not(.dropcard--mini) .dropcard__btn { font-size: clamp(11.5px, 1.15cqi, 15px); }
+  .dropcard:not(.dropcard--mini) .dropcard__ctanote {
+    max-width: 420px;
+    font-size: clamp(10.5px, 1.05cqi, 13.5px);
+    margin-top: clamp(8px, 0.9cqi, 12px);
+  }
   .dropcard:not(.dropcard--mini) .dropcard__btn--primary { padding: clamp(12px, 1.3cqi, 17px); }
   .dropcard:not(.dropcard--mini) .dropcard__btn--ghost {
     padding: clamp(12px, 1.3cqi, 17px) clamp(15px, 1.7cqi, 24px);

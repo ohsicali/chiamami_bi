@@ -1,0 +1,151 @@
+/* Il drop preso in cima a «I miei vantaggi» — vedi MyDropCard.jsx.
+   Corallo pieno come la card del drop in vetrina (stesso gradiente), ma
+   compatta: è un biglietto in tasca, non un annuncio. */
+
+.mdc {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px 16px 16px;
+  border-radius: 20px;
+  background: linear-gradient(160deg, var(--color-corallo, #e8453c) 0%, var(--color-corallo-ink, #c53a33) 100%);
+  color: #fff;
+  box-shadow: 0 16px 30px -18px rgba(232, 69, 60, 0.85);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Un riflesso che attraversa la card ogni tanto: è "vivo", non una ricevuta. */
+.mdc::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.16) 45%, transparent 60%);
+  transform: translateX(-100%);
+  animation: mdc-shine 6s ease-in-out 1.2s infinite;
+  pointer-events: none;
+}
+@keyframes mdc-shine {
+  0%, 70% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.mdc--urgent { box-shadow: 0 0 0 2px #fff, 0 0 0 5px rgba(232, 69, 60, 0.35), 0 16px 30px -18px rgba(232, 69, 60, 0.9); }
+
+.mdc-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.mdc-ph {
+  flex: none;
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.2);
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
+}
+.mdc-ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.mdc-id { flex: 1; min-width: 0; }
+.mdc-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.mdc-tag i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #fff;
+}
+.mdc-id h4 {
+  margin: 5px 0 0;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mdc-id p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.88);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Il badge dello sconto è verde come ovunque nel sito. */
+.mdc-badge {
+  flex: none;
+  align-self: flex-start;
+  background: var(--gradient-sconto, linear-gradient(140deg, #a3e635, #4ade80));
+  color: var(--color-ink, #22181c);
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  padding: 6px 10px;
+  border-radius: 11px;
+  border: 2px solid #fff;
+  max-width: 96px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mdc-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.mdc-qr {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 999px;
+  background: var(--color-ink, #22181c);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 18px -8px rgba(34, 24, 28, 0.55);
+  transition: transform 140ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+}
+.mdc-qr:active { transform: scale(0.97); }
+.mdc-note {
+  flex: 1;
+  min-width: 140px;
+  font-size: 11px;
+  line-height: 1.35;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mdc::after { animation: none; }
+  .mdc-qr { transition: none; }
+}
