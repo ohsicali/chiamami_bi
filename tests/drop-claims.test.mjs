@@ -17,7 +17,8 @@ import {
 } from '../src/lib/dropClaim.js'
 import { dueStage, planDropClaimEmails, dropClaimProps, DROP_CLAIM_KINDS, DROP_CLAIM_RULES } from '../api/_email/dropClaims.js'
 import { dropClaimEmail, discountClaimedEmail, SAMPLE } from '../api/_email/templates.js'
-import { dropCtaState, waitlistJoinMessage } from '../src/lib/dropWaitlist.js'
+import { dropCtaState, waitlistJoinMessage, waitlistJoinedCopy } from '../src/lib/dropWaitlist.js'
+import { dropPeopleFromRows, dropPeopleNotes, dropPeopleSummary } from '../src/lib/dropStats.js'
 
 // Lunedì 12 ottobre 2026, 15:00 a Roma.
 const NOW = new Date('2026-10-12T13:00:00Z')
@@ -268,6 +269,7 @@ test('drop esaurito coi giorni contati: «Mettiti in lista», non un bottone spe
   assert.equal(c.kind, 'waitlist')
   assert.equal(c.disabled, false)
   assert.match(c.note, /passa al primo in lista/)
+  assert.match(c.note, /Più sei in alto, prima tocca a te/, 'deve essere chiaro che conta la posizione')
   assert.match(dropCtaState({ deal: full, wait: { waiting: 3 }, now: NOW }).note, /Ci sono già 3 persone in lista/)
   const inFila = dropCtaState({ deal: full, wait: { waiting: 3, my_position: 2, my_status: 'waiting' }, now: NOW })
   assert.equal(inFila.kind, 'waiting')
@@ -293,4 +295,53 @@ test('dopo «Mettiti in lista»: le parole giuste per ogni risposta del DB', () 
   assert.equal(waitlistJoinMessage({ status: 'claim_available' }).claim, true)
   assert.match(waitlistJoinMessage({ status: 'already_claimed' }).text, /I miei vantaggi/)
   assert.match(waitlistJoinMessage({ status: 'error' }).text, /Riprova/)
+})
+
+test('in lista: la schermata dice il numero, i 7 giorni e buona fortuna', () => {
+  const c = waitlistJoinedCopy({ position: 134, waiting: 140, days: 7, restaurantName: 'Gelateria Borghese' })
+  assert.equal(c.position, 134)
+  assert.equal(c.title, 'Sei il numero 134 nella lista d’attesa')
+  assert.match(c.body, /Gelateria Borghese non lo usa entro 7 giorni/)
+  assert.match(c.body, /passerai tu/)
+  assert.match(c.after, /Dietro di te ci sono 6 persone/)
+  assert.match(c.luck, /Buona fortuna/)
+  assert.equal(waitlistJoinedCopy({ position: 1, waiting: 1, days: 7 }).title, 'Sei il primo della lista!')
+  assert.match(waitlistJoinedCopy({ position: 1, waiting: 1, days: 7 }).body, /il primo posto che si libera è tuo/)
+  assert.doesNotMatch(waitlistJoinedCopy({ position: 3, waiting: 3, days: 7 }).after, /Dietro di te/, 'ultimo della fila: nessuno dietro')
+  assert.equal(waitlistJoinedCopy({}).position, null, 'senza posto (DB lento) niente numero')
+})
+
+test('numeri del drop per il locale e l’admin: presi, usati, da usare, persi, in lista', () => {
+  // Dalla RPC verify_drops_overview.
+  const s = dropPeopleSummary({ total: 50, claim_window_days: 7, used: 12, to_use: 38, lost: 8, waiting: 133, from_waitlist: 8, next_expiry: at(2 * D) })
+  assert.deepEqual(
+    [s.taken, s.total, s.free, s.soldOut, s.pct, s.waiting, s.lost, s.windowed],
+    [50, 50, 0, true, 100, 133, 8, true],
+  )
+  const notes = dropPeopleNotes(s)
+  assert.match(notes[0], /7 giorni per usarlo/)
+  assert.match(notes[1], /il primo posto si libera mercoledì 14 ottobre alle 15:00/)
+  assert.match(notes[2], /8 posti sono già passati a chi era in lista/)
+  // Un drop di prima, senza giorni contati: niente righe sulla lista.
+  assert.deepEqual(dropPeopleNotes(dropPeopleSummary({ total: 20, used: 6, to_use: 14 })), [])
+  assert.equal(dropPeopleSummary({ total: 20, used: 6, to_use: 10 }).free, 4)
+})
+
+test('l’admin conta dalle righe come il DB: scaduto = perso, il posto torna libero', () => {
+  const deal = drop({ max_quantity: 5, max_redemptions: 5 })
+  const rows = [
+    { status: 'redeemed', expires_at: at(3 * D) },
+    { status: 'generated', expires_at: at(2 * D) },
+    { status: 'generated', expires_at: at(-H) }, // scaduto, il giro non è ancora passato
+    { status: 'expired', expires_at: at(-D) },
+    { status: 'generated', expires_at: at(5 * D) },
+  ]
+  const it = dropPeopleFromRows(deal, rows, { waiting: 4, promoted: 1 }, NOW)
+  assert.deepEqual(
+    [it.total, it.claims, it.used, it.to_use, it.lost, it.taken, it.waiting, it.from_waitlist, it.next_expiry],
+    [5, 5, 1, 2, 2, 3, 4, 1, at(2 * D)],
+  )
+  const s = dropPeopleSummary(it)
+  assert.deepEqual([s.soldOut, s.free], [false, 2])
+  assert.deepEqual(dropPeopleFromRows(deal, undefined, null, NOW).taken, 0, 'nessun riscatto: zero, non un errore')
 })

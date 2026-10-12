@@ -19,7 +19,7 @@ import {
   isActiveDiscount, isActiveDrop, isConvention, isSoldOut, isExpired,
   isVisibleDrop, filterActive, filterActiveDrops, filterActiveConventions,
   filterVisibleDrops, sortByExpiry, remainingCount, formatCountdown,
-  findUnreachableDiscounts, pickFeaturedDeal, filterShownDrops,
+  findUnreachableDiscounts, pickFeaturedDeal, filterShownDrops, canFreeSeat,
   chooseFeaturedDeal, canFeatureInHome, activeDiscountsFor, discountByRestaurant,
 } from '../src/lib/discounts.js'
 
@@ -179,9 +179,42 @@ test('filterShownDrops: dei drop esauriti resta solo l\'ultimo uscito (Borghese 
     d({ id: 'live', is_drop: true, drop_starts_at: '2026-09-01T00:00:00Z', max_quantity: 10, claimed_count: 2 }),
     d({ id: 'conv' }),
   ]
-  assert.deepEqual(filterShownDrops(list, NOW).map((x) => x.id).sort(), ['borghese', 'live'])
   const OGGI = new Date('2026-10-01T12:00:00Z')
+  assert.deepEqual(filterShownDrops(list, OGGI).map((x) => x.id).sort(), ['borghese', 'live'])
   assert.equal(pickFeaturedDeal(list.filter((x) => x.id !== 'live'), OGGI).id, 'borghese')
+})
+
+test('filterShownDrops: esce un drop nuovo → l\'esaurito sparisce (Piadora sì, Borghese no)', () => {
+  const OGGI = new Date('2026-10-12T18:00:00Z')
+  const list = [
+    d({ id: 'borghese', is_drop: true, valid_until: null, drop_starts_at: '2026-09-30T17:00:00Z', max_quantity: 20, total_redeemed: 20 }),
+    d({ id: 'piadora', is_drop: true, valid_until: null, drop_starts_at: '2026-10-12T17:00:00Z', max_quantity: 50, total_redeemed: 14 }),
+  ]
+  assert.deepEqual(filterShownDrops(list, OGGI).map((x) => x.id), ['piadora'])
+  // Prima che Piadora esca (programmato), Borghese resta col sold out.
+  const PRIMA = new Date('2026-10-12T16:50:00Z')
+  assert.deepEqual(filterShownDrops(list, PRIMA).map((x) => x.id).sort(), ['borghese', 'piadora'])
+  assert.equal(pickFeaturedDeal(list, OGGI).id, 'piadora')
+})
+
+test('filterShownDrops: un drop esaurito coi giorni contati resta finché un posto può liberarsi', () => {
+  const OGGI = new Date('2026-10-15T12:00:00Z')
+  const piadora = d({
+    id: 'piadora', is_drop: true, valid_until: null, drop_starts_at: '2026-10-12T17:00:00Z',
+    max_quantity: 50, total_redeemed: 50, claim_window_days: 7, claims_open_until: '2026-10-19T17:24:00Z',
+  })
+  const nuovo = d({ id: 'nuovo', is_drop: true, valid_until: null, drop_starts_at: '2026-10-14T17:00:00Z', max_quantity: 30, total_redeemed: 4 })
+  // Esce un drop nuovo, ma chi ha preso Piadora ha ancora giorni: resta, con «Mettiti in lista».
+  assert.deepEqual(filterShownDrops([piadora, nuovo], OGGI).map((x) => x.id).sort(), ['nuovo', 'piadora'])
+  assert.equal(canFreeSeat(piadora, OGGI), true)
+  // Passata l'ultima scadenza (o tutti usati: NULL) nessun posto può più liberarsi: sparisce.
+  const DOPO = new Date('2026-10-19T18:00:00Z')
+  assert.deepEqual(filterShownDrops([piadora, nuovo], DOPO).map((x) => x.id), ['nuovo'])
+  assert.deepEqual(filterShownDrops([{ ...piadora, claims_open_until: null }, nuovo], OGGI).map((x) => x.id), ['nuovo'])
+  // Un drop di prima, senza giorni contati, non ne ha diritto anche se la colonna c'è.
+  assert.equal(canFreeSeat({ ...piadora, claim_window_days: null }, OGGI), false)
+  // La vetrina della home resta all'ultimo drop uscito.
+  assert.equal(pickFeaturedDeal([piadora, nuovo], OGGI).id, 'nuovo')
 })
 
 test('pickFeaturedDeal: esce un drop nuovo → prende il posto del precedente (anche se quello ha ancora posti)', () => {

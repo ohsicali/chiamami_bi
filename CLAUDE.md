@@ -205,9 +205,16 @@ nuovo visibile**: un drop esaurito resta con la scritta "sold out" e il
 bottone "Esaurito" spento. **Ne resta uno solo, l'ultimo uscito**
 (`filterShownDrops`, per `drop_starts_at`): il 30/09 Gelateria Borghese sì,
 Shoro −30% (esaurito dal 22/09) no — deciso dal proprietario. Quando va
-esaurito un drop più nuovo prende lui il posto. Sparisce anche se scade o
-viene disattivato. Dal 12/10 un drop esaurito **coi giorni contati** non ha il
-bottone spento ma «Mettiti in lista» (vedi "Drop coi giorni contati").
+esaurito un drop più nuovo prende lui il posto. **Dal 12/10 l'esaurito resta
+solo finché è l'ultimo drop uscito**: appena esce un drop nuovo (anche con
+posti liberi) sparisce da home e Bi Club — uscito Piadora, Borghese via
+(deciso dal proprietario). Un drop programmato non ancora iniziato non lo
+scalza. Sparisce anche se scade o viene disattivato. Dal 12/10 un drop esaurito **coi giorni contati** non ha il
+bottone spento ma «Mettiti in lista» (vedi "Drop coi giorni contati"), e
+**resta nel Bi Club anche dopo un drop nuovo finché un posto può ancora
+liberarsi** (`canFreeSeat`: qualcuno che l'ha preso ha ancora giorni per
+usarlo, colonna `discounts.claims_open_until` tenuta dal DB — deciso dal
+proprietario il 12/10). La vetrina della home resta all'ultimo drop uscito.
 - **Home** (tutte e due, `HomeFeedV4` e `HomeDesktopClassic`): lo sconto in
   evidenza lo sceglie `pickFeaturedDeal()` / `chooseFeaturedDeal()` in
   `src/lib/discounts.js`. **Vince l'ultima cosa successa** (deciso il 30/09):
@@ -444,8 +451,28 @@ e, al posto del bottone spento, **«Mettiti in lista»**.
   ore, "l'hai perso". Chi ha il posto dalla lista riceve "si è liberato un posto".
   Il promemoria delle 48 ore (§7c) salta i drop coi giorni contati.
 - **Pannello**: nel form del drop "Giorni per usarlo" (7 di default, "Nessun
-  limite" per fare come prima); sulle card dei drop i giorni, chi è in lista e
-  quanti posti sono passati di mano.
+  limite" per fare come prima); sulle card dei drop Presi (posti occupati),
+  Utilizzati, Da usare, **In lista**, Persi e "SOLD OUT" accanto alla barra.
+- **Il locale li vede in /verify** (12/10): nella card corallo del drop
+  quante persone l'hanno preso, usati alla cassa, da usare, **in lista
+  d'attesa**, persi, e come funziona. Il browser del locale non può contarli:
+  RPC `verify_drops_overview` (device token, solo numeri, SQL
+  `supabase/verify-drops-overview-2026-10-12.sql`, **eseguito**). Locale e
+  admin leggono le stesse parole: `src/lib/dropStats.js` (test in
+  `tests/drop-claims.test.mjs`). /verify mostra **tutti** gli sconti attivi
+  del locale, il drop per primo (prima uno solo, a caso fra drop e convenzione).
+- **Il drop esaurito resta in vista finché un posto può liberarsi** (12/10):
+  `discounts.claims_open_until` = la scadenza più lontana fra i riscatti
+  ancora da usare, scritta dal trigger `tr_claims_open_until` a ogni riscatto
+  nuovo/usato/scaduto (SQL `supabase/drop-claims-open-until-2026-10-12.sql`,
+  **eseguito**). `filterShownDrops` tiene l'esaurito se `canFreeSeat`, anche
+  quando è uscito un drop più nuovo.
+- **«Sei il numero 134 nella lista d'attesa»** (12/10): appena ci si mette in
+  lista si apre una card corallo col numero in grande, "se non lo usano entro 7
+  giorni passerai tu" e "Buona fortuna!" (`WaitlistJoined`, parole in
+  `waitlistJoinedCopy`). La apre `useDropWaitlist.join` con
+  `openWaitlistJoined`, così vale da ogni punto; il punto che chiama `join`
+  non mostra un suo messaggio quando l'esito è `joined`/`already`.
 - **Tutorial**: schermata "Drop preso? Hai 7 giorni." nel benvenuto e "Hai 7
   giorni per usarlo." in "Come si usa lo sconto" aperto dopo un drop
   (`openUseTour({ drop: giorni })`, topic `use-drop`). Se cambiano i giorni o

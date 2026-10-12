@@ -56,17 +56,20 @@ export function dropCtaState({ deal, redemption = null, wait = null, now = new D
         label: wait.my_position ? `In lista · sei il n° ${wait.my_position}` : 'Sei in lista',
         disabled: true,
         tone: 'waiting',
-        note: `Se chi l’ha preso non lo usa entro ${giorni}, il posto passa a chi è in lista: quando tocca a te ti scrivo.`,
+        note: `Se qualcuno non lo usa entro ${giorni}, il posto passa a chi è in cima alla lista: quando tocca a te ti scrivo.`,
         canLeave: true,
       }
     }
+    // Chi trova il drop esaurito deve capire che non è finita (12/10,
+    // richiesta del proprietario): i posti tornano liberi, e vanno in ordine
+    // a chi è in lista.
     const n = Number(wait?.waiting) || 0
     return {
       kind: 'waitlist',
       label: '🔔 Mettiti in lista',
       disabled: false,
       tone: 'waitlist',
-      note: `Chi l’ha preso ha ${giorni} per usarlo: se non lo usa, il posto passa al primo in lista.${n ? ` ${n === 1 ? 'C’è già 1 persona' : `Ci sono già ${n} persone`} in lista.` : ''}`,
+      note: `Posti finiti, ma non è detta l’ultima: chi l’ha preso ha ${giorni} per usarlo, e se non lo usa il posto passa al primo in lista. Più sei in alto, prima tocca a te.${n ? ` ${n === 1 ? 'C’è già 1 persona' : `Ci sono già ${n} persone`} in lista.` : ''}`,
     }
   }
   return {
@@ -100,4 +103,38 @@ export function waitlistJoinMessage(result) {
     default:
       return { text: 'Non sono riuscito a metterti in lista. Riprova tra poco.' }
   }
+}
+
+/**
+ * Le parole della schermata che si apre dopo «Mettiti in lista» (12/10):
+ * il proprio posto in fila in grande e cosa succede adesso. "Sei il numero
+ * 134 nella lista d'attesa. Se lo sconto non verrà usato entro 7 giorni,
+ * passerai tu. Buona fortuna!" — l'ha chiesto così il proprietario.
+ */
+export function waitlistJoinedCopy({ position, waiting, days, restaurantName } = {}) {
+  const pos = Number(position) > 0 ? Number(position) : null
+  const giorni = days ? `${days} ${days === 1 ? 'giorno' : 'giorni'}` : 'i giorni previsti'
+  const where = restaurantName ? ` da ${restaurantName}` : ''
+  const others = Number(waiting) > 0 && pos ? Math.max(0, Number(waiting) - pos) : 0
+  return {
+    kicker: 'Sei in lista d’attesa',
+    position: pos,
+    title: pos
+      ? (pos === 1 ? 'Sei il primo della lista!' : `Sei il numero ${pos} nella lista d’attesa`)
+      : 'Sei nella lista d’attesa',
+    body: pos === 1
+      ? `Se chi ha preso il drop${where} non lo usa entro ${giorni}, il primo posto che si libera è tuo.`
+      : `Se chi ha preso il drop${where} non lo usa entro ${giorni}, il posto passa a chi è in cima alla lista: quando arriva il tuo turno, passerai tu.`,
+    after: `Ti scrivo appena tocca a te: da lì hai ${giorni} per usarlo.${others ? ` Dietro di te ${others === 1 ? 'c’è 1 persona' : `ci sono ${others} persone`}.` : ''}`,
+    luck: 'Buona fortuna! 🍀',
+    cta: 'Ho capito',
+  }
+}
+
+/** L'evento che apre quella schermata (la mostra `WaitlistJoinedGate` in App.jsx). */
+export const WAITLIST_JOINED_EVENT = 'chiamamibi:waitlist-joined'
+
+export function openWaitlistJoined(detail) {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new CustomEvent(WAITLIST_JOINED_EVENT, { detail }))
 }

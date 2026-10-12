@@ -1,0 +1,136 @@
+/* I numeri del drop dentro la card corallo di /verify (12/10). Bianco su
+   corallo come il resto della card (`.v4-sconto-hero--rich.is-drop`). */
+.vdrop {
+  position: relative;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.32);
+  color: #fff;
+}
+.vdrop-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 7px;
+}
+.vdrop-head b {
+  font-family: var(--font-sans);
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+.vdrop-track {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.24);
+  overflow: hidden;
+}
+.vdrop-track i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: #fff;
+  transition: width 0.5s ease;
+}
+.vdrop-foot {
+  margin-top: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  opacity: 0.9;
+}
+.vdrop-sold {
+  display: inline-block;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 1;
+}
+
+.vdrop-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+@media (min-width: 560px) {
+  .vdrop-tiles--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .vdrop-tiles--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.vdrop-tile {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  padding: 9px 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.vdrop-tile b {
+  font-family: var(--font-sans);
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+.vdrop-tile span {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  opacity: 0.92;
+}
+/* Chi aspetta in lista è il numero nuovo: bianco pieno, testo corallo. */
+.vdrop-tile.is-hot {
+  background: #fff;
+  color: var(--color-corallo-ink, #C53A33);
+}
+
+.vdrop-notes {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.vdrop-notes li {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  padding-left: 14px;
+  position: relative;
+  opacity: 0.95;
+}
+.vdrop-notes li::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+}
+
+/* Il bollino "Sold out" in cima alla card del drop esaurito, sulla riga
+   dell'etichetta (sopra al valore lo copriva). */
+.v4-sconto-labrow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.v4-sconto-soldout {
+  position: relative;
+  flex: 0 0 auto;
+  background: #fff;
+  color: var(--color-corallo-ink, #C53A33);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 999px;
+  transform: rotate(-3deg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}

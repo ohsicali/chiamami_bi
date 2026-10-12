@@ -140,18 +140,32 @@ function dropStarted(d, now) {
 }
 
 /**
- * I drop da MOSTRARE (home e Bi Club): tutti quelli attivi più UN SOLO drop
- * esaurito, l'ultimo uscito. Deciso dal proprietario il 30/09: il drop
+ * Un drop esaurito coi giorni contati può ancora liberare un posto? Sì
+ * finché qualcuno che l'ha preso ha ancora giorni per usarlo:
+ * `claims_open_until` è la scadenza più lontana fra quei riscatti, tenuta dal
+ * DB (supabase/drop-claims-open-until-2026-10-12.sql).
+ */
+export function canFreeSeat(d, now = new Date()) {
+  return Number(d?.claim_window_days) > 0 && ms(d?.claims_open_until) > now.getTime()
+}
+
+/**
+ * I drop da MOSTRARE (home e Bi Club): tutti quelli attivi più i drop
+ * esauriti che contano ancora. Deciso dal proprietario il 30/09: il drop
  * appena finito resta col "sold out" (Gelateria Borghese), quelli esauriti
- * prima no (Shoro −30%, esaurito dal 22/09) — altrimenti la vetrina si
- * riempirebbe di drop che non si possono più prendere. Quando un nuovo drop
- * va esaurito prende lui il posto, senza toccare niente a mano.
+ * prima no (Shoro −30%, esaurito dal 22/09). Il 12/10: quando esce un drop
+ * nuovo, l'esaurito sparisce anche se il nuovo ha ancora posti (Piadora
+ * uscito → Borghese via dal Bi Club) — tranne un drop coi giorni contati
+ * finché un posto può ancora liberarsi (`canFreeSeat`): lì ci si mette in
+ * lista, e chi c'è aspetta il suo turno (deciso lo stesso giorno). Un drop
+ * programmato che non è ancora iniziato non scalza l'esaurito.
  */
 export function filterShownDrops(list, now = new Date()) {
   const visible = filterVisibleDrops(list, now)
-  const soldOut = visible.filter((d) => isSoldOut(d))
-  const latest = soldOut.reduce((best, d) => (!best || dropStartMs(d) > dropStartMs(best) ? d : best), null)
-  return visible.filter((d) => !isSoldOut(d) || d === latest)
+  const latest = visible
+    .filter((d) => dropStarted(d, now))
+    .reduce((best, d) => (!best || dropStartMs(d) > dropStartMs(best) ? d : best), null)
+  return visible.filter((d) => !isSoldOut(d) || d === latest || canFreeSeat(d, now))
 }
 
 /** Convenzione attiva. */
