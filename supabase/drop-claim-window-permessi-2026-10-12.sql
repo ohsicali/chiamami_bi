@@ -5,6 +5,7 @@
 -- dal connettore Supabase. Queste righe no: il connettore chiede una
 -- conferma per REVOKE e DROP, e la conferma non è arrivata. Si incollano
 -- nel SQL Editor di Supabase (Dashboard → SQL Editor → New query → Run).
+-- **Eseguito dal proprietario il 12/10** (verificato col connettore).
 --
 -- Cosa fanno:
 --   - la lista d'attesa si scrive solo dalle RPC (oggi la RLS lo impedisce
