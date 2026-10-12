@@ -435,7 +435,16 @@ function HeroPromo({ featured, onUnlock, ctaLabel, ctaDisabled, ctaTone, ctaNote
             </button>
           </div>
           {ctaNote && (
-            <p className="hfv4-hero-note" style={{ margin: '10px 0 0', maxWidth: 420, fontSize: 12.5, lineHeight: 1.45, fontWeight: 500, color: 'rgba(255,255,255,.9)' }}>
+            <p
+              className="hfv4-hero-note"
+              style={{
+                margin: '10px 0 0', maxWidth: 420, fontSize: 12.5, lineHeight: 1.45, fontWeight: 500, color: 'rgba(255,255,255,.9)',
+                // Lista d'attesa (12/10): come funziona deve leggersi bene.
+                ...(ctaTone === 'waitlist' || ctaTone === 'waiting'
+                  ? { fontSize: 13, fontWeight: 600, color: '#fff', background: 'rgba(60,10,6,.18)', borderRadius: 12, padding: '10px 12px' }
+                  : null),
+              }}
+            >
               {ctaNote}
             </p>
           )}

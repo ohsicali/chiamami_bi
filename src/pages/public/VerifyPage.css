@@ -1588,6 +1588,20 @@
 @media (max-width: 1100px) {
   .v4-dsk-grid { grid-template-columns: 1fr; }
 }
+/* Nella griglia la card del drop (stile telefono) sta accanto allo scanner. */
+.v4-dsk-grid > .v4-sconto-hero { margin-bottom: 0; }
+/* Gli altri sconti attivi del locale, sotto la griglia (12/10). */
+.v4-dsk-more {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 18px;
+  align-items: start;
+}
+.v4-dsk-more > .v4-sconto-hero { margin-bottom: 0; }
+@media (max-width: 1100px) {
+  .v4-dsk-more { grid-template-columns: 1fr; }
+}
 .v4-dsk-hero {
   background: linear-gradient(135deg, var(--color-green-a), var(--color-green-b));
   color: #0F2C12;

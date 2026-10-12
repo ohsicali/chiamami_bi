@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../supabase'
-import { hasClaimWindow } from '../dropClaim'
+import { claimWindowDays, hasClaimWindow } from '../dropClaim'
+import { openWaitlistJoined } from '../dropWaitlist'
 import { isSoldOut } from '../discounts'
 import { track } from '../posthog'
 
@@ -14,8 +15,9 @@ import { track } from '../posthog'
  * niente da chiedere, e nella maggior parte delle visite la RPC non parte.
  *
  * `join`/`leave` passano dalle RPC (il browser non scrive mai nella
- * tabella) e aggiornano subito lo stato. Cosa dire dopo: `waitlistJoinMessage`
- * in src/lib/dropWaitlist.js.
+ * tabella) e aggiornano subito lo stato. Entrati in lista si apre la
+ * schermata col proprio posto (`openWaitlistJoined`); per gli altri esiti
+ * cosa dire lo decide `waitlistJoinMessage` in src/lib/dropWaitlist.js.
  */
 export function useDropWaitlist(deals, userId) {
   const ids = useMemo(
@@ -62,6 +64,15 @@ export function useDropWaitlist(deals, userId) {
           ...m,
           [deal.id]: { ...(m[deal.id] || {}), discount_id: deal.id, waiting: data.waiting, my_position: data.position, my_status: 'waiting' },
         }))
+        // Il proprio posto in fila, in grande (12/10): da qualunque punto ci
+        // si metta in lista (home, Bi Club) — vedi WaitlistJoinedGate.
+        openWaitlistJoined({
+          discountId: deal.id,
+          position: data.position ?? null,
+          waiting: data.waiting ?? null,
+          days: claimWindowDays(deal),
+          restaurantName: deal.restaurant?.name || deal.restaurant_name || null,
+        })
       }
       return data || null
     } catch {

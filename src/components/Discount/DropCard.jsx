@@ -190,7 +190,9 @@ export default function DropCard({
             </button>
           </div>
         )}
-        {ctaNote && <div className="dropcard__ctanote">{ctaNote}</div>}
+        {ctaNote && (
+          <div className={`dropcard__ctanote ${ctaTone ? `dropcard__ctanote--${ctaTone}` : ''}`}>{ctaNote}</div>
+        )}
       </div>
     </>
   )

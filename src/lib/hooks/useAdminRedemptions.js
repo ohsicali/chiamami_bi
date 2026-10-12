@@ -20,7 +20,7 @@ import { applyRedemptionChange, deriveRedemptionStats } from '../redemptionsLive
  */
 
 const PAGE = 1000 // tetto righe di PostgREST: oltre, si pagina
-const COLS = 'id, discount_id, status, generated_at, redeemed_at, user_name'
+const COLS = 'id, discount_id, status, generated_at, redeemed_at, expires_at, user_name'
 
 async function fetchAllRows() {
   const rows = []

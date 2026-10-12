@@ -40,6 +40,42 @@ dove siamo. Aggiorna a ogni step importante.
 | Avvisi agli admin su Telegram (sconto usato, recensione, suggerimento, candidatura) | — | 🚧 In review | Branch `claude/sleepy-ride-2d13rk`. SQL `supabase/admin-telegram-2026-09-30.sql` **già eseguito** il 30/09 (provato in transazione annullata: i 4 messaggi, suggerimento anon incluso; con l'invio in errore la convalida passa). Bot **@LaGuidaDiBi_bot** e gruppo **"La Guida di Bi"** configurati nel Vault il 30/09; messaggio di prova arrivato. Se il gruppo diventa supergruppo l'id cambia (`-100…`): rifare getUpdates e aggiornare `telegram_admin_chat_id`. Vedi CLAUDE.md. |
 | Drop coi giorni contati — 7 giorni per usarlo, lista d'attesa, email a tappe | — | 🚧 In review | PR #340, branch `claude/drop-giorni-contati`. SQL `supabase/drop-claim-window-2026-10-12.sql` **eseguito il 12/10** dal connettore, tranne REVOKE/DROP (il connettore vuole una conferma che non arriva): quelli sono in `supabase/drop-claim-window-permessi-2026-10-12.sql`, **eseguito dal proprietario nel SQL Editor il 12/10** (verificato: giro solo service role, lista scritta solo dalle RPC, `my_claim_rank` con `expires_at`). Dopo il deploy: `supabase/drop-claims-cron-2026-10-12.sql`. Vedi CLAUDE.md "Drop coi giorni contati" e EMAIL-FLOWS §7f. |
 | Feedback dopo la convalida (festa, stelle, Bi che ringrazia, email 30 min / 1 giorno, recensioni in /verify) | #320 | ✅ Merged (9d3cf06) | SQL `redemption-feedback-2026-09-29.sql`, `verify-feedback-list-2026-09-29.sql` e `redemption-feedback-cron-2026-09-29.sql` **tutti eseguiti** il 29/09. Giro email attivo (pg_cron `chiamamibi-feedback-asks`, ogni 10 min; prima chiamata: 200). Vedi sezione "29/09 — feedback" sotto e CLAUDE.md. |
+| Drop: chi l'ha preso e chi è in lista in /verify e nel pannello, «sei il n° 134» | — | 🚧 In review | Branch `claude/drop-lista-verify`. SQL `supabase/verify-drops-overview-2026-10-12.sql` **eseguito il 12/10** col connettore (provato come anon in transazione annullata con un device token finto di Piadora: 23/50 presi, 0 usati, 23 da usare, 0 in lista; token sbagliato → `unauthorized`). Vedi sezione "12/10 — lista d'attesa" sotto e CLAUDE.md "Drop coi giorni contati". |
+
+## 12/10 — lista d'attesa: i numeri al locale e all'admin, il posto in grande
+
+Richiesta del proprietario dopo il merge di #340.
+
+- **/verify**: il locale vede, per ogni drop, quante persone l'hanno preso
+  (posti occupati su N, barra), quanti l'hanno già usato alla cassa, quanti
+  devono ancora usarlo, **quanti sono in lista d'attesa**, quanti l'hanno perso
+  (tempo scaduto) e due righe su come funziona (i 7 giorni, quando si libera il
+  primo posto, quanti posti sono già passati a chi era in lista). Il browser del
+  locale non può leggere i riscatti degli altri né la lista: li conta la RPC
+  `verify_drops_overview` (device token come le altre `verify_*`, solo numeri).
+  Il bollino **Sold out** sta sulla riga dell'etichetta della card.
+- **/verify mostra tutti gli sconti attivi**, il drop per primo: prima ne
+  mostrava uno solo, il primo per `valid_until` — con drop e convenzione senza
+  scadenza (Piadora, Gelateria Borghese) usciva l'uno o l'altro a caso. Corretto
+  anche "0 / 50" sulla card del drop: `claimed_count` è 0 su tutti i drop e col
+  `??` non si passava a `total_redeemed` (ora `claimedCount()`).
+- **Pannello sconti**: sulle card dei drop coi giorni contati "Presi" sono i
+  posti occupati, poi Utilizzati, **Da usare**, **In lista** (corallo se c'è
+  qualcuno), **Persi**, e "SOLD OUT" accanto alla barra. Contati dalle righe che
+  il pannello ha già in memoria (`useAdminRedemptions`, ora con `expires_at`) +
+  `drop_waitlist`, con la stessa logica e le stesse parole del locale
+  (`src/lib/dropStats.js`).
+- **Drop esaurito**: la riga sotto «Mettiti in lista» è un riquadro leggibile
+  (era 9,5 px) e dice che non è finita: chi l'ha preso ha 7 giorni, se non lo usa
+  il posto passa al primo in lista, più sei in alto prima tocca a te, quanti sono
+  già in lista.
+- **«Sei il numero 134 nella lista d'attesa»**: appena ci si mette in lista
+  (home telefono e computer, Bi Club) si apre una card corallo con Bi che saluta,
+  il numero che sale, "se chi ha preso il drop non lo usa entro 7 giorni… passerai
+  tu", quanti ci sono dietro e "Buona fortuna! 🍀" (`WaitlistJoined`, aperta da
+  `useDropWaitlist.join` con `openWaitlistJoined`, montata da
+  `WaitlistJoinedGate` in App.jsx, chunk a parte).
+- Anteprime con Playwright e Supabase simulato (vedi la PR).
 
 ## 12/10 — drop coi giorni contati: 7 giorni per usarlo, poi la lista d'attesa
 

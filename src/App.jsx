@@ -16,6 +16,7 @@ import WelcomeTourGate from './components/Onboarding/WelcomeTourGate'
 import RedemptionFeedbackGate from './components/Feedback/RedemptionFeedbackGate'
 import BirthDateGate from './components/Onboarding/BirthDateGate'
 import DropWinGate from './components/Discount/DropWinGate'
+import WaitlistJoinedGate from './components/Discount/WaitlistJoinedGate'
 import MetaTags from './components/SEO/MetaTags'
 import { seoMeta } from './lib/seoPages'
 
@@ -323,6 +324,10 @@ export default function App() {
     {/* Drop appena preso: Bi applaude, "sei il numero X su 20", poi il QR
         (src/lib/dropWin.js). */}
     <DropWinGate />
+
+    {/* Appena in lista d'attesa per un drop esaurito: "sei il numero 134",
+        cosa succede adesso e buona fortuna (src/lib/dropWaitlist.js). */}
+    <WaitlistJoinedGate />
 
     {/* Data di nascita per chi non l'ha ancora messa: una volta per visita
         (regole in src/lib/birthDate.js). */}

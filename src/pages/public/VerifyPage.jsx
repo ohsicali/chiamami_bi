@@ -9,6 +9,10 @@ import { formatAddress } from '../../lib/utils/formatAddress'
 import AlreadyUsedResult from '../../components/Verify/AlreadyUsedResult'
 import ShortCodeInput from '../../components/Verify/ShortCodeInput'
 import VerifyReviews, { ReviewsTeaser } from '../../components/Verify/VerifyReviews'
+import { DropPeople } from '../../components/Verify/VerifyDrops'
+import { useVerifyDrops } from '../../lib/hooks/useVerifyDrops'
+import { dropPeopleSummary } from '../../lib/dropStats'
+import { claimedCount } from '../../lib/discounts'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
 import { SHORT_CODE_LENGTH, isShortCode, normalizeShortCode } from '../../lib/shortCode'
 import MetaTags from '../../components/SEO/MetaTags'
@@ -1820,12 +1824,13 @@ function DesktopShell({
 /* Desktop Dashboard — hero verde + scan tile + 4-col stats + storico expandable */
 function DesktopDashboard({ restaurant, deviceToken, onSessionExpired, onOpenScanner, onOpenReviews }) {
   const [stats, setStats] = useState(null)
-  const [discount, setDiscount] = useState(null)
+  const [discounts, setDiscounts] = useState([])
   const [activity, setActivity] = useState([])
   const [loading, setLoading] = useState(true)
   const [statsError, setStatsError] = useState(null)
   const [range, setRange] = useState(defaultRange)
   const [storicoOpen, setStoricoOpen] = useState(false)
+  const { byId: dropsById } = useVerifyDrops({ restaurantId: restaurant.id, deviceToken, onSessionExpired })
 
   useEffect(() => {
     let cancelled = false
@@ -1838,15 +1843,7 @@ function DesktopDashboard({ restaurant, deviceToken, onSessionExpired, onOpenSca
           p_from: range.from.toISOString(),
           p_to: range.to.toISOString(),
         })
-        const discountPromise = supabase
-          .from('discounts')
-          .select('id, title, description, discount_type, discount_value, valid_from, valid_until, max_redemptions, total_redeemed, is_active, is_drop, drop_starts_at, drop_ends_at, max_quantity, claimed_count, valid_days, valid_meal_slots, valid_time_from, valid_time_to, conditions')
-          .eq('restaurant_id', restaurant.id)
-          .eq('is_active', true)
-          .or(`valid_until.is.null,valid_until.gt.${new Date().toISOString()}`)
-          .order('valid_until', { ascending: true })
-          .limit(1)
-          .maybeSingle()
+        const discountPromise = fetchActiveDiscounts(restaurant.id)
         const activityPromise = supabase.rpc('verify_activity_list', {
           p_restaurant_id: restaurant.id,
           p_device_token: deviceToken,
@@ -1865,7 +1862,7 @@ function DesktopDashboard({ restaurant, deviceToken, onSessionExpired, onOpenSca
           const actVal = activityRes.status === 'fulfilled' ? activityRes.value?.data : null
           setStats(buildFallbackStats(actVal?.items || null, range))
         }
-        setDiscount(discountRes.status === 'fulfilled' ? (discountRes.value?.data || null) : null)
+        setDiscounts(discountRes.status === 'fulfilled' ? sortForVerify(discountRes.value?.data) : [])
         let activityRows = []
         if (activityRes.status === 'fulfilled') {
           const val = activityRes.value?.data
@@ -1898,6 +1895,10 @@ function DesktopDashboard({ restaurant, deviceToken, onSessionExpired, onOpenSca
     )
   }
 
+  // In testa il drop più recente (con chi l'ha preso e chi è in lista), se
+  // c'è; gli altri sconti attivi sotto la griglia.
+  const discount = discounts[0] || null
+  const moreDiscounts = discounts.slice(1)
   const discountValue = discount ? formatDiscountValue(discount) : null
   const today = new Date()
   const dayLabel = today.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -1941,7 +1942,9 @@ function DesktopDashboard({ restaurant, deviceToken, onSessionExpired, onOpenSca
       )}
 
       <div className="v4-dsk-grid">
-        {discount ? (
+        {discount?.is_drop ? (
+          <ScontoHero discount={discount} people={dropsById[discount.id]} />
+        ) : discount ? (
           <div className="v4-dsk-hero">
             <div className="lab">● SCONTO ATTIVO</div>
             <div className="val">{discountValue}</div>
@@ -1962,6 +1965,14 @@ function DesktopDashboard({ restaurant, deviceToken, onSessionExpired, onOpenSca
           <div className="btn">Apri scanner →</div>
         </button>
       </div>
+
+      {moreDiscounts.length > 0 && (
+        <div className="v4-dsk-more">
+          {moreDiscounts.map((d) => (
+            <ScontoHero key={d.id} discount={d} people={d.is_drop ? dropsById[d.id] : null} />
+          ))}
+        </div>
+      )}
 
       <Stats4 stats={stats} range={range} />
 
@@ -2158,6 +2169,29 @@ function ResultCard({ tone, icon, title, description, children, onReset, resetLa
 /* ------------------------------------------------------------------ */
 /*  Dashboard tab — stats + sconto attivo + funnel + attivita         */
 /* ------------------------------------------------------------------ */
+const VERIFY_DISCOUNT_COLS = 'id, title, description, discount_type, discount_value, valid_from, valid_until, max_redemptions, total_redeemed, is_active, is_drop, drop_starts_at, drop_ends_at, max_quantity, claimed_count, claim_window_days, valid_days, valid_meal_slots, valid_time_from, valid_time_to, conditions, created_at'
+
+// Gli sconti attivi del locale (lettura pubblica: le prove non arrivano).
+function fetchActiveDiscounts(restaurantId) {
+  return supabase
+    .from('discounts')
+    .select(VERIFY_DISCOUNT_COLS)
+    .eq('restaurant_id', restaurantId)
+    .eq('is_active', true)
+    .or(`valid_until.is.null,valid_until.gt.${new Date().toISOString()}`)
+    .order('valid_until', { ascending: true })
+    .limit(6)
+}
+
+// Prima i drop (il più recente in testa: è quello di cui il locale vuole
+// sapere quanti l'hanno preso e quanti aspettano), poi gli sconti fissi.
+function sortForVerify(rows) {
+  const list = Array.isArray(rows) ? rows : []
+  const start = (d) => new Date(d.drop_starts_at || d.created_at || 0).getTime()
+  const drops = list.filter((d) => d.is_drop).sort((a, b) => start(b) - start(a))
+  return [...drops, ...list.filter((d) => !d.is_drop)]
+}
+
 function defaultRange() {
   const to = new Date()
   const from = new Date()
@@ -2169,12 +2203,16 @@ function defaultRange() {
 function DashboardTab({ restaurant, deviceToken, onSessionExpired, onOpenReviews }) {
   const [stats, setStats] = useState(null)
   const [statsError, setStatsError] = useState(null)
-  const [discount, setDiscount] = useState(null)
+  const [discounts, setDiscounts] = useState([])
   const [activity, setActivity] = useState([])
   const [loading, setLoading] = useState(true)
   const [reloadKey, setReloadKey] = useState(0)
   const [range, setRange] = useState(defaultRange)
   const [storicoOpen, setStoricoOpen] = useState(false)
+  // Quanti hanno preso il drop e quanti sono in lista (12/10).
+  const { byId: dropsById } = useVerifyDrops({
+    restaurantId: restaurant.id, deviceToken, onSessionExpired, reloadKey,
+  })
 
   useEffect(() => {
     let cancelled = false
@@ -2190,16 +2228,10 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired, onOpenReviews
           p_to: range.to.toISOString(),
         })
 
-        // 2) Active discount (public read)
-        const discountPromise = supabase
-          .from('discounts')
-          .select('id, title, description, discount_type, discount_value, valid_from, valid_until, max_redemptions, total_redeemed, is_active, is_drop, drop_starts_at, drop_ends_at, max_quantity, claimed_count, valid_days, valid_meal_slots, valid_time_from, valid_time_to, conditions')
-          .eq('restaurant_id', restaurant.id)
-          .eq('is_active', true)
-          .or(`valid_until.is.null,valid_until.gt.${new Date().toISOString()}`)
-          .order('valid_until', { ascending: true })
-          .limit(1)
-          .maybeSingle()
+        // 2) Active discounts (public read). Tutti, non solo il primo (12/10):
+        //    un locale col drop e la convenzione vedeva l'uno o l'altro a
+        //    caso (valid_until vuoto per tutti e due).
+        const discountPromise = fetchActiveDiscounts(restaurant.id)
 
         // 3) Recent activity via SECURITY DEFINER RPC — after the 2026-04
         //    security hardening, anon users can no longer SELECT foreign
@@ -2246,7 +2278,7 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired, onOpenReviews
           setStats(buildFallbackStats(actValue?.items || null, range))
         }
 
-        setDiscount(discountRes.status === 'fulfilled' ? (discountRes.value?.data || null) : null)
+        setDiscounts(discountRes.status === 'fulfilled' ? sortForVerify(discountRes.value?.data) : [])
 
         // Activity feed — the RPC already joins profiles server-side and
         // falls back to discount_redemptions.user_name when profiles is
@@ -2324,7 +2356,10 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired, onOpenReviews
       )}
 
       <RangePicker range={range} onChange={setRange} />
-      <ScontoHero discount={discount} />
+      {discounts.length === 0 && <ScontoHero discount={null} />}
+      {discounts.map((d) => (
+        <ScontoHero key={d.id} discount={d} people={d.is_drop ? dropsById[d.id] : null} />
+      ))}
       <Stats4 stats={stats} range={range} />
       <ReviewsTeaser
         restaurant={restaurant}
@@ -2363,7 +2398,7 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired, onOpenReviews
 /* ------------------------------------------------------------------ */
 /*  v4 — Dashboard presentational components                          */
 /* ------------------------------------------------------------------ */
-function ScontoHero({ discount }) {
+function ScontoHero({ discount, people = null }) {
   if (!discount) {
     return (
       <div className="v4-sconto-hero" style={{ background: 'linear-gradient(135deg, var(--color-cream-deep), var(--color-cream))', color: 'var(--color-ink)' }}>
@@ -2383,7 +2418,9 @@ function ScontoHero({ discount }) {
   // non sono compilati ricadiamo su max_redemptions/total_redeemed così la
   // barra appare comunque (succede quando il drop è creato senza max esplicito).
   const limit = (isDrop ? (discount.max_quantity ?? discount.max_redemptions) : discount.max_redemptions) || 0
-  const used  = (isDrop ? (discount.claimed_count ?? discount.total_redeemed) : discount.total_redeemed) || 0
+  // `claimed_count` è 0 (non NULL) su tutti i drop: con `??` la card
+  // diceva "0 / 50" a Piadora con 23 presi. Conta il più alto dei due.
+  const used  = (isDrop ? claimedCount(discount) : discount.total_redeemed) || 0
   const hasLimit = limit > 0
   const pct = hasLimit ? Math.min(100, Math.round((used / limit) * 100)) : null
   // Il blocco progress lo mostriamo sempre per i drop, e per gli sconti
@@ -2399,9 +2436,17 @@ function ScontoHero({ discount }) {
   const conditionsList = (discount.conditions || '')
     .split(/\n+/).map((s) => s.trim()).filter(Boolean)
 
+  // Drop (12/10): i numeri delle persone arrivano da `verify_drops_overview`
+  // e prendono il posto della barra semplice.
+  const peopleSummary = isDrop && people ? dropPeopleSummary(people) : null
+  const soldOut = isDrop && (peopleSummary ? peopleSummary.soldOut : hasLimit && used >= limit)
+
   return (
     <div className={`v4-sconto-hero v4-sconto-hero--rich ${isDrop ? 'is-drop' : ''}`}>
-      <div className="lab">{isDrop ? '◉' : '●'} {typeLabel}</div>
+      <div className="v4-sconto-labrow">
+        <div className="lab">{isDrop ? '◉' : '●'} {typeLabel}</div>
+        {soldOut && <span className="v4-sconto-soldout">Sold out</span>}
+      </div>
       <div className="val">{value}</div>
       {discount.title && <div className="ttl">{discount.title}</div>}
       {discount.description && <div className="cond">{discount.description}</div>}
@@ -2426,7 +2471,9 @@ function ScontoHero({ discount }) {
         </div>
       )}
 
-      {showProgress && (
+      {peopleSummary ? (
+        <DropPeople item={people} />
+      ) : showProgress && (
         <div className="v4-sconto-progress">
           <div className="v4-sconto-progress-head">
             <span>

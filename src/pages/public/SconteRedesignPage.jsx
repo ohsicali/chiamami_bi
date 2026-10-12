@@ -447,6 +447,8 @@ function SconteRedesignPageInner() {
     const result = await waitlist.join(deal)
     const msg = waitlistJoinMessage(result)
     if (msg.claim) { claimDeal(deal); return }
+    // Entrato in lista: il posto in fila lo dice la schermata grande.
+    if (result?.status === 'joined' || result?.status === 'already') return
     setToast({ text: msg.text, goMiei: result?.status === 'already_claimed' })
   }
   const leaveWaitlist = async (deal) => {
