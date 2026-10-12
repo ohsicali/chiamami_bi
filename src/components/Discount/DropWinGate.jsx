@@ -5,6 +5,7 @@ import { track } from '../../lib/posthog'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { DROP_WIN_EVENT, NO_WIN, hasSeenFirstClaimTour, isFirstClaim, markFirstClaimTourSeen } from '../../lib/dropWin'
 import { openUseTour } from '../../lib/welcomeTour'
+import { claimWindowDays } from '../../lib/dropClaim'
 
 // Bi che applaude e i coriandoli stanno in un chunk a parte: li scarica solo
 // chi prende un drop. Il download parte insieme alla domanda al DB.
@@ -28,6 +29,9 @@ async function fetchRank(redemptionId) {
       total: row.total,
       isDrop: !!row.is_drop,
       restaurantName: row.restaurant_name || null,
+      // Drop coi giorni contati (12/10): fin quando vale, per la barra.
+      expiresAt: row.expires_at || null,
+      windowDays: row.claim_window_days || null,
     }
   } catch {
     return { failed: true }
@@ -107,6 +111,15 @@ export default function DropWinGate() {
       }
       const restaurant = deal?.restaurant || deal?.restaurants || null
       const restaurantName = info.restaurantName || restaurant?.name || null
+      // I giorni per usarlo: dal DB, o dallo sconto se il DB non ha risposto
+      // in tempo (la scadenza allora è "da adesso", al secondo quasi giusta).
+      const windowDays = info.windowDays || claimWindowDays(deal)
+      const claim = windowDays
+        ? {
+            generated_at: new Date().toISOString(),
+            expires_at: info.expiresAt || new Date(Date.now() + windowDays * 86_400_000).toISOString(),
+          }
+        : null
       track('drop_win_shown', {
         discount_id: deal?.id || null,
         rank: info.rank ?? null,
@@ -114,7 +127,7 @@ export default function DropWinGate() {
         rank_failed: !!info.failed,
         first_claim: first,
       })
-      setOpen({ key: redemptionId, rank: info.rank, total: info.total, restaurantName, first })
+      setOpen({ key: redemptionId, rank: info.rank, total: info.total, restaurantName, first, claim, windowDays })
     }
     window.addEventListener(DROP_WIN_EVENT, onWin)
     return () => window.removeEventListener(DROP_WIN_EVENT, onWin)
@@ -124,14 +137,17 @@ export default function DropWinGate() {
   // del tutorial di benvenuto; "Chiudi" (o Esc) lascia dov'era.
   // Al primo sconto sbloccato il tutorial parte comunque (la festa mostra
   // solo quel bottone).
+  // Un drop coi giorni contati apre la versione del tutorial che racconta
+  // anche i 7 giorni e la lista d'attesa (`drop`).
   const handleClose = (action) => {
     const first = !!open?.first
+    const timed = open?.windowDays || false
     setOpen(null)
     track('drop_win_closed', { action, first_claim: first })
     finish({ shown: true, action })
     if (action === 'tutorial' || first) {
       if (first) track('first_claim_tour', { is_drop: true })
-      openUseTour({ source: first ? 'first_claim' : 'drop_win' })
+      openUseTour({ source: first ? 'first_claim' : 'drop_win', drop: timed })
     }
   }
 
@@ -145,6 +161,8 @@ export default function DropWinGate() {
             total={open.total}
             restaurantName={open.restaurantName}
             first={open.first}
+            claim={open.claim}
+            windowDays={open.windowDays}
             onClose={handleClose}
           />
         )}

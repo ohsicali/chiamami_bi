@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import {
   welcomeEmail, newDiscountEmail, newRestaurantEmail,
-  discountClaimedEmail, discountUsedEmail, discountReminderEmail, feedbackAskEmail, feedbackThanksEmail, partnerWelcomeEmail,
+  discountClaimedEmail, discountUsedEmail, discountReminderEmail, dropClaimEmail, feedbackAskEmail, feedbackThanksEmail, partnerWelcomeEmail,
   suggestionConfirmationEmail, partnerApplicationConfirmationEmail,
   recoveryOtpEmail, internalSuggestionEmail, internalPartnerApplicationEmail,
   SAMPLE,
@@ -46,6 +46,13 @@ const EMAIL = [
   ['Sconto usato', 'usato', discountUsedEmail(SAMPLE.discountUsed)],
   ['Promemoria — sconto non usato', 'promemoria', discountReminderEmail({ ...SAMPLE.discountReminder, photos: [FOTO], unsubscribeUrl: UNSUB })],
   ['Promemoria — drop in scadenza', 'promemoria-drop', discountReminderEmail({ ...SAMPLE.discountReminder, photos: [FOTO], isDrop: true, endsAt: '2026-09-26T20:00:00Z', others: 0, unsubscribeUrl: UNSUB })],
+  ['Codice di un drop coi 7 giorni', 'codice-drop', discountClaimedEmail({ ...SAMPLE.discountClaimed, value: '−30%', restaurantName: 'Shoro', perk: '30% su tutto il menù', expiryLabel: 'Da usare entro lun 19 ott, 21:00', claimWindow: { days: 7, deadline: 'lunedì 19 ottobre alle 21:00' } })],
+  ['Drop — posto dalla lista d’attesa', 'drop-lista', dropClaimEmail({ ...SAMPLE.dropClaim, stage: 'start', promoted: true, leftWords: null, pct: 100, photos: [FOTO] })],
+  ['Drop — hai 7 giorni', 'drop-7-giorni', dropClaimEmail({ ...SAMPLE.dropClaim, stage: 'start', leftWords: null, pct: 100, photos: [FOTO] })],
+  ['Drop — ti restano 4 giorni', 'drop-4-giorni', dropClaimEmail({ ...SAMPLE.dropClaim, photos: [FOTO], unsubscribeUrl: UNSUB })],
+  ['Drop — mancano 2 giorni', 'drop-2-giorni', dropClaimEmail({ ...SAMPLE.dropClaim, stage: 'left2', leftWords: '2 giorni', pct: 29, photos: [FOTO], unsubscribeUrl: UNSUB })],
+  ['Drop — ultime 24 ore', 'drop-24-ore', dropClaimEmail({ ...SAMPLE.dropClaim, stage: 'left1', leftWords: '23 ore', deadline: 'domani, lunedì 19 ottobre alle 21:00', pct: 14, photos: [FOTO], unsubscribeUrl: UNSUB })],
+  ['Drop — perso', 'drop-perso', dropClaimEmail({ ...SAMPLE.dropClaim, stage: 'expired', passedOn: true, photos: [FOTO], unsubscribeUrl: UNSUB })],
   ['Com’è andata? — senza stelle', 'feedback', feedbackAskEmail({ ...SAMPLE.feedbackAsk, unsubscribeUrl: UNSUB })],
   ['Com’è andata? — stelle date', 'feedback-stelle', feedbackAskEmail({ ...SAMPLE.feedbackAskRated, unsubscribeUrl: UNSUB })],
   ['Grazie per la recensione', 'feedback-grazie', feedbackThanksEmail({ ...SAMPLE.feedbackThanks, unsubscribeUrl: UNSUB })],

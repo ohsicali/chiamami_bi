@@ -21,6 +21,11 @@
  * - GET  ?job=feedback-asks → ogni 10 minuti da pg_cron (token nel Vault);
  * - POST { type: 'feedback-asks', dryRun?: boolean } → a mano, da admin.
  *
+ * E i drop coi giorni contati (_email/dropClaims.js, 12/10): scadenze, lista
+ * d'attesa e le email "hai 7 giorni / 4 / 2 / ultime 24 ore / l'hai perso":
+ * - GET  ?job=drop-claims → ogni 10 minuti da pg_cron (stesso token);
+ * - POST { type: 'drop-claims', dryRun?: boolean } → a mano, da admin.
+ *
  * E le uscite programmate di locali e sconti (_scheduled-publish.js):
  * - GET  ?job=scheduled-publish → ogni 5 minuti da pg_cron (stesso token);
  * - POST { type: 'scheduled-publish', dryRun?: boolean } → a mano, da admin.
@@ -36,6 +41,7 @@ import { announce } from './_email/announce.js'
 import { runDiscountReminders } from './_email/reminders.js'
 import { runFeedbackAsks } from './_email/feedback.js'
 import { runScheduledPublish } from './_scheduled-publish.js'
+import { runDropClaims } from './_email/dropClaims.js'
 
 // Quanto può essere "giovane" uno sconto per l'annuncio automatico alla
 // creazione (`onCreate`). Largo abbastanza per un salvataggio lento con le
@@ -47,6 +53,7 @@ export default async function handler(req, res) {
   if (req.method === 'GET' && req.query?.job === 'discount-reminders') return handleReminderCron(req, res)
   if (req.method === 'GET' && req.query?.job === 'feedback-asks') return handleFeedbackCron(req, res)
   if (req.method === 'GET' && req.query?.job === 'scheduled-publish') return handleScheduledPublishCron(req, res)
+  if (req.method === 'GET' && req.query?.job === 'drop-claims') return handleDropClaimsCron(req, res)
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   maybeCleanup()
@@ -95,6 +102,13 @@ export default async function handler(req, res) {
   if (type === 'scheduled-publish') {
     try {
       return res.status(200).json(await runScheduledPublish(admin, { dryRun: !!req.body?.dryRun }))
+    } catch (err) {
+      return res.status(500).json({ error: err.message })
+    }
+  }
+  if (type === 'drop-claims') {
+    try {
+      return res.status(200).json(await runDropClaims(admin, { dryRun: !!req.body?.dryRun }))
     } catch (err) {
       return res.status(500).json({ error: err.message })
     }
@@ -244,6 +258,28 @@ async function handleScheduledPublishCron(req, res) {
     return res.status(200).json(summary)
   } catch (err) {
     console.error('[scheduled-publish]', err.message)
+    return res.status(500).json({ error: err.message })
+  }
+}
+
+/**
+ * GET ?job=drop-claims — i drop coi giorni contati: riscatti scaduti, posti
+ * a chi è in lista d'attesa, e le email delle tappe (_email/dropClaims.js).
+ * Ogni 10 minuti da pg_cron (supabase/drop-claims-cron-2026-10-12.sql).
+ */
+async function handleDropClaimsCron(req, res) {
+  const admin = await cronClient(req, res, 'drop-claims-cron')
+  if (!admin) return
+
+  try {
+    const summary = await runDropClaims(admin)
+    const moved = summary.tick && (summary.tick.expired || summary.tick.promoted || summary.tick.closed)
+    if (summary.planned || moved || summary.errors.length) {
+      console.log('[drop-claims]', JSON.stringify({ ...summary, errors: summary.errors.slice(0, 5) }))
+    }
+    return res.status(200).json(summary)
+  } catch (err) {
+    console.error('[drop-claims]', err.message)
     return res.status(500).json({ error: err.message })
   }
 }

@@ -206,7 +206,8 @@ bottone "Esaurito" spento. **Ne resta uno solo, l'ultimo uscito**
 (`filterShownDrops`, per `drop_starts_at`): il 30/09 Gelateria Borghese sì,
 Shoro −30% (esaurito dal 22/09) no — deciso dal proprietario. Quando va
 esaurito un drop più nuovo prende lui il posto. Sparisce anche se scade o
-viene disattivato.
+viene disattivato. Dal 12/10 un drop esaurito **coi giorni contati** non ha il
+bottone spento ma «Mettiti in lista» (vedi "Drop coi giorni contati").
 - **Home** (tutte e due, `HomeFeedV4` e `HomeDesktopClassic`): lo sconto in
   evidenza lo sceglie `pickFeaturedDeal()` / `chooseFeaturedDeal()` in
   `src/lib/discounts.js`. **Vince l'ultima cosa successa** (deciso il 30/09):
@@ -395,6 +396,59 @@ QR, il popup si chiude. Primo e ultimo posto hanno la loro frase; mai "21 su 20"
   numero. PostHog: `drop_win_shown` (`rank`, `total`, `rank_failed`),
   `drop_win_closed` (`action`: tutorial/close); il tutorial così aperto manda
   gli `onboarding_*` con `source: 'drop_win'`, `topic: 'use'`.
+
+## Drop coi giorni contati — 7 giorni per usarlo, poi la lista d'attesa (12/10)
+Richiesta del proprietario per i drop **da adesso in poi** (quelli usciti prima
+restano senza limite): un drop ha N posti, chi riesce a prenderlo ha **7 giorni
+per usarlo dal tocco su "Sblocca"**, poi il codice non vale più e il posto va
+al **primo della lista d'attesa**. Chi trova il drop esaurito vede il "sold out"
+e, al posto del bottone spento, **«Mettiti in lista»**.
+- **Lo decide il DB** (`supabase/drop-claim-window-2026-10-12.sql`):
+  `discounts.claim_window_days` (NULL = nessun limite) e
+  `discount_redemptions.expires_at`, scritto da `guard_redemption_insert`
+  (mai dal browser: se lo manda, viene sovrascritto). Tabella `drop_waitlist`,
+  scritta solo dalle RPC `drop_waitlist_join/leave`; `drop_waitlist_status`
+  (anche anon) dà quanti sono in lista e il proprio posto.
+- **I posti**: `total_redeemed` conta i posti occupati. Un riscatto che scade
+  diventa `expired` e lo abbassa (trigger `tr_redeemed_count_on_status`); la
+  promozione di chi è in lista lo rialza. Con qualcuno in lista, un posto libero
+  è dei primi della fila: chi non è in lista non lo prende (il guard conta chi
+  ha davanti). Chi ha perso un drop non può riprenderlo né rimettersi in lista.
+- **Il giro**: `drop_claims_tick()` (scadenze → posti ai primi in lista, ognuno
+  con i suoi 7 giorni da quel momento; lista chiusa se il drop finisce) e poi le
+  email, **pg_cron ogni 10 minuti** (`supabase/drop-claims-cron-2026-10-12.sql`
+  → `/api/notify-subscribers?job=drop-claims`). Per spegnere:
+  `SELECT cron.unschedule('chiamamibi-drop-claims');`
+- **/verify**: `verify_redeem_qr` rifiuta un riscatto oltre i suoi giorni anche
+  prima del giro, con `reason: 'claim_window'` (il locale legge "Drop scaduto per
+  questo cliente").
+- **App** (regole e parole in `src/lib/dropClaim.js` e `src/lib/dropWaitlist.js`,
+  test in `tests/drop-claims.test.mjs`): `ClaimTimer` è la barra che si svuota
+  col conto alla rovescia al secondo — nella festa del drop (`DropWin`, la barra
+  si riempie e il tempo parte), nel foglio del QR e in **cima a «I miei
+  vantaggi»** (`MyDropCard`, corallo, il più vicino a scadere per primo). Sotto,
+  "Scaduti": i drop persi nelle ultime due settimane. Il bottone del drop
+  (home telefono e computer, Bi Club) passa da `dropCtaState`: sblocca / apri il
+  QR / tempo scaduto / «Mettiti in lista» / «In lista · sei il n° 3» (con "Esci
+  dalla lista"). Da sloggati «Mettiti in lista» apre la porta e al rientro si
+  entra in lista. Un punto nuovo che mostra il bottone di un drop usa
+  `dropCtaState`.
+- **Se il drop ha una data di fine** vale per tutti, anche per chi l'ha preso: la
+  scadenza di un riscatto è la prima fra i suoi 7 giorni e la fine del drop. Per
+  questo un drop nuovo nel pannello nasce **senza data di fine** (prima tre
+  giorni) e il pannello avvisa se la fine taglia i giorni.
+- **Email** (`api/_email/dropClaims.js`, `docs/EMAIL-FLOWS.md` §7f): la ricevuta
+  col codice dice "hai 7 giorni, fino a …"; poi 4 giorni, 2 giorni, ultime 24
+  ore, "l'hai perso". Chi ha il posto dalla lista riceve "si è liberato un posto".
+  Il promemoria delle 48 ore (§7c) salta i drop coi giorni contati.
+- **Pannello**: nel form del drop "Giorni per usarlo" (7 di default, "Nessun
+  limite" per fare come prima); sulle card dei drop i giorni, chi è in lista e
+  quanti posti sono passati di mano.
+- **Tutorial**: schermata "Drop preso? Hai 7 giorni." nel benvenuto e "Hai 7
+  giorni per usarlo." in "Come si usa lo sconto" aperto dopo un drop
+  (`openUseTour({ drop: giorni })`, topic `use-drop`). Se cambiano i giorni o
+  le regole della lista, aggiorna anche quei testi.
+- PostHog: `drop_waitlist_joined` (`status`, `position`), `drop_waitlist_left`.
 
 ## Data di nascita (29/09)
 Dal 29/09 la registrazione con email chiede la **data di nascita** (obbligatoria,

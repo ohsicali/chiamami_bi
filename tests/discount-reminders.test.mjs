@@ -193,3 +193,13 @@ test('quando l’hai preso, detto a parole', () => {
   assert.equal(claimedWords('2026-09-08T10:00:00Z', NOW), 'l’8 settembre')
   assert.equal(claimedWords(null, NOW), null)
 })
+
+test('un drop coi giorni contati non ha il promemoria delle 48 ore: ha le sue tappe', () => {
+  // Drop del 12/10: "ti restano 4 giorni" e così via (tests/drop-claims.test.mjs).
+  const conGiorni = { ...red({ is_drop: true }), expires_at: inH(96) }
+  assert.equal(plan({ pending: [conGiorni] }).length, 0)
+  // …e non conta nemmeno nel "hai altri N sconti" degli altri promemoria.
+  const out = plan({ pending: [conGiorni, red()] })
+  assert.equal(out.length, 1)
+  assert.equal(out[0].others, 0)
+})

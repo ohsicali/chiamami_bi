@@ -28,6 +28,11 @@ export default function DropCard({
   onDiscover,
   ctaLabel,
   ctaDisabled = false,
+  // Drop coi giorni contati (12/10): la riga sotto i bottoni ("hai 7 giorni
+  // per usarlo", "mettiti in lista…") e il tono del bottone quando il drop
+  // esaurito offre la lista d'attesa ('waitlist') o ci sei già ('waiting').
+  ctaNote = null,
+  ctaTone = null,
   validityNote,
   showAlwaysValid = true,
   className = '',
@@ -169,7 +174,7 @@ export default function DropCard({
           <div className="dropcard__cta">
             <button
               type="button"
-              className="dropcard__btn dropcard__btn--primary"
+              className={`dropcard__btn dropcard__btn--primary ${ctaTone ? `dropcard__btn--${ctaTone}` : ''}`}
               onClick={(e) => { e.stopPropagation(); onUnlock?.(deal) }}
               disabled={ctaDisabled || !onUnlock}
             >
@@ -185,6 +190,7 @@ export default function DropCard({
             </button>
           </div>
         )}
+        {ctaNote && <div className="dropcard__ctanote">{ctaNote}</div>}
       </div>
     </>
   )

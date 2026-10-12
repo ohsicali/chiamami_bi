@@ -28,6 +28,8 @@ import Footer from '../../components/Layout/Footer'
 import { useRestaurants, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { getPublicCategoryNames } from '../../lib/hooks/useCategories'
 import { useActiveDiscounts, useMyDiscounts } from '../../lib/hooks/useDiscounts'
+import { useDropWaitlist } from '../../lib/hooks/useDropWaitlist'
+import { dropCtaState, waitlistJoinMessage } from '../../lib/dropWaitlist'
 import { useAuth } from '../../lib/hooks/useAuth'
 import SconteAuthGate from '../../components/Discount/SconteAuthGate'
 import SaveAuthGate from '../../components/Restaurant/SaveAuthGate'
@@ -283,7 +285,7 @@ function TopBar() {
   )
 }
 
-function HeroPromo({ featured, onUnlock, ctaLabel, ctaDisabled }) {
+function HeroPromo({ featured, onUnlock, ctaLabel, ctaDisabled, ctaTone, ctaNote }) {
   const navigate = useNavigate()
   const [countdown, setCountdown] = useState(() => formatCountdown(featured?.endsAt))
   useEffect(() => {
@@ -402,7 +404,14 @@ function HeroPromo({ featured, onUnlock, ctaLabel, ctaDisabled }) {
             <button
               onClick={() => !ctaDisabled && onUnlock?.(featured)}
               disabled={ctaDisabled}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 16px', background: isDropDeal ? 'var(--color-ink)' : 'var(--color-corallo)', color: '#fff', borderRadius: 999, fontSize: 13, fontWeight: 700, border: 'none', cursor: ctaDisabled ? 'default' : 'pointer', opacity: ctaDisabled ? 0.7 : 1 }}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 16px',
+                // In lista d'attesa (12/10): bianco, col proprio posto in fila.
+                background: ctaTone === 'waiting' ? '#fff' : isDropDeal ? 'var(--color-ink)' : 'var(--color-corallo)',
+                color: ctaTone === 'waiting' ? 'var(--color-ink)' : '#fff',
+                borderRadius: 999, fontSize: 13, fontWeight: 700, border: 'none', cursor: ctaDisabled ? 'default' : 'pointer',
+                opacity: ctaDisabled && ctaTone !== 'waiting' ? 0.7 : 1,
+              }}
             >
               {ctaLabel || featured.cta}{ctaDisabled ? '' : ' →'}
             </button>
@@ -425,6 +434,11 @@ function HeroPromo({ featured, onUnlock, ctaLabel, ctaDisabled }) {
               Scopri
             </button>
           </div>
+          {ctaNote && (
+            <p className="hfv4-hero-note" style={{ margin: '10px 0 0', maxWidth: 420, fontSize: 12.5, lineHeight: 1.45, fontWeight: 500, color: 'rgba(255,255,255,.9)' }}>
+              {ctaNote}
+            </p>
+          )}
         </div>
 
         {/* Photo: col destra desktop (108px), sopra il body su mobile (order:-1) */}
@@ -686,7 +700,7 @@ export default function HomeDesktopClassic() {
   const { user } = useAuth()
   const { restaurants, loading } = useRestaurants(null)
   const { discounts } = useActiveDiscounts()
-  const { active: myActiveDeals, used: myUsedDeals } = useMyDiscounts(user?.id)
+  const { active: myActiveDeals, used: myUsedDeals, expired: myExpiredDeals } = useMyDiscounts(user?.id)
   const { isSaved, toggleSave, addSave } = useSavedRestaurants(user?.id)
 
   // Riscatti dell'utente indicizzati per sconto: la card in home deve poter
@@ -695,10 +709,12 @@ export default function HomeDesktopClassic() {
   // proporre "Sblocca sconto" su un drop che l'utente ha già preso.
   const redemptionByDealId = useMemo(() => {
     const map = new Map()
+    // Drop non usato in tempo (12/10): "Tempo scaduto", non "Sblocca".
+    ;(myExpiredDeals || []).forEach((r) => map.set(r.discount_id, r))
     ;(myActiveDeals || []).forEach((r) => map.set(r.discount_id, { ...r, status: r.status || 'generated' }))
     ;(myUsedDeals || []).forEach((r) => map.set(r.discount_id, { ...r, status: r.status || 'redeemed' }))
     return map
-  }, [myActiveDeals, myUsedDeals])
+  }, [myActiveDeals, myUsedDeals, myExpiredDeals])
 
   const { active: autoActive, next: autoNext } = getCurrentMoment()
   const [activeMoment, setActiveMoment] = useState(autoActive || autoNext || 'aperitivo')
@@ -755,6 +771,9 @@ export default function HomeDesktopClassic() {
     const subtitleParts = [drop.description || drop.title, drop.conditions].filter(Boolean)
     return {
       id: drop.id,
+      // La riga dello sconto così com'è: serve al bottone (lista d'attesa,
+      // giorni contati — src/lib/dropWaitlist.js).
+      raw: drop,
       title: `${label}\nda ${r.name}.`,
       discountLabel: label,
       restaurantName: r.name,
@@ -791,8 +810,35 @@ export default function HomeDesktopClassic() {
   // dello stesso locale al posto del drop da cui si era partiti — si tocca
   // 50% e si legge 1€. Da sloggati si apre il gate, da loggati si va nel Bi
   // Club, che è dove lo sconto si prende davvero.
+  // Drop esaurito coi giorni contati (12/10): «Mettiti in lista» al posto
+  // del bottone spento, come sul telefono e nel Bi Club.
+  const featuredList = useMemo(() => (featuredDrop?.raw ? [featuredDrop.raw] : []), [featuredDrop])
+  const waitlist = useDropWaitlist(featuredList, user?.id)
+  const [waitNotice, setWaitNotice] = useState(null)
+  useEffect(() => {
+    if (!waitNotice) return undefined
+    const t = setTimeout(() => setWaitNotice(null), 6000)
+    return () => clearTimeout(t)
+  }, [waitNotice])
+  const ctaFor = (deal) => dropCtaState({
+    deal: deal?.raw || deal, redemption: redemptionByDealId.get(deal?.id), wait: waitlist.byId[deal?.id],
+  })
+  const joinWaitlist = async (deal) => {
+    const result = await waitlist.join(deal?.raw || deal)
+    const msg = waitlistJoinMessage(result)
+    if (msg.claim) { navigate('/sconti'); return }
+    if (result?.status !== 'joined' && result?.status !== 'already') setWaitNotice(msg.text)
+  }
+  const leaveWaitlist = async (deal) => {
+    if (!window.confirm('Vuoi uscire dalla lista d’attesa? Se rientri, ti rimetti in fondo alla fila.')) return
+    await waitlist.leave(deal?.raw || deal)
+  }
+
   const unlockDeal = (deal) => {
     if (!user) { setHomeAuthGate(deal?.id || null); return }
+    const cta = ctaFor(deal)
+    if (cta.kind === 'waitlist') { joinWaitlist(deal); return }
+    if (cta.disabled) return
     const status = redemptionByDealId.get(deal?.id)?.status
     // Già usato: niente da sbloccare, il bottone in questo stato è disabled
     // (vedi dealCta) — la guardia qui è solo per chi lo richiama a mano.
@@ -807,14 +853,21 @@ export default function HomeDesktopClassic() {
   // Stessa logica di `DropSection` sul Bi Club: "Sblocca sconto" di default,
   // "Apri il QR" se l'utente l'ha già preso, "Già usato" (disabled) se il QR
   // è già stato riscattato.
+  // Drop esaurito in vetrina: «Mettiti in lista» se ha i giorni contati,
+  // se no "Esaurito" e spento (src/lib/dropWaitlist.js).
   const dealCta = (deal) => {
-    const redemption = redemptionByDealId.get(deal?.id)
-    const status = redemption?.status
-    if (status === 'redeemed') return { ctaLabel: 'Già usato', ctaDisabled: true }
-    if (status === 'generated') return { ctaLabel: 'Apri il QR', ctaDisabled: false }
-    // Drop esaurito in vetrina: non si sblocca più, il bottone lo dice.
-    if (deal?.soldOut) return { ctaLabel: 'Esaurito', ctaDisabled: true }
-    return { ctaLabel: undefined, ctaDisabled: false }
+    if (!deal) return { ctaLabel: undefined, ctaDisabled: false }
+    const cta = ctaFor(deal)
+    const busy = waitlist.busyId === deal.id
+    const note = waitNotice || (cta.canLeave
+      ? <>{cta.note} <button type="button" onClick={() => leaveWaitlist(deal)} style={{ font: 'inherit', fontWeight: 700, color: '#fff', background: 'none', border: 'none', padding: 0, textDecoration: 'underline', cursor: 'pointer' }}>Esci dalla lista</button></>
+      : cta.note)
+    return {
+      ctaLabel: busy ? 'Un attimo…' : cta.label,
+      ctaDisabled: busy || cta.disabled,
+      ctaTone: cta.tone,
+      ctaNote: note,
+    }
   }
 
   // Il cuore da sloggato non faceva niente: `toggleSave` esce subito senza

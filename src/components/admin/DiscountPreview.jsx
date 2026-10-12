@@ -75,6 +75,12 @@ export default function DiscountPreview({ form, restaurant }) {
             <div className="adm-pv-drop__left">Posti senza limite: la barra non si vede.</div>
           )}
           <div className="adm-pv-cta adm-pv-cta--drop">🔓 Sblocca sconto</div>
+          {/* I giorni per usarlo (12/10): la stessa riga della card sul sito. */}
+          {parseInt(form.claim_window_days, 10) > 0 && (
+            <div className="adm-pv-drop__left" style={{ marginTop: 8 }}>
+              Da quando lo sblocchi hai {parseInt(form.claim_window_days, 10)} giorni per usarlo.
+            </div>
+          )}
         </div>
       ) : (
         <div className="adm-pv-conv">

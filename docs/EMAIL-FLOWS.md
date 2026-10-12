@@ -49,6 +49,7 @@ Questo doc descrive **cosa parte quando e perché**. Serve per:
 | 7c | Ogni giorno alle ~11 (cron Vercel): sconti presi da ≥48 ore e mai usati | Chi li ha presi, se ha "I miei sconti" acceso | `Il tuo sconto da {Locale} ti aspetta` · drop: `Il tuo drop da {Locale} scade tra {X}` | `GET /api/notify-subscribers?job=discount-reminders` (Bearer `CRON_SECRET`) | nessuno — parte da sola (`vercel.json` → `crons`) |
 | 7d | ~30 min e ~1 giorno dopo che il locale ha convalidato uno sconto, se il feedback nell'app non è finito (pg_cron ogni 10 min) | Chi ha usato lo sconto, se ha "I miei sconti" acceso | `Com’è andata da {Locale}?` · stelle già date: `Mi racconti com’è andata da {Locale}?` · secondo giro: `Ieri da {Locale}: …` | `GET /api/notify-subscribers?job=feedback-asks` (token nel Vault, o `CRON_SECRET`) | nessuno — parte da sola (`supabase/redemption-feedback-cron-2026-09-29.sql`) |
 | 7e | All'ora dell'uscita programmata di un locale o di uno sconto (pg_cron ogni 5 min) | Tutti gli utenti col relativo interruttore acceso (+ il PIN al locale) | come 7 / 7b / 2 | `GET /api/notify-subscribers?job=scheduled-publish` (token nel Vault, o `CRON_SECRET`) | nessuno — parte da sola (`supabase/scheduled-publish-cron-2026-09-29.sql`); si programma dal pannello (`EditRestaurant.jsx`, `DiscountManager.jsx`) |
+| 7f | Drop coi giorni contati (pg_cron ogni 10 min): posto arrivato dalla lista d'attesa; restano 4 giorni, 2 giorni, 24 ore; non usato in tempo | Chi ha preso il drop (la partenza a tutti, i promemoria e il "perso" solo con "I miei sconti" acceso) | `Si è liberato un posto: il drop da {Locale} è tuo` · `Hai 7 giorni per usare il drop da {Locale}` · `Ti restano 4 giorni per il drop da {Locale}` · `Mancano 2 giorni: …` · `Ultime 24 ore per il drop da {Locale}` · `Il drop da {Locale} è scaduto` | `GET /api/notify-subscribers?job=drop-claims` (token nel Vault, o `CRON_SECRET`) | nessuno — parte da sola (`supabase/drop-claims-cron-2026-10-12.sql`) |
 | ~~8~~ | ~~Newsletter manuale (edge function)~~ | — | — | ~~Edge Function `send-newsletter`~~ | **Rimossa il 21/09/2026** — vedi §"Chi riceve le email" |
 
 ### Trigger dormant / gap identificati
@@ -251,6 +252,48 @@ le cinque stelle si toccano **dalla posta**: ogni stella porta a
 - **SQL:** colonne `supabase/scheduled-publish-2026-09-29.sql` (eseguito il
   29/09); cron `supabase/scheduled-publish-cron-2026-09-29.sql` (eseguito il
   29/09 dopo il deploy; prima chiamata 200). Per spegnere: `SELECT cron.unschedule('chiamamibi-scheduled-publish');`
+
+### 7f. Drop coi giorni contati — 7 giorni per usarlo, poi la lista d'attesa (12/10/2026)
+
+Da questa data un drop nuovo ha `claim_window_days` (7 di default): chi lo
+prende ha quei giorni per usarlo, dal tocco su "Sblocca"; passati senza
+usarlo il codice non vale più e il posto va al primo della lista d'attesa
+(dettagli in CLAUDE.md, "Drop coi giorni contati").
+
+Le email, una volta sola ciascuna per riscatto e mai fuori ordine:
+
+| Tappa | Quando | Oggetto | A chi |
+|---|---|---|---|
+| ricevuta | allo sblocco dal Bi Club (§6, `discount-claimed`) | `Il tuo codice per {Locale}: hai 7 giorni` | tutti (è una ricevuta) |
+| `drop-claim-start` | 3 min–24 h dopo lo sblocco, se non c'è già la ricevuta; oppure quando il posto arriva dalla lista | `Hai 7 giorni per usare il drop da {Locale}` · `Si è liberato un posto: il drop da {Locale} è tuo` | tutti (è una ricevuta, senza disiscrizione) |
+| `drop-claim-4d` | restano 4 giorni | `Ti restano 4 giorni per il drop da {Locale}` | "I miei sconti" acceso |
+| `drop-claim-2d` | restano 2 giorni | `Mancano 2 giorni: il drop da {Locale} sta per scadere` | "I miei sconti" acceso |
+| `drop-claim-1d` | restano 24 ore | `Ultime 24 ore per il drop da {Locale}` | "I miei sconti" acceso |
+| `drop-claim-expired` | scaduto senza usarlo (entro 3 giorni) | `Il drop da {Locale} è scaduto` | "I miei sconti" acceso |
+
+- **Regole** (`DROP_CLAIM_RULES` in `api/_email/dropClaims.js`, sotto test in
+  `tests/drop-claims.test.mjs`): una tappa che cade a meno di 12 ore dallo
+  sblocco si salta (drop con pochi giorni); se il giro si è fermato parte solo
+  la tappa di adesso, mai una tappa prima di una già partita; di notte (23–8)
+  niente, tranne la partenza di chi ha appena sbloccato; una email per persona
+  a giro; niente promemoria per un drop spento, finito o di un locale non
+  pubblicato; niente "perso" se a chiudere è stata la fine del drop.
+- **Il giro**: pg_cron ogni 10 minuti lancia `drop_claims_tick()` nel DB
+  (scadenze e posti a chi è in lista) e poi
+  `GET /api/notify-subscribers?job=drop-claims`, che rilancia il tick e manda
+  le email. A mano, da admin: `POST { type: 'drop-claims', dryRun: true }`.
+- **Registro**: `email_sent_log` con `ref_id` = il riscatto e `kind` qui sopra;
+  la riga si scrive prima dell'invio, come negli altri giri.
+- **Il promemoria delle 48 ore (§7c) salta i drop coi giorni contati**: hanno
+  queste tappe, e non contano nel "hai altri N sconti".
+- **Template**: `dropClaimEmail()` — card corallo del drop con la barra del
+  **tempo** che resta al posto di quella dei posti; il "perso" è crema spento
+  col valore barrato (il drop non è più vivo: niente corallo). Anteprime in
+  `docs/email-preview/drop-*.html` e `codice-drop.html`, e in `/admin/settings`
+  → "Provala".
+- **SQL**: `supabase/drop-claim-window-2026-10-12.sql` (colonne, lista, tick,
+  /verify) e, dopo il deploy, `supabase/drop-claims-cron-2026-10-12.sql`. Per
+  spegnere: `SELECT cron.unschedule('chiamamibi-drop-claims');`
 
 ### ~~8. Newsletter standalone (edge function Supabase)~~ · RIMOSSA il 21/09/2026
 

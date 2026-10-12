@@ -55,6 +55,11 @@ const EMPTY_FORM = {
   ends_at: '',
   no_end_date: false, // true → ends_at resta vuoto apposta, non "non ancora scelto"
   max_uses: '',
+  // Drop coi giorni contati (12/10, supabase/drop-claim-window-2026-10-12.sql):
+  // quanti giorni ha chi lo prende per usarlo, poi il posto passa al primo
+  // in lista d'attesa. null = non ancora scelto (un drop nuovo parte da 7,
+  // vedi switchKind); '' = nessun limite (i drop usciti prima del 12/10).
+  claim_window_days: null,
   is_active: true,
   // Uscita programmata (supabase/scheduled-publish-2026-09-29.sql): lo
   // sconto resta spento fino a `publish_at` e il giro ogni 5 minuti lo
@@ -107,7 +112,7 @@ function countdown(target) {
   return { label: 'Al termine', value: `${h}h ${m}m` }
 }
 
-function DropCard({ d, testers, selected, notifyLog, notifying, active, partnerTotal, flash, home, onSelect, onEdit, onNotify, onToggleActive, onHome, onDelete }) {
+function DropCard({ d, testers, wait, selected, notifyLog, notifying, active, partnerTotal, flash, home, onSelect, onEdit, onNotify, onToggleActive, onHome, onDelete }) {
   const isDrop = d.is_drop
   const isFeatured = d.is_featured && !d.is_drop
   const ttl = countdown(discountEndsAt(d))
@@ -301,6 +306,23 @@ function DropCard({ d, testers, selected, notifyLog, notifying, active, partnerT
           {taken > 0 && (
             <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
               {usedPct}% convalidati
+            </span>
+          )}
+          {/* Drop coi giorni contati (12/10): quanti giorni ha chi lo prende,
+              chi aspetta in lista e quanti posti sono passati di mano. */}
+          {isDrop && d.claim_window_days > 0 && (
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-corallo-ink, #C53A33)' }}>
+              ⏳ {d.claim_window_days} giorni per usarlo
+            </span>
+          )}
+          {wait?.waiting > 0 && (
+            <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--color-ink, #22181C)' }}>
+              🔔 {wait.waiting} in lista d’attesa
+            </span>
+          )}
+          {wait?.promoted > 0 && (
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
+              {wait.promoted} {wait.promoted === 1 ? 'posto passato' : 'posti passati'} dalla lista
             </span>
           )}
         </div>
@@ -742,6 +764,28 @@ export default function DiscountManager() {
     })
   }, [])
 
+  // Lista d'attesa dei drop coi giorni contati (12/10): quanti aspettano e
+  // quanti posti sono passati a chi era in fila. Prima dell'SQL la tabella
+  // non c'è: niente numeri, nient'altro cambia.
+  const [waitByDiscount, setWaitByDiscount] = useState({})
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return
+    supabase
+      .from('drop_waitlist')
+      .select('discount_id, status')
+      .in('status', ['waiting', 'promoted'])
+      .then(({ data, error }) => {
+        if (error) return
+        const map = {}
+        ;(data || []).forEach((w) => {
+          const cur = map[w.discount_id] || { waiting: 0, promoted: 0 }
+          cur[w.status] += 1
+          map[w.discount_id] = cur
+        })
+        setWaitByDiscount(map)
+      })
+  }, [])
+
   // Load notify log rows so we can show "già inviato" state inline.
   useEffect(() => {
     if (!isSupabaseConfigured()) return
@@ -861,6 +905,7 @@ export default function DiscountManager() {
       ends_at: toInputDate(endSource, isDrop),
       no_end_date: !endSource,
       max_uses: (isDrop ? (d.max_quantity || d.max_redemptions) : d.max_redemptions) || '',
+      claim_window_days: d.claim_window_days != null ? String(d.claim_window_days) : '',
       is_active: d.is_active,
       schedule_on: !!d.publish_at,
       was_live: !!d.is_active,
@@ -1055,6 +1100,11 @@ export default function DiscountManager() {
       drop_starts_at: isDrop ? startIso : null,
       drop_ends_at: isDrop ? endIso : null,
       max_quantity: isDrop ? uses : null,
+      // I giorni per usarlo valgono solo per i drop. La chiave c'è solo quando
+      // serve: un salvataggio di una convenzione non dipende dalla colonna.
+      ...(isDrop
+        ? { claim_window_days: parseInt(form.claim_window_days, 10) > 0 ? parseInt(form.claim_window_days, 10) : null }
+        : form.claim_window_days ? { claim_window_days: null } : {}),
       is_featured: isFeatured,
       // Nasce già di prova (mai visibile al pubblico, neanche per un attimo);
       // da prova a normale = pubblicato per tutti.
@@ -1564,6 +1614,7 @@ export default function DiscountManager() {
                 key={d.id}
                 d={d}
                 testers={testersByDiscount[d.id]}
+                wait={waitByDiscount[d.id]}
                 selected={selectedIds.has(d.id)}
                 notifyLog={notifyLogs[`${d.is_drop ? 'drop' : 'discount'}:${d.id}`]}
                 notifying={notifyingId === d.id}

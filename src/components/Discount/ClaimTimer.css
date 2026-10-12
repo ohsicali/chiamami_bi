@@ -1,0 +1,136 @@
+/* Il tempo per usare un drop preso — vedi ClaimTimer.jsx.
+   Una barra che si svuota (scaleX, niente layout a ogni secondo) con una
+   punta luminosa, e sopra il conto alla rovescia a cifre fisse. */
+
+.ct {
+  --ct-ink: var(--color-corallo-ink, #c53a33);
+  --ct-fill: var(--color-corallo, #e8453c);
+  --ct-track: rgba(232, 69, 60, 0.14);
+  --ct-text: var(--color-ink, #22181c);
+  --ct-soft: rgba(34, 24, 28, 0.6);
+  width: 100%;
+  font-family: var(--font-sans);
+  color: var(--ct-text);
+}
+
+.ct--coral {
+  --ct-ink: #fff;
+  --ct-fill: #fff;
+  --ct-track: rgba(255, 255, 255, 0.26);
+  --ct-text: #fff;
+  --ct-soft: rgba(255, 255, 255, 0.86);
+}
+
+.ct-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ct-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ct-ink);
+}
+.ct-label svg { flex: none; }
+
+.ct-count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 1px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ct-count b {
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.ct-count small {
+  font-size: 10px;
+  font-weight: 700;
+  margin: 0 4px 0 1px;
+  color: var(--ct-soft);
+}
+.ct-count small:last-child { margin-right: 0; }
+
+.ct-track {
+  position: relative;
+  height: 9px;
+  margin-top: 8px;
+  border-radius: 999px;
+  background: var(--ct-track);
+  overflow: visible;
+}
+
+.ct-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--ct-fill);
+  transform-origin: left center;
+  transition: transform 1s linear;
+}
+.ct--coral .ct-fill { box-shadow: 0 0 12px rgba(255, 255, 255, 0.55); }
+
+/* La punta: dove si consuma il tempo. */
+.ct-tip {
+  position: absolute;
+  top: 50%;
+  width: 15px;
+  height: 15px;
+  margin: -7.5px 0 0 -7.5px;
+  border-radius: 50%;
+  background: var(--ct-fill);
+  border: 3px solid var(--ct-track-solid, #fff);
+  box-shadow: 0 2px 8px rgba(120, 20, 14, 0.3);
+  transition: left 1s linear;
+}
+.ct--coral .ct-tip {
+  border-color: var(--color-corallo, #e8453c);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35), 0 2px 10px rgba(120, 20, 14, 0.35);
+}
+
+/* La festa: la barra si riempie con una molla, la punta la segue. */
+.ct--intro .ct-fill { transition: transform 1.3s cubic-bezier(0.16, 1, 0.3, 1); }
+.ct--intro .ct-tip { transition: left 1.3s cubic-bezier(0.16, 1, 0.3, 1); }
+
+.ct-foot {
+  margin: 7px 0 0;
+  font-size: 11.5px;
+  line-height: 1.35;
+  font-weight: 500;
+  color: var(--ct-soft);
+}
+.ct-foot b { font-weight: 800; color: var(--ct-text); }
+
+/* Ultime 24 ore: la punta pulsa. */
+.ct--urgent .ct-tip { animation: ct-pulse 1.4s ease-in-out infinite; }
+@keyframes ct-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232, 69, 60, 0.45); }
+  50% { box-shadow: 0 0 0 7px rgba(232, 69, 60, 0); }
+}
+.ct--coral.ct--urgent .ct-tip { animation-name: ct-pulse-white; }
+@keyframes ct-pulse-white {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
+  50% { box-shadow: 0 0 0 8px rgba(255, 255, 255, 0); }
+}
+
+.ct--over .ct-fill,
+.ct--over .ct-tip { display: none; }
+
+.ct--compact .ct-count b { font-size: 14px; }
+.ct--compact .ct-track { height: 7px; margin-top: 6px; }
+.ct--compact .ct-tip { width: 12px; height: 12px; margin: -6px 0 0 -6px; border-width: 2.5px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-fill, .ct-tip, .ct--intro .ct-fill, .ct--intro .ct-tip { transition: none; }
+  .ct--urgent .ct-tip { animation: none; }
+}

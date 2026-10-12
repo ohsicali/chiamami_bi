@@ -5,6 +5,8 @@ import Footer from '../../components/Layout/Footer'
 import { useRestaurants, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { getPublicCategoryNames } from '../../lib/hooks/useCategories'
 import { useActiveDiscounts, useMyDiscounts } from '../../lib/hooks/useDiscounts'
+import { useDropWaitlist } from '../../lib/hooks/useDropWaitlist'
+import { dropCtaState, waitlistJoinMessage } from '../../lib/dropWaitlist'
 import { useAuth } from '../../lib/hooks/useAuth'
 import SconteAuthGate from '../../components/Discount/SconteAuthGate'
 import SaveAuthGate from '../../components/Restaurant/SaveAuthGate'
@@ -263,7 +265,7 @@ function TopBar() {
  * implementazione con badge, barra e conteggi calcolati a modo suo, che si
  * era già allontanata da quella del Bi Club.
  */
-function HomeDrop({ featured, loading, onUnlock, onDiscover, ctaLabel, ctaDisabled }) {
+function HomeDrop({ featured, loading, onUnlock, onDiscover, ctaLabel, ctaDisabled, ctaTone, ctaNote }) {
   // Finché gli sconti non sono arrivati si tiene il posto della card (vedi
   // `.hfv4-skel` più sotto): comparendo dal nulla spingeva giù di 378px
   // tutto quello che c'era sotto, ed era metà del CLS della home.
@@ -278,6 +280,8 @@ function HomeDrop({ featured, loading, onUnlock, onDiscover, ctaLabel, ctaDisabl
         showAlwaysValid={false}
         ctaLabel={ctaLabel}
         ctaDisabled={ctaDisabled}
+        ctaTone={ctaTone}
+        ctaNote={ctaNote}
       />
 
     </div>
@@ -498,7 +502,7 @@ export default function HomeFeedV4() {
   const { user } = useAuth()
   const { restaurants, loading } = useRestaurants(null)
   const { discounts, loading: discountsLoading } = useActiveDiscounts()
-  const { active: myActiveDeals, used: myUsedDeals } = useMyDiscounts(user?.id)
+  const { active: myActiveDeals, used: myUsedDeals, expired: myExpiredDeals } = useMyDiscounts(user?.id)
   const { isSaved, toggleSave, addSave } = useSavedRestaurants(user?.id)
 
   // Riscatti dell'utente indicizzati per sconto: la card in home deve poter
@@ -507,10 +511,12 @@ export default function HomeFeedV4() {
   // proporre "Sblocca sconto" su un drop che l'utente ha già preso.
   const redemptionByDealId = useMemo(() => {
     const map = new Map()
+    // Drop non usato in tempo (12/10): "Tempo scaduto", non "Sblocca".
+    ;(myExpiredDeals || []).forEach((r) => map.set(r.discount_id, r))
     ;(myActiveDeals || []).forEach((r) => map.set(r.discount_id, { ...r, status: r.status || 'generated' }))
     ;(myUsedDeals || []).forEach((r) => map.set(r.discount_id, { ...r, status: r.status || 'redeemed' }))
     return map
-  }, [myActiveDeals, myUsedDeals])
+  }, [myActiveDeals, myUsedDeals, myExpiredDeals])
 
   const { active: autoActive, next: autoNext } = getCurrentMoment()
   const [activeMoment, setActiveMoment] = useState(autoActive || autoNext || 'aperitivo')
@@ -599,8 +605,34 @@ export default function HomeFeedV4() {
   // altro sconto dello stesso locale invece del drop da cui si era partiti.
   // Da sloggati si apre la porta a vetri; da loggati si va nel Bi Club, che
   // è dove lo sconto si prende davvero e dove esce il QR.
+  // Drop esaurito coi giorni contati (12/10): «Mettiti in lista» al posto
+  // del bottone spento. La lista è chiesta solo per il drop in vetrina.
+  const featuredList = useMemo(() => (featuredDrop ? [featuredDrop] : []), [featuredDrop])
+  const waitlist = useDropWaitlist(featuredList, user?.id)
+  const [waitNotice, setWaitNotice] = useState(null)
+  useEffect(() => {
+    if (!waitNotice) return undefined
+    const t = setTimeout(() => setWaitNotice(null), 6000)
+    return () => clearTimeout(t)
+  }, [waitNotice])
+  const ctaFor = (deal) => dropCtaState({ deal, redemption: redemptionByDealId.get(deal?.id), wait: waitlist.byId[deal?.id] })
+
+  const joinWaitlist = async (deal) => {
+    const result = await waitlist.join(deal)
+    const msg = waitlistJoinMessage(result)
+    if (msg.claim) { navigate('/sconti'); return }
+    if (result?.status !== 'joined' && result?.status !== 'already') setWaitNotice(msg.text)
+  }
+  const leaveWaitlist = async (deal) => {
+    if (!window.confirm('Vuoi uscire dalla lista d’attesa? Se rientri, ti rimetti in fondo alla fila.')) return
+    await waitlist.leave(deal)
+  }
+
   const unlockDeal = (deal) => {
     if (!user) { setHomeAuthGate(deal?.id || null); return }
+    const cta = ctaFor(deal)
+    if (cta.kind === 'waitlist') { joinWaitlist(deal); return }
+    if (cta.disabled) return
     const status = redemptionByDealId.get(deal?.id)?.status
     // Già usato: niente da sbloccare, il bottone in questo stato è disabled
     // (vedi dealCta) — la guardia qui è solo per chi lo richiama a mano.
@@ -616,15 +648,22 @@ export default function HomeFeedV4() {
   // "Apri il QR" se l'utente l'ha già preso, "Già usato" (disabled) se il QR
   // è già stato riscattato. Senza questo la home continuava a proporre
   // "Sblocca sconto" su un drop che l'utente aveva già preso o consumato.
+  // Il drop esaurito resta in vetrina (vedi featuredDrop): se è uno dei drop
+  // coi giorni contati il bottone è «Mettiti in lista», se no "Esaurito" e
+  // spento (regole in src/lib/dropWaitlist.js, le stesse del Bi Club).
   const dealCta = (deal) => {
-    const redemption = redemptionByDealId.get(deal?.id)
-    const status = redemption?.status
-    if (status === 'redeemed') return { ctaLabel: 'Già usato', ctaDisabled: true }
-    if (status === 'generated') return { ctaLabel: 'Apri il QR', ctaDisabled: false }
-    // Il drop esaurito resta in vetrina (vedi featuredDrop) ma non si sblocca
-    // più: il bottone dice "Esaurito" ed è spento.
-    if (isSoldOut(deal)) return { ctaLabel: 'Esaurito', ctaDisabled: true }
-    return { ctaLabel: undefined, ctaDisabled: false }
+    if (!deal) return { ctaLabel: undefined, ctaDisabled: false }
+    const cta = ctaFor(deal)
+    const busy = waitlist.busyId === deal.id
+    const note = waitNotice || (cta.canLeave
+      ? <>{cta.note} <button type="button" className="dropcard__ctanote-link" onClick={(e) => { e.stopPropagation(); leaveWaitlist(deal) }}>Esci dalla lista</button></>
+      : cta.note)
+    return {
+      ctaLabel: busy ? 'Un attimo…' : cta.label,
+      ctaDisabled: busy || cta.disabled,
+      ctaTone: cta.tone,
+      ctaNote: note,
+    }
   }
 
   // Quanti locali risultano aperti nella fascia corrente: il numero che il

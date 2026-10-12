@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-30 (Avvisi agli admin su Telegram)
+Ultima modifica: 2026-10-12 (Drop coi giorni contati e lista d'attesa)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -38,7 +38,53 @@ dove siamo. Aggiorna a ogni step importante.
 | Drop preso — "Ce l'hai fatta, sei il numero X su 20" (Bi che applaude) | — | 🚧 In review | Branch `claude/drop-win-animation`. SQL `supabase/drop-claim-rank-2026-09-30.sql` **già eseguito** il 30/09 (provato in transazione annullata: 1/3, 2/3, 3/3, il quarto `sold_out`; niente numero per il riscatto di un altro; anon rifiutato). Lucchetto per sconto sui riscatti + RPC `my_claim_rank`. Vedi CLAUDE.md. |
 | Pannello admin rifatto — aggiunta locali e sconti | #330 | 🚧 In review | Branch `claude/admin-redesign`. **Nessun SQL.** Kit `adm-*`, percorso "Aggiungi un locale" senza bozze vuote, scheda locale con checklist, editor sconti a tutto schermo con anteprima. Vedi CLAUDE.md "Pannello admin rifatto". |
 | Avvisi agli admin su Telegram (sconto usato, recensione, suggerimento, candidatura) | — | 🚧 In review | Branch `claude/sleepy-ride-2d13rk`. SQL `supabase/admin-telegram-2026-09-30.sql` **già eseguito** il 30/09 (provato in transazione annullata: i 4 messaggi, suggerimento anon incluso; con l'invio in errore la convalida passa). Bot **@LaGuidaDiBi_bot** e gruppo **"La Guida di Bi"** configurati nel Vault il 30/09; messaggio di prova arrivato. Se il gruppo diventa supergruppo l'id cambia (`-100…`): rifare getUpdates e aggiornare `telegram_admin_chat_id`. Vedi CLAUDE.md. |
+| Drop coi giorni contati — 7 giorni per usarlo, lista d'attesa, email a tappe | — | 🚧 In review | Branch `claude/drop-giorni-contati`. SQL `supabase/drop-claim-window-2026-10-12.sql` **provato in transazione annullata** il 12/10 (vedi sezione sotto); da eseguire PRIMA del merge. Dopo il deploy: `supabase/drop-claims-cron-2026-10-12.sql`. Vedi CLAUDE.md "Drop coi giorni contati" e EMAIL-FLOWS §7f. |
 | Feedback dopo la convalida (festa, stelle, Bi che ringrazia, email 30 min / 1 giorno, recensioni in /verify) | #320 | ✅ Merged (9d3cf06) | SQL `redemption-feedback-2026-09-29.sql`, `verify-feedback-list-2026-09-29.sql` e `redemption-feedback-cron-2026-09-29.sql` **tutti eseguiti** il 29/09. Giro email attivo (pg_cron `chiamamibi-feedback-asks`, ogni 10 min; prima chiamata: 200). Vedi sezione "29/09 — feedback" sotto e CLAUDE.md. |
+
+## 12/10 — drop coi giorni contati: 7 giorni per usarlo, poi la lista d'attesa
+
+Richiesta del proprietario: dai prossimi drop (non quelli già usciti) chi
+prende un drop ha 7 giorni per usarlo dal tocco su "Sblocca"; scaduti, il
+codice non vale più e il posto va in ordine a chi si è messo in lista. Chi
+arriva a drop esaurito vede il "sold out" con «Mettiti in lista». Barra del
+tempo che resta dopo lo sblocco e in cima a «I miei vantaggi»; la regola nel
+tutorial (benvenuto, primo sconto, drop preso); email a 7 giorni, 4, 2, 24
+ore e "l'hai perso".
+
+**Fatto** (dettagli in CLAUDE.md "Drop coi giorni contati"):
+- SQL `supabase/drop-claim-window-2026-10-12.sql`: `discounts.claim_window_days`,
+  `discount_redemptions.expires_at`, tabella `drop_waitlist` + RPC
+  `drop_waitlist_status/join/leave`, `guard_redemption_insert` (scadenza e
+  priorità alla fila), contatore che scende alla scadenza, `drop_claims_tick()`,
+  `verify_redeem_qr` (rifiuta oltre i giorni, `reason: 'claim_window'`),
+  `my_claim_rank` con `expires_at`. **Provato il 12/10 sul DB vero in
+  transazione annullata**: scadenza scritta dal DB anche se il browser manda
+  99 giorni; terzo su due posti → `sold_out`; in lista n° 1 e n° 2; chi l'ha
+  preso non entra in lista; anon vede quanti in lista ma non entra; giro →
+  1 scaduto, 1 promosso (7 giorni da subito), contatore fermo a 2; il secondo
+  in lista non salta la fila; uscito dalla lista e posti alzati a 3 → prende;
+  `verify_redeem_qr` aggiornata.
+  Nota: il connettore Supabase aspetta una conferma sulle istruzioni
+  "distruttive" (REVOKE, DROP): senza risposta va in timeout a 60 s.
+- Cron `supabase/drop-claims-cron-2026-10-12.sql` (pg_cron ogni 10 min: tick +
+  `job=drop-claims`). Da eseguire dopo il deploy.
+- Email `api/_email/dropClaims.js` + `dropClaimEmail` (templates), ricevuta col
+  "hai 7 giorni", promemoria 48 ore che salta questi drop. Anteprime
+  `docs/email-preview/drop-*.html`, `codice-drop.html`.
+- App: `ClaimTimer`, `MyDropCard`, lista d'attesa (`useDropWaitlist`,
+  `dropCtaState`) in home telefono/computer e Bi Club, "Scaduti" in «I miei
+  vantaggi», barra nel foglio del QR e nella festa del drop, /verify.
+- Tutorial: "Drop preso? Hai 7 giorni." (benvenuto) e "Hai 7 giorni per
+  usarlo." (dopo un drop, topic `use-drop`).
+- Pannello: "Giorni per usarlo" nel form del drop (7 di default; un drop nuovo
+  nasce senza data di fine), giorni/lista/posti passati sulle card.
+- Test `tests/drop-claims.test.mjs` (+1 in `discount-reminders`). Screenshot a
+  390 e 1280 con Supabase simulato.
+
+**Ordine per andare online**: 1) eseguire `drop-claim-window-2026-10-12.sql`
+(il pannello, salvando un drop, scrive `claim_window_days`: senza la colonna
+il salvataggio fallisce); 2) merge; 3) eseguire
+`drop-claims-cron-2026-10-12.sql`.
 
 ## 29/09 — feedback dopo lo sconto convalidato
 

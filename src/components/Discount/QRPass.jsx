@@ -12,6 +12,8 @@ import {
   DAY_SHORT_LABELS,
 } from '../../lib/validity'
 import { QR_PASS_EVENT, REDEMPTION_VALIDATED_EVENT } from '../../lib/redemptionFeedback'
+import { claimDeadline, formatClaimDeadlineShort } from '../../lib/dropClaim'
+import ClaimTimer from './ClaimTimer'
 import './QRPass.css'
 
 /**
@@ -170,7 +172,7 @@ function splitConditions(conditions) {
 }
 
 /* ── La card: badge, selettore QR / Codice, riquadro ──────────────────── */
-export default function QRPass({ deal, qrValue, shortCode, restaurantName }) {
+export default function QRPass({ deal, qrValue, shortCode, restaurantName, claimEndsAt = null }) {
   const hasCode = isShortCode(shortCode)
   const [mode, setMode] = useState('qr')
   const [presenting, setPresenting] = useState(false)
@@ -197,8 +199,14 @@ export default function QRPass({ deal, qrValue, shortCode, restaurantName }) {
             {perk && perk !== badge && <p className="qrp-perk">{perk}</p>}
             <ValidityLine deal={deal} />
             {note && <p className="qrp-note">{note}</p>}
+            {/* Un drop coi giorni contati (12/10) scade per chi l'ha preso,
+                non per tutti: la data è la sua, e la barra sta sotto. */}
             {isDrop && (
-              <p className="qrp-drop">{cd ? `Scade tra ${cd}` : 'Drop live'}</p>
+              <p className="qrp-drop">
+                {claimEndsAt
+                  ? `Usalo entro ${formatClaimDeadlineShort(claimEndsAt)}`
+                  : cd ? `Scade tra ${cd}` : 'Drop live'}
+              </p>
             )}
           </div>
         </div>
@@ -337,7 +345,15 @@ export function QRPassSheet({
           qrValue={qrValue}
           shortCode={redemption?.short_code}
           restaurantName={name}
+          claimEndsAt={claimDeadline(redemption, deal)}
         />
+
+        {/* Drop coi giorni contati: quanto resta per usarlo (12/10). */}
+        {claimDeadline(redemption, deal) && (
+          <div className="qrp-timer">
+            <ClaimTimer redemption={redemption} deal={deal} tone="light" compact />
+          </div>
+        )}
 
         <p className={`qrp-once ${justUnlocked ? 'is-new' : ''}`}>
           {justUnlocked && <span className="qrp-once-ok" aria-hidden="true"><Icon name="check" size={11} stroke={3.4} /></span>}

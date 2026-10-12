@@ -25,7 +25,7 @@ import {
   h1, h2, p, lede, eyebrow, metaLine, divider, button, offerCard, codeBlock,
   successBox, photoMosaic, dropCard, conventionOffer, microNote,
   textLink, signature, checklist, checkRows, steps, note, dataTable, spacer,
-  starRow, biSays, heroIllustration, quoteBlock, esc, SIGN,
+  starRow, biSays, heroIllustration, quoteBlock, expiredClaim, esc, SIGN,
 } from './blocks.js'
 import { isBareDiscountValue } from './discount.js'
 import { claimedWords, clipSentences, conventionValidity, countdownWords, metaFor, perkBeyondValue } from './content.js'
@@ -334,16 +334,24 @@ export function newRestaurantEmail({
  * disiscrizione: è una ricevuta, non un annuncio. Toglierla di mezzo
  * significherebbe lasciare qualcuno senza il proprio codice.
  */
-export function discountClaimedEmail({ value, restaurantName, perk, conditions, address, code, expiryLabel, href }) {
+export function discountClaimedEmail({ value, restaurantName, perk, conditions, address, code, expiryLabel, href, claimWindow = null }) {
+  // Drop coi giorni contati (12/10): la ricevuta è anche il "hai 7 giorni",
+  // con la data precisa — il giro delle email non ne manda un'altra.
+  const tempo = claimWindow
+    ? `Hai ${claimWindow.days} ${claimWindow.days === 1 ? 'giorno' : 'giorni'} per usarlo: vale fino a ${claimWindow.deadline}. Se non lo usi, il posto passa al primo in lista d’attesa.`
+    : ''
   return {
-    subject: `Il tuo codice per ${restaurantName}`,
+    subject: claimWindow
+      ? `Il tuo codice per ${restaurantName}: hai ${claimWindow.days} ${claimWindow.days === 1 ? 'giorno' : 'giorni'}`
+      : `Il tuo codice per ${restaurantName}`,
     ...renderEmail({
-      preheader: `${code} — mostralo al locale. ${expiryLabel || ''}`.trim(),
+      preheader: `${code} — mostralo al locale. ${claimWindow ? `Vale fino a ${claimWindow.deadline}.` : expiryLabel || ''}`.trim(),
       reason: MOTIVO.ricevuta,
       blocks: [
         eyebrow('Il tuo sconto'),
         h1('Sconto tuo.'),
         lede(`Mostra il codice qui sotto al bancone di ${restaurantName} e lo scalano loro. Non devi stampare niente.`),
+        tempo ? p(`<strong style="color:${COLORS.coralloInk};">⏳ ${esc(tempo)}</strong>`, { padding: '12px 20px 0' }) : '',
         offerCard({
           value,
           restaurantName: `da ${restaurantName}`,
@@ -373,6 +381,7 @@ export function discountClaimedEmail({ value, restaurantName, perk, conditions, 
         perk || '',
         [conditions, address].filter(Boolean).join(' · '),
         expiryLabel || '',
+        tempo,
         '',
         `IL TUO CODICE: ${code}`,
         '',
@@ -591,6 +600,182 @@ export function discountReminderEmail({
         codice,
         '',
         ...coda,
+      ].filter((l) => l !== '').join('\n'),
+    }),
+  }
+}
+
+/* ================================================================== */
+/*  5-bis². Il drop coi giorni contati — 7 giorni, 4, 2, 24 ore, perso */
+/* ================================================================== */
+
+/**
+ * Le email del drop preso coi giorni contati (12/10). Chi le manda e quando
+ * lo decide `api/_email/dropClaims.js`; qui ci sono le cinque versioni:
+ *
+ *   start    "hai 7 giorni" — a chi ha avuto il posto dalla lista d'attesa
+ *            (`promoted`), o a chi l'ha preso senza ricevere la ricevuta col
+ *            codice (sblocco dalla scheda del locale). È una ricevuta: niente
+ *            link di disiscrizione;
+ *   left4    "ti restano 4 giorni";
+ *   left2    "mancano 2 giorni";
+ *   left1    "ultime 24 ore";
+ *   expired  "l'hai perso": il codice non vale più e il posto è passato a chi
+ *            era in lista (o è tornato libero).
+ *
+ * Le prime quattro hanno la card corallo del drop con la barra del TEMPO
+ * che resta al posto di quella dei posti (il drop è suo, i posti non
+ * contano più); l'ultima no: il drop non è più vivo, niente corallo.
+ *
+ * @param {object} o
+ * @param {'start'|'left4'|'left2'|'left1'|'expired'} o.stage
+ * @param {boolean} [o.promoted]      il posto è arrivato dalla lista d'attesa
+ * @param {boolean} [o.passedOn]      (expired) il posto è andato a chi era in lista
+ * @param {number}  o.windowDays      i giorni per usarlo (7)
+ * @param {string}  [o.leftWords]     quanto resta, a parole ("4 giorni e 2 ore")
+ * @param {string}  [o.deadline]      "lunedì 19 ottobre alle 21:00"
+ * @param {number}  [o.pct]           tempo che resta, 0–100
+ */
+export function dropClaimEmail({
+  stage, promoted = false, passedOn = false, name = '', value, restaurantName, perk,
+  conditions, cuisine, city, photos, windowDays = 7, leftWords, deadline, pct = 100,
+  code, href, othersHref = `${SITE_URL}/sconti`, unsubscribeUrl,
+}) {
+  const plain = String(value || '').replace(/^[−-]\s*/, '').trim()
+  const badge = plain && isBareDiscountValue(plain) ? `−${plain}` : ''
+  const vantaggio = perkBeyondValue(perk, plain)
+  const giorni = `${windowDays} ${windowDays === 1 ? 'giorno' : 'giorni'}`
+  // "Giulia, il drop è tuo" — o, senza nome, "Il drop è tuo".
+  const frase = (t) => (name ? `${name}, ${t}` : t.charAt(0).toUpperCase() + t.slice(1))
+  const codice = code ? `Se la fotocamera non legge il QR, detta il codice ${code}.` : ''
+  const link = href || `${SITE_URL}/sconti?tab=miei`
+  const fino = deadline ? ` fino a ${deadline}` : ''
+
+  /* ── Perso ────────────────────────────────────────────────────── */
+  if (stage === 'expired') {
+    const dove = passedOn
+      ? 'Il tuo posto è passato a chi era in lista d’attesa.'
+      : 'Il tuo posto è tornato libero.'
+    return {
+      subject: `Il drop da ${restaurantName} è scaduto`,
+      ...renderEmail({
+        preheader: `Non l’hai usato entro ${giorni}, quindi non vale più. ${dove}`,
+        reason: MOTIVO.promemoria,
+        unsubscribeUrl,
+        city,
+        blocks: [
+          eyebrow('Tempo scaduto', { color: COLORS.ink70, padding: '22px 20px 0' }),
+          h1('Questo drop è andato.'),
+          lede(`${frase(`non hai usato il drop da ${restaurantName} entro i ${giorni} dallo sblocco, quindi il codice non vale più.`)} ${dove}`),
+          expiredClaim({ value: badge || plain, restaurantName, perk: vantaggio, chip: `Non usato in ${giorni}` }),
+          p('Capita. Il prossimo drop te lo scrivo appena esce: quando lo prendi, hai sempre i giorni scritti sulla card per usarlo, e la barra in «I miei vantaggi» ti dice quanto manca.'),
+          button('Guarda gli sconti di adesso', othersHref, { padding: '18px 20px 0' }),
+          signature('— Bi'),
+          spacer(22),
+        ],
+        text: [
+          frase(`non hai usato il drop da ${restaurantName} entro i ${giorni} dallo sblocco, quindi il codice non vale più.`),
+          dove,
+          '',
+          [plain, vantaggio].filter(Boolean).join(' — '),
+          '',
+          'Il prossimo drop te lo scrivo appena esce. Gli sconti di adesso:',
+          othersHref,
+          '',
+          '— Bi',
+        ].filter((l) => l !== '').join('\n'),
+      }),
+    }
+  }
+
+  /* ── Ancora da usare: start, left4, left2, left1 ──────────────── */
+  const copy = {
+    start: promoted
+      ? {
+          subject: `Si è liberato un posto: il drop da ${restaurantName} è tuo`,
+          eyebrow: 'Dalla lista d’attesa',
+          title: 'Il posto è tuo.',
+          lede: frase(`eri in lista per il drop da ${restaurantName} e qualcuno non l’ha usato in tempo: adesso è tuo. Hai ${giorni} per usarlo${fino}.`),
+          after: 'Il QR ti aspetta in «I miei vantaggi»: lo mostri alla cassa e lo scalano loro.',
+        }
+      : {
+          subject: `Hai ${giorni} per usare il drop da ${restaurantName}`,
+          eyebrow: 'Il drop è tuo',
+          title: `Hai ${giorni}.`,
+          lede: frase(`il drop da ${restaurantName} è tuo. Da adesso hai ${giorni} per usarlo${fino}. Se non lo usi, il posto passa al primo in lista d’attesa.`),
+          after: 'Lo ritrovi in «I miei vantaggi», con la barra che ti dice quanto manca.',
+        },
+    left4: {
+      subject: `Ti restano 4 giorni per il drop da ${restaurantName}`,
+      eyebrow: 'Ancora da usare',
+      title: 'Ti restano 4 giorni.',
+      lede: frase(`il drop da ${restaurantName} vale ancora${fino}. Dopo, il posto passa a chi è in lista d’attesa.`),
+      after: 'Quando passi, apri il QR alla cassa e lo scalano loro.',
+    },
+    left2: {
+      subject: `Mancano 2 giorni: il drop da ${restaurantName} sta per scadere`,
+      eyebrow: 'Mancano 2 giorni',
+      title: 'Ancora due giorni.',
+      lede: frase(`ti restano ${leftWords || '2 giorni'} per usare il drop da ${restaurantName}: vale${fino}. Poi non vale più e il posto passa a chi è in lista.`),
+      after: 'Se hai in mente di andarci, è il momento di decidere quando.',
+    },
+    left1: {
+      subject: `Ultime 24 ore per il drop da ${restaurantName}`,
+      eyebrow: 'Ultime 24 ore',
+      title: 'È l’ultimo giorno.',
+      lede: frase(`mancano solo ${leftWords || '24 ore'}: il drop da ${restaurantName} vale${fino}, poi lo perdi e passa al primo in lista.`),
+      after: 'Se ci vai oggi, apri il QR alla cassa e lo scalano loro.',
+    },
+  }[stage] || null
+  if (!copy) throw new Error(`dropClaimEmail: stage sconosciuto ${stage}`)
+
+  const isReceipt = stage === 'start'
+  const pill = isReceipt
+    ? `● IL TUO DROP · ${giorni.toUpperCase()} PER USARLO`
+    : `● IL TUO DROP · ${stage === 'left1' ? 'ULTIME ORE' : `TI RESTANO ${String(leftWords || '').toUpperCase()}`}`
+  return {
+    subject: copy.subject,
+    ...renderEmail({
+      preheader: `${copy.title} ${deadline ? `Vale fino a ${deadline}.` : ''}`.trim(),
+      reason: isReceipt ? MOTIVO.ricevuta : MOTIVO.promemoria,
+      unsubscribeUrl: isReceipt ? undefined : unsubscribeUrl,
+      city,
+      blocks: [
+        eyebrow(copy.eyebrow, { padding: '22px 20px 0' }),
+        h1(copy.title),
+        lede(copy.lede),
+        dropCard({
+          badge,
+          restaurantName,
+          perk: vantaggio,
+          meta: [cuisine, conditions].filter(Boolean).join(' · '),
+          photoUrl: photos?.[0] || null,
+          cuisine,
+          href: link,
+          label: 'Apri il QR',
+          footnote: codice,
+          pill,
+          timer: { pct, left: leftWords || giorni, until: deadline },
+        }),
+        p(esc(copy.after), { padding: '16px 20px 0' }),
+        signature('— Bi'),
+        spacer(20),
+      ],
+      text: [
+        copy.title,
+        '',
+        copy.lede,
+        '',
+        [plain, vantaggio].filter(Boolean).join(' — '),
+        conditions || '',
+        deadline ? `Vale fino a ${deadline}.` : '',
+        '',
+        `Apri il QR: ${link}`,
+        codice,
+        '',
+        copy.after,
+        '',
+        '— Bi',
       ].filter((l) => l !== '').join('\n'),
     }),
   }
@@ -1019,6 +1204,14 @@ export const SAMPLE = {
     code: 'K48 213', others: 2,
     href: `${SITE_URL}/sconti?tab=miei&open=00000000-0000-0000-0000-000000000000`,
     othersHref: `${SITE_URL}/sconti?tab=miei`,
+  },
+  dropClaim: {
+    stage: 'left4', promoted: false, name: 'Giulia',
+    value: '−30%', restaurantName: 'Shoro', perk: '30% su tutto il menù',
+    conditions: 'Solo a cena', cuisine: 'Giapponese', city: 'Torino',
+    windowDays: 7, leftWords: '4 giorni', deadline: 'lunedì 19 ottobre alle 21:00', pct: 57,
+    code: 'K48 213',
+    href: `${SITE_URL}/sconti?tab=miei&open=00000000-0000-0000-0000-000000000000`,
   },
   discountUsed: {
     value: '−50%', restaurantName: 'Bar Stampa',

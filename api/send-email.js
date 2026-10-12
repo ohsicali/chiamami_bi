@@ -26,7 +26,7 @@ import { applyCors } from './_cors.js'
 import { verifyTurnstile } from './_turnstile.js'
 import {
   welcomeEmail, newDiscountEmail, newRestaurantEmail,
-  discountClaimedEmail, discountUsedEmail, discountReminderEmail, feedbackAskEmail, feedbackThanksEmail, partnerWelcomeEmail,
+  discountClaimedEmail, discountUsedEmail, discountReminderEmail, dropClaimEmail, feedbackAskEmail, feedbackThanksEmail, partnerWelcomeEmail,
   suggestionConfirmationEmail, partnerApplicationConfirmationEmail,
   recoveryOtpEmail, internalSuggestionEmail, internalPartnerApplicationEmail, SAMPLE,
 } from './_email/templates.js'
@@ -37,6 +37,9 @@ import {
 import { formatDiscountBadge, pickPerk } from './_email/discount.js'
 import { formatShortCode, normalizeShortCode } from './_short-code.js'
 import { SITE_URL as PUBLIC_SITE } from './_email/theme.js'
+import {
+  DEFAULT_CLAIM_WINDOW_DAYS, claimDeadline, claimWindowDays, formatClaimDeadline, formatClaimDeadlineShort, hasClaimWindow,
+} from '../src/lib/dropClaim.js'
 import { sendPartnerWelcome } from './_email/partner.js'
 
 export default async function handler(req, res) {
@@ -186,7 +189,7 @@ async function handleDiscountClaimed(req, res) {
   // RLS, perché qui stiamo usando la service role key che la salta.
   const { data: red } = await ctx.admin
     .from('discount_redemptions')
-    .select('id, qr_code, short_code, status, generated_at, discount_id, user_id, discount:discounts(*, restaurant:restaurants(name, slug, address, neighborhood, city, cuisine_type))')
+    .select('*, discount:discounts(*, restaurant:restaurants(name, slug, address, neighborhood, city, cuisine_type))')
     .eq('id', redemptionId)
     .eq('user_id', ctx.user.id)
     .maybeSingle()
@@ -319,6 +322,17 @@ async function handlePreview(req, res) {
       ...SAMPLE.discountReminder, now: new Date(), claimedAt: new Date(Date.now() - 3 * 86_400_000).toISOString(),
       isDrop: true, endsAt: new Date(Date.now() + 40 * 3_600_000).toISOString(), unsubscribeUrl: u,
     }),
+    // I drop coi giorni contati (12/10): le cinque tappe, più il posto
+    // arrivato dalla lista d'attesa e la ricevuta col "hai 7 giorni".
+    'discount-claimed-drop': () => discountClaimedEmail({
+      ...SAMPLE.discountClaimed, value: '−30%', restaurantName: 'Shoro', perk: '30% su tutto il menù',
+      expiryLabel: 'Da usare entro lun 19 ott, 21:00', claimWindow: { days: 7, deadline: 'lunedì 19 ottobre alle 21:00' },
+    }),
+    'drop-claim-promoted': () => dropClaimEmail({ ...SAMPLE.dropClaim, stage: 'start', promoted: true, leftWords: null, pct: 100 }),
+    'drop-claim-4d': () => dropClaimEmail({ ...SAMPLE.dropClaim, unsubscribeUrl: u }),
+    'drop-claim-2d': () => dropClaimEmail({ ...SAMPLE.dropClaim, stage: 'left2', leftWords: '2 giorni', pct: 29, unsubscribeUrl: u }),
+    'drop-claim-1d': () => dropClaimEmail({ ...SAMPLE.dropClaim, stage: 'left1', leftWords: '23 ore', pct: 14, unsubscribeUrl: u }),
+    'drop-claim-expired': () => dropClaimEmail({ ...SAMPLE.dropClaim, stage: 'expired', passedOn: true, unsubscribeUrl: u }),
     partner: () => partnerWelcomeEmail(SAMPLE.partnerWelcome),
     suggestion: () => suggestionConfirmationEmail(SAMPLE.suggestionConfirmation),
     'partner-application': () => partnerApplicationConfirmationEmail(SAMPLE.partnerApplicationConfirmation),
@@ -345,6 +359,7 @@ async function handlePreview(req, res) {
 function discountClaimedProps(red) {
   const d = red.discount || {}
   const r = d.restaurant || {}
+  const deadline = hasClaimWindow(d) ? claimDeadline(red, d) : null
   return {
     value: formatDiscountBadge(d),
     restaurantName: r.name || 'il locale',
@@ -355,8 +370,12 @@ function discountClaimedProps(red) {
     // un'email nessuno lo legge al bancone, `K48 213` sì. Il fallback è per
     // le righe scritte prima che la colonna esistesse.
     code: formatShortCode(red.short_code) || red.qr_code,
-    expiryLabel: expiryLabel(d),
-    href: `${PUBLIC_SITE}/sconti`,
+    expiryLabel: deadline ? `Da usare entro ${formatClaimDeadlineShort(deadline)}` : expiryLabel(d),
+    // Drop coi giorni contati (12/10): la ricevuta dice fin quando vale.
+    claimWindow: deadline
+      ? { days: claimWindowDays(d) || DEFAULT_CLAIM_WINDOW_DAYS, deadline: formatClaimDeadline(deadline) }
+      : null,
+    href: `${PUBLIC_SITE}/sconti?tab=miei&open=${encodeURIComponent(red.discount_id)}`,
   }
 }
 
