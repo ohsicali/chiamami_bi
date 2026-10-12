@@ -191,20 +191,33 @@ export const KINDS = {
  *
  * @returns {Promise<Array<{email:string, name:string, token:string}>>}
  */
+/** Righe per pagina: il massimo che Supabase restituisce in una richiesta. */
+export const RECIPIENTS_PAGE = 1000
+
 export async function recipientsFor(supabaseAdmin, kind) {
   const column = KINDS[kind]
   if (!column) throw new Error(`Tipo email sconosciuto: ${kind}`)
 
-  const { data, error } = await supabaseAdmin
-    .from('email_preferences')
-    .select(`unsubscribe_token, user_id, profiles!inner(email, full_name)`)
-    .eq(column, true)
-
-  if (error) throw new Error(`Lettura destinatari fallita: ${error.message}`)
+  // A pagine: Supabase restituisce al massimo 1000 righe per richiesta, e
+  // senza pagine dal 29/09 (utenti oltre quota 1000) ogni annuncio partiva
+  // ai primi 1000 e gli altri restavano senza. Ordine fisso su user_id, o
+  // le pagine possono saltare o ripetere qualcuno.
+  const rows = []
+  for (let from = 0; ; from += RECIPIENTS_PAGE) {
+    const { data, error } = await supabaseAdmin
+      .from('email_preferences')
+      .select(`unsubscribe_token, user_id, profiles!inner(email, full_name)`)
+      .eq(column, true)
+      .order('user_id', { ascending: true })
+      .range(from, from + RECIPIENTS_PAGE - 1)
+    if (error) throw new Error(`Lettura destinatari fallita: ${error.message}`)
+    rows.push(...(data || []))
+    if (!data || data.length < RECIPIENTS_PAGE) break
+  }
 
   const seen = new Set()
   const out = []
-  for (const row of data || []) {
+  for (const row of rows) {
     const email = row?.profiles?.email?.trim().toLowerCase()
     if (!email || seen.has(email)) continue
     seen.add(email)
