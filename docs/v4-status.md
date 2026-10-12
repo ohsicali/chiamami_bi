@@ -38,7 +38,7 @@ dove siamo. Aggiorna a ogni step importante.
 | Drop preso — "Ce l'hai fatta, sei il numero X su 20" (Bi che applaude) | — | 🚧 In review | Branch `claude/drop-win-animation`. SQL `supabase/drop-claim-rank-2026-09-30.sql` **già eseguito** il 30/09 (provato in transazione annullata: 1/3, 2/3, 3/3, il quarto `sold_out`; niente numero per il riscatto di un altro; anon rifiutato). Lucchetto per sconto sui riscatti + RPC `my_claim_rank`. Vedi CLAUDE.md. |
 | Pannello admin rifatto — aggiunta locali e sconti | #330 | 🚧 In review | Branch `claude/admin-redesign`. **Nessun SQL.** Kit `adm-*`, percorso "Aggiungi un locale" senza bozze vuote, scheda locale con checklist, editor sconti a tutto schermo con anteprima. Vedi CLAUDE.md "Pannello admin rifatto". |
 | Avvisi agli admin su Telegram (sconto usato, recensione, suggerimento, candidatura) | — | 🚧 In review | Branch `claude/sleepy-ride-2d13rk`. SQL `supabase/admin-telegram-2026-09-30.sql` **già eseguito** il 30/09 (provato in transazione annullata: i 4 messaggi, suggerimento anon incluso; con l'invio in errore la convalida passa). Bot **@LaGuidaDiBi_bot** e gruppo **"La Guida di Bi"** configurati nel Vault il 30/09; messaggio di prova arrivato. Se il gruppo diventa supergruppo l'id cambia (`-100…`): rifare getUpdates e aggiornare `telegram_admin_chat_id`. Vedi CLAUDE.md. |
-| Drop coi giorni contati — 7 giorni per usarlo, lista d'attesa, email a tappe | — | 🚧 In review | PR #340, branch `claude/drop-giorni-contati`. SQL `supabase/drop-claim-window-2026-10-12.sql` **eseguito il 12/10** dal connettore, tranne REVOKE/DROP (il connettore vuole una conferma che non arriva): quelli sono in `supabase/drop-claim-window-permessi-2026-10-12.sql`, **eseguito dal proprietario nel SQL Editor il 12/10** (verificato: giro solo service role, lista scritta solo dalle RPC, `my_claim_rank` con `expires_at`). Dopo il deploy: `supabase/drop-claims-cron-2026-10-12.sql`. Vedi CLAUDE.md "Drop coi giorni contati" e EMAIL-FLOWS §7f. |
+| Drop coi giorni contati — 7 giorni per usarlo, lista d'attesa, email a tappe | #340 | ✅ Merged (53d092d) | Online dal 12/10. SQL `supabase/drop-claim-window-2026-10-12.sql` **eseguito il 12/10** dal connettore, tranne REVOKE/DROP (il connettore vuole una conferma che non arriva): quelli sono in `supabase/drop-claim-window-permessi-2026-10-12.sql`, **eseguito dal proprietario nel SQL Editor il 12/10** (verificato: giro solo service role, lista scritta solo dalle RPC, `my_claim_rank` con `expires_at`). Cron `supabase/drop-claims-cron-2026-10-12.sql` **eseguito il 12/10** dopo il deploy (pg_cron `chiamamibi-drop-claims`, ogni 10 min; prima chiamata a mano: 200, niente da fare). Vedi CLAUDE.md "Drop coi giorni contati" e EMAIL-FLOWS §7f. |
 | Feedback dopo la convalida (festa, stelle, Bi che ringrazia, email 30 min / 1 giorno, recensioni in /verify) | #320 | ✅ Merged (9d3cf06) | SQL `redemption-feedback-2026-09-29.sql`, `verify-feedback-list-2026-09-29.sql` e `redemption-feedback-cron-2026-09-29.sql` **tutti eseguiti** il 29/09. Giro email attivo (pg_cron `chiamamibi-feedback-asks`, ogni 10 min; prima chiamata: 200). Vedi sezione "29/09 — feedback" sotto e CLAUDE.md. |
 
 ## 12/10 — drop coi giorni contati: 7 giorni per usarlo, poi la lista d'attesa
@@ -88,8 +88,12 @@ policy di lettura, trigger, RPC, `drop_claims_tick()` (prima chiamata:
 esistenti non cambiano (nessuno ha `claim_window_days`).
 `supabase/drop-claim-window-permessi-2026-10-12.sql` (permessi stretti +
 `my_claim_rank` con la scadenza) **eseguito dal proprietario nel SQL Editor il
-12/10**, verificato dal connettore. Poi merge; dopo il deploy,
-`drop-claims-cron-2026-10-12.sql`.
+12/10**, verificato dal connettore. Merge #340 (53d092d); dopo il deploy
+eseguito `drop-claims-cron-2026-10-12.sql`: pg_cron `chiamamibi-drop-claims`
+ogni 10 minuti, prima chiamata a mano via pg_net → 200
+`{"tick":{"expired":0,"promoted":0,"closed":0},"planned":0,…}`. Le risposte del
+giro si leggono in `net._http_response`. Per spegnerlo:
+`SELECT cron.unschedule('chiamamibi-drop-claims');`
 
 ## 29/09 — feedback dopo lo sconto convalidato
 
