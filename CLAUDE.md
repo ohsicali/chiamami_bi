@@ -403,7 +403,9 @@ restano senza limite): un drop ha N posti, chi riesce a prenderlo ha **7 giorni
 per usarlo dal tocco su "Sblocca"**, poi il codice non vale più e il posto va
 al **primo della lista d'attesa**. Chi trova il drop esaurito vede il "sold out"
 e, al posto del bottone spento, **«Mettiti in lista»**.
-- **Lo decide il DB** (`supabase/drop-claim-window-2026-10-12.sql`):
+- **Lo decide il DB** (`supabase/drop-claim-window-2026-10-12.sql`, eseguito il
+  12/10 tranne REVOKE/DROP, che stanno in `drop-claim-window-permessi-2026-10-12.sql`
+  da incollare nel SQL Editor — vedi `docs/v4-status.md`):
   `discounts.claim_window_days` (NULL = nessun limite) e
   `discount_redemptions.expires_at`, scritto da `guard_redemption_insert`
   (mai dal browser: se lo manda, viene sovrascritto). Tabella `drop_waitlist`,
