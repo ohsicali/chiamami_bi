@@ -158,25 +158,50 @@ export default function EditRestaurant() {
           }
         }
 
-        // Save extra locations to restaurant_locations (delete + re-insert,
-        // stesso pattern delle foto). Righe senza indirizzo o coordinate
-        // vengono scartate: una sede a metà compilata non deve comparire
-        // come pin fantasma sulla mappa.
-        await supabase.from('restaurant_locations').delete().eq('restaurant_id', restaurantId)
-        if (form.locations?.length > 0) {
-          const locationRows = form.locations
-            .map((l, i) => ({
-              restaurant_id: restaurantId,
-              label: l.label || null,
-              address: l.address || '',
-              latitude: l.latitude !== '' && l.latitude != null ? parseFloat(l.latitude) : null,
-              longitude: l.longitude !== '' && l.longitude != null ? parseFloat(l.longitude) : null,
-              sort_order: i,
-            }))
-            .filter((l) => l.address && l.latitude != null && l.longitude != null)
-          if (locationRows.length > 0) {
-            await supabase.from('restaurant_locations').insert(locationRows)
-          }
+        // Sedi extra in restaurant_locations. Si aggiornano al loro posto
+        // (13/10): prima si cancellavano e reinserivano a ogni salvataggio,
+        // ma uno sconto che vale "solo in questa sede" tiene l'id della sede
+        // (discounts.valid_location_ids) e con un id nuovo la perdeva.
+        // Righe senza indirizzo o coordinate vengono scartate: una sede a
+        // metà compilata non deve comparire come pin fantasma sulla mappa.
+        const locationRows = (form.locations || [])
+          .map((l, i) => ({
+            id: l.id || null,
+            restaurant_id: restaurantId,
+            label: l.label || null,
+            address: l.address || '',
+            latitude: l.latitude !== '' && l.latitude != null ? parseFloat(l.latitude) : null,
+            longitude: l.longitude !== '' && l.longitude != null ? parseFloat(l.longitude) : null,
+            sort_order: i,
+          }))
+          .filter((l) => l.address && l.latitude != null && l.longitude != null)
+        const keptIds = locationRows.filter((l) => l.id).map((l) => l.id)
+        let removeQuery = supabase.from('restaurant_locations').delete().eq('restaurant_id', restaurantId)
+        if (keptIds.length) removeQuery = removeQuery.not('id', 'in', `(${keptIds.join(',')})`)
+        const { error: removeErr } = await removeQuery
+        if (removeErr) throw removeErr
+        for (const { id, ...row } of locationRows.filter((l) => l.id)) {
+          const { error: locErr } = await supabase.from('restaurant_locations').update(row).eq('id', id)
+          if (locErr) throw locErr
+        }
+        const fresh = locationRows.filter((l) => !l.id).map((l) => {
+          const row = { ...l }
+          delete row.id
+          return row
+        })
+        if (fresh.length > 0) {
+          const { data: inserted, error: insErr } = await supabase
+            .from('restaurant_locations')
+            .insert(fresh)
+            .select('id, sort_order')
+          if (insErr) throw insErr
+          // Gli id nuovi tornano nel form: il prossimo "Salva" aggiorna
+          // queste righe invece di crearle una seconda volta.
+          const idByOrder = new Map((inserted || []).map((r) => [r.sort_order, r.id]))
+          setForm((prev) => ({
+            ...prev,
+            locations: (prev.locations || []).map((l, i) => (l.id || !idByOrder.has(i) ? l : { ...l, id: idByOrder.get(i) })),
+          }))
         }
 
         setDirty(false)

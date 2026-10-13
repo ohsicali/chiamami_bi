@@ -464,6 +464,58 @@
 .adm-chip[aria-pressed='true'],
 .adm-chip[aria-checked='true'] { background: var(--adm-ink); border-color: var(--adm-ink); color: #fff; }
 
+/* Sedi in cui vale uno sconto (editor sconti, 13/10). */
+.adm-sedi { display: flex; flex-direction: column; gap: 8px; }
+.adm-sede {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 13px;
+  border-radius: 14px;
+  border: 1.5px solid var(--adm-line, #EAE3D7);
+  background: #fff;
+  color: var(--adm-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.adm-sede:hover { border-color: rgba(34, 24, 28, 0.3); }
+.adm-sede__num {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 800;
+  background: #F3EEE4;
+  color: var(--adm-muted);
+}
+.adm-sede__txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.adm-sede__txt b { font-size: 13.5px; font-weight: 800; }
+.adm-sede__txt span { font-size: 11.5px; color: var(--adm-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adm-sede__check {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 900;
+  color: transparent;
+  border: 1.5px solid var(--adm-line, #EAE3D7);
+}
+.adm-sede[aria-pressed='true'] { border-color: #1A4731; background: #F4FCEC; }
+.adm-sede[aria-pressed='true'] .adm-sede__num {
+  background: var(--gradient-sconto, linear-gradient(135deg, #A3E635, #4ADE80));
+  color: #1A4731;
+}
+.adm-sede[aria-pressed='true'] .adm-sede__check { background: #1A4731; border-color: #1A4731; color: #fff; }
+
 /* ── Avvisi ─────────────────────────────────────────────────────────── */
 .adm-note {
   display: flex;
@@ -714,7 +766,7 @@
 .adm-toast--err { background: var(--adm-danger); }
 
 @media (prefers-reduced-motion: reduce) {
-  .adm-btn, .adm-choice, .adm-bigpick, .adm-switch span, .adm-switch span::after { transition: none; }
+  .adm-btn, .adm-choice, .adm-sede, .adm-bigpick, .adm-switch span, .adm-switch span::after { transition: none; }
 }
 
 /* Filtri dell'elenco locali: sul telefono una riga sola che scorre. */

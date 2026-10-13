@@ -8,6 +8,7 @@ import {
   MEAL_SLOTS,
 } from '../../lib/validity'
 import { normalizeProducts } from '../../lib/utils/discountProducts'
+import { discountLocationScope, locationMapsUrl, locationStreet } from '../../lib/utils/restaurantLocations'
 import './DiscountRules.css'
 
 /**
@@ -23,6 +24,7 @@ import './DiscountRules.css'
  * Qui diventano tre blocchi con tre forme diverse:
  *   - VALE SU   → le foto dei prodotti coperti (`discount_products`)
  *   - QUANDO    → i sette giorni come pastiglie, quelli buoni accesi
+ *   - DOVE      → per i locali con più sedi, in quali vale (13/10)
  *   - DA SAPERE → le condizioni, una per riga
  *
  * VALE SU e DA SAPERE compaiono solo se hanno qualcosa da dire; QUANDO
@@ -35,8 +37,12 @@ import './DiscountRules.css'
  * Il verde è riservato a ciò che è valido — è lo stesso `--gradient-sconto`
  * delle pillole percentuale, non un secondo verde.
  */
-export default function DiscountRules({ deal, products, className = '' }) {
+export default function DiscountRules({ deal, products, restaurant, className = '' }) {
   const items = useMemo(() => normalizeProducts(products ?? deal?.products), [products, deal])
+  // Le sedi del locale: dal chiamante (scheda del locale, che le ha già) o
+  // dal locale attaccato allo sconto (Bi Club, "I miei vantaggi").
+  const place = restaurant || deal?.restaurant || null
+  const scope = discountLocationScope(deal, place)
 
   const days = effectiveValidDays(deal)
   const hasDayLimit = days.length > 0 && days.length < 7
@@ -53,7 +59,7 @@ export default function DiscountRules({ deal, products, className = '' }) {
   // del coupon. Prima "Quando" spariva insieme alla fila dei sette giorni
   // quando non c'era un vincolo, e uno sconto con le foto prodotto ma senza
   // limiti non diceva mai "vale sempre".
-  if (items.length === 0 && !hasDayLimit && !hasWindow && !showConditions) return null
+  if (items.length === 0 && !hasDayLimit && !hasWindow && !showConditions && !scope) return null
 
   return (
     <section className={`dr ${className}`.trim()} aria-label="Regole dello sconto">
@@ -75,6 +81,13 @@ export default function DiscountRules({ deal, products, className = '' }) {
         {hasDayLimit && <DayStrip days={days} />}
         <WindowLine deal={deal} slots={slots} allDays={!hasDayLimit} />
       </div>
+
+      {scope && (
+        <div className="dr-block">
+          <h3 className="dr-eyebrow">Dove vale</h3>
+          <LocationScope scope={scope} place={place} />
+        </div>
+      )}
 
       {showConditions && (
         <div className="dr-block">
@@ -196,6 +209,67 @@ function windowDetail(deal, slots) {
     )
   }
   return null
+}
+
+/* ============================================================================
+   DOVE — le sedi
+   ============================================================================ */
+
+/**
+ * Le sedi come le pastiglie dei giorni: accese quelle dove lo sconto vale,
+ * spente le altre — stessa grammatica, così si legge senza spiegazioni.
+ * Sotto, in parole: "In tutte le 4 sedi", oppure la sede giusta con
+ * l'indirizzo che apre Google Maps (è lì che bisogna andare).
+ */
+function LocationScope({ scope, place }) {
+  const onIds = new Set(scope.locations.map((l) => l.id))
+  const only = !scope.all && scope.locations.length === 1 ? scope.locations[0] : null
+  const onlyUrl = only ? locationMapsUrl(only, place?.name) : null
+  const label = scope.all
+    ? `Valido in tutte le ${scope.total} sedi`
+    : `Valido solo in: ${scope.locations.map((l) => l.name).join(', ')}`
+
+  return (
+    <>
+      <div className="dr-sedi" role="img" aria-label={label}>
+        {scope.every.map((l) => (
+          <span key={l.id} className={`dr-sede ${onIds.has(l.id) ? 'is-on' : 'is-off'}`} aria-hidden="true">
+            {onIds.has(l.id) && <CheckIcon />}
+            {l.name}
+          </span>
+        ))}
+      </div>
+      <p className="dr-when">
+        {scope.all ? (
+          <><strong>In tutte le {scope.total} sedi</strong> del locale</>
+        ) : only ? (
+          <>
+            <strong>Solo nella sede {only.name}</strong>
+            {only.address && (
+              <>
+                {' · '}
+                {onlyUrl ? (
+                  <a className="dr-sede-link" href={onlyUrl} target="_blank" rel="noopener noreferrer">
+                    {locationStreet(only.address, place?.city)}
+                  </a>
+                ) : locationStreet(only.address, place?.city)}
+              </>
+            )}
+          </>
+        ) : (
+          <><strong>Solo in {scope.locations.length} sedi</strong> su {scope.total}: nelle altre non vale</>
+        )}
+      </p>
+    </>
+  )
+}
+
+function CheckIcon() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M20 6L9 17l-5-5" />
+    </svg>
+  )
 }
 
 /* ============================================================================

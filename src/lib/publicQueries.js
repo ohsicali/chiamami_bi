@@ -43,7 +43,7 @@ export const RESTAURANTS_SELECT =
   `${RESTAURANT_COLUMNS}, ${HOURS_PROJECTION}, restaurant_photos(id, photo_url, thumb_url, sort_order), restaurant_locations(id, label, address, latitude, longitude, sort_order)`
 
 export const ACTIVE_DISCOUNTS_SELECT =
-  '*, products:discount_products(id, name, note, photo_url, thumb_url, sort_order), restaurant:restaurants(id, name, slug, city, address, cuisine_type, category, price_range, tagline, latitude, longitude, photos:restaurant_photos(id, photo_url, thumb_url, sort_order))'
+  '*, products:discount_products(id, name, note, photo_url, thumb_url, sort_order), restaurant:restaurants(id, name, slug, city, address, location_label, google_maps_url, cuisine_type, category, price_range, tagline, latitude, longitude, photos:restaurant_photos(id, photo_url, thumb_url, sort_order), restaurant_locations(id, label, address, latitude, longitude, sort_order))'
 
 // Stessa select di sempre dei banner (era `SELECT` in useAds.js).
 export const ADS_SELECT = `

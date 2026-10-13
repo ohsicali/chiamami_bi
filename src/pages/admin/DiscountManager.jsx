@@ -13,6 +13,7 @@ import { useAdminRedemptions } from '../../lib/hooks/useAdminRedemptions'
 import { dropPeopleFromRows, dropPeopleNotes, dropPeopleSummary } from '../../lib/dropStats'
 import LiveRedemptionsPanel from '../../components/admin/LiveRedemptionsPanel'
 import { toLocalInput, fromLocalInput, publishAtError, formatPublishAt } from '../../lib/scheduledPublish'
+import { getAllLocations } from '../../lib/utils/restaurantLocations'
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -51,6 +52,11 @@ const EMPTY_FORM = {
   valid_days: [],          // [] = tutti i giorni
   valid_meal_slots: [],    // [] = qualsiasi ora
   products: [],            // foto di cosa lo sconto copre
+  // Locali con più sedi (13/10, supabase/discount-locations-2026-10-13.sql):
+  // 'all' = vale in tutte (salvato come NULL), 'some' = solo nelle sedi di
+  // `valid_location_ids` ('primary' o l'id di restaurant_locations).
+  location_mode: 'all',
+  valid_location_ids: [],
   kind: 'discount', // 'discount' | 'featured' | 'drop'
   starts_at: new Date().toISOString().split('T')[0],
   ends_at: '',
@@ -731,7 +737,7 @@ export default function DiscountManager() {
     }
     Promise.all([
       supabase.from('discounts').select('*, products:discount_products(id, name, note, photo_url, thumb_url, sort_order), restaurant:restaurants(id, name)').order('created_at', { ascending: false }),
-      supabase.from('restaurants').select('id, name, address, is_published, restaurant_photos(photo_url, thumb_url, sort_order)').order('name'),
+      supabase.from('restaurants').select('id, name, address, city, is_published, location_label, restaurant_photos(photo_url, thumb_url, sort_order), restaurant_locations(id, label, address, sort_order)').order('name'),
       supabase.from('restaurant_partners').select('restaurant_id, pin_code').eq('is_active', true),
       supabase.from('sponsored_placements').select('id, discount_id').not('discount_id', 'is', null),
       // Chi ha un PIN: il PIN non si legge dalla tabella, lo dà l'RPC admin.
@@ -758,7 +764,11 @@ export default function DiscountManager() {
           id: r.id,
           name: r.name,
           address: r.address,
+          city: r.city,
           is_published: r.is_published,
+          // Le sedi, per "In quali sedi vale" (getAllLocations le legge da qui).
+          location_label: r.location_label,
+          restaurant_locations: r.restaurant_locations || [],
           photo: cover?.thumb_url || cover?.photo_url || null,
           has_pin: !!secrets[r.id]?.verify_pin,
         }
@@ -911,6 +921,8 @@ export default function DiscountManager() {
       valid_days: Array.isArray(d.valid_days) ? d.valid_days : [],
       valid_meal_slots: Array.isArray(d.valid_meal_slots) ? d.valid_meal_slots : [],
       products: [...(d.products || [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
+      location_mode: Array.isArray(d.valid_location_ids) && d.valid_location_ids.length ? 'some' : 'all',
+      valid_location_ids: Array.isArray(d.valid_location_ids) ? d.valid_location_ids : [],
       kind,
       starts_at: toInputDate(isDrop ? (d.drop_starts_at || d.valid_from) : d.valid_from, isDrop),
       ends_at: toInputDate(endSource, isDrop),
@@ -1088,6 +1100,7 @@ export default function DiscountManager() {
     // non un errore di digitazione.
     const endIso = form.ends_at ? new Date(form.ends_at).toISOString() : null
     const uses = form.max_uses ? parseInt(form.max_uses) : null
+    const validLocationIds = scopedLocationIds(form, restaurants.find((r) => r.id === restId))
 
     const payload = {
       restaurant_id: restId,
@@ -1101,6 +1114,7 @@ export default function DiscountManager() {
       // tenere due modi di dire la stessa cosa non aiuta nessuno.
       valid_days: form.valid_days?.length ? form.valid_days : null,
       valid_meal_slots: form.valid_meal_slots?.length ? form.valid_meal_slots : null,
+      valid_location_ids: validLocationIds,
       valid_from: startIso,
       valid_until: endIso,
       max_redemptions: uses,
@@ -1915,3 +1929,18 @@ const iconBtnStyle = {
   borderRadius: 6,
   marginLeft: 2,
 }
+
+/**
+ * Le sedi da salvare: NULL quando vale in tutte (anche se le si è spuntate
+ * tutte a mano), altrimenti solo gli id di sedi che il locale ha davvero.
+ * Locale con una sede sola: sempre NULL.
+ */
+function scopedLocationIds(form, restaurant) {
+  if (form.location_mode !== 'some') return null
+  const known = getAllLocations(restaurant).map((l) => String(l.id))
+  if (known.length < 2) return null
+  const ids = (form.valid_location_ids || []).map(String).filter((id) => known.includes(id))
+  if (ids.length === 0 || ids.length === known.length) return null
+  return ids
+}
+
