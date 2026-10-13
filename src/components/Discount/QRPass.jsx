@@ -14,6 +14,7 @@ import {
 import { QR_PASS_EVENT, REDEMPTION_VALIDATED_EVENT } from '../../lib/redemptionFeedback'
 import { claimDeadline, formatClaimDeadlineShort } from '../../lib/dropClaim'
 import ClaimTimer from './ClaimTimer'
+import { discountLocationScope, discountLocationLine } from '../../lib/utils/restaurantLocations'
 import './QRPass.css'
 
 /**
@@ -172,7 +173,7 @@ function splitConditions(conditions) {
 }
 
 /* ── La card: badge, selettore QR / Codice, riquadro ──────────────────── */
-export default function QRPass({ deal, qrValue, shortCode, restaurantName, claimEndsAt = null }) {
+export default function QRPass({ deal, qrValue, shortCode, restaurantName, restaurant = null, claimEndsAt = null }) {
   const hasCode = isShortCode(shortCode)
   const [mode, setMode] = useState('qr')
   const [presenting, setPresenting] = useState(false)
@@ -188,6 +189,10 @@ export default function QRPass({ deal, qrValue, shortCode, restaurantName, claim
   // La prima condizione ("Non cumulabile…"), su una riga: le altre sono in
   // "Info sconto". Stesso taglio di DiscountRules.
   const note = splitConditions(deal?.conditions)[0] || null
+  // Locale con più sedi e sconto che vale solo in alcune (13/10): va detto
+  // qui, alla cassa, non solo in "Info sconto". In tutte le sedi = niente.
+  const scope = discountLocationScope(deal, restaurant || deal?.restaurant)
+  const onlyHere = scope && !scope.all ? discountLocationLine(scope) : null
   const showCode = hasCode && mode === 'code'
 
   return (
@@ -199,6 +204,7 @@ export default function QRPass({ deal, qrValue, shortCode, restaurantName, claim
             {perk && perk !== badge && <p className="qrp-perk">{perk}</p>}
             <ValidityLine deal={deal} />
             {note && <p className="qrp-note">{note}</p>}
+            {onlyHere && <p className="qrp-note qrp-sede">📍 {onlyHere}</p>}
             {/* Un drop coi giorni contati (12/10) scade per chi l'ha preso,
                 non per tutti: la data è la sua, e la barra sta sotto. */}
             {isDrop && (
@@ -288,6 +294,7 @@ export function QRPassSheet({
   restaurantName,
   subtitle,
   photoUrl,
+  restaurant = null, // per le sedi: chi lo apre dalla scheda del locale
   justUnlocked = false,
   onClose,
   children,
@@ -345,6 +352,7 @@ export function QRPassSheet({
           qrValue={qrValue}
           shortCode={redemption?.short_code}
           restaurantName={name}
+          restaurant={restaurant}
           claimEndsAt={claimDeadline(redemption, deal)}
         />
 

@@ -179,6 +179,43 @@
 }
 .dr-when-range { color: var(--dr-ink-40); }
 
+/* ── DOVE (le sedi) ──────────────────────────────────────────────────────── */
+
+.dr-sedi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.dr-sede {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 0 11px;
+  border-radius: 9px;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1;
+  user-select: none;
+}
+.dr-sede.is-on {
+  background: var(--gradient-sconto, linear-gradient(135deg, #A3E635 0%, #4ADE80 100%));
+  color: var(--dr-sconto-ink);
+}
+.dr-sede.is-off {
+  background: var(--dr-cream);
+  color: var(--dr-ink-40);
+  text-decoration: line-through;
+  text-decoration-color: rgba(34, 24, 28, 0.25);
+}
+.dr-sede-link {
+  color: var(--dr-ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: rgba(34, 24, 28, 0.25);
+  text-underline-offset: 2px;
+}
+
 /* ── DA SAPERE ───────────────────────────────────────────────────────────── */
 
 .dr-conds {

@@ -194,6 +194,25 @@ campo "Video Instagram" del pannello, dove li mette Bea) e se vuoto dal vecchio
 `instagram_reel`; TikTok da `tiktok_url` (campo "Video TikTok"). Fino al 30/09 la
 scheda leggeva solo `instagram_reel` e i reel messi dal pannello nuovo non si vedevano.
 
+## Sedi del locale e in quali vale lo sconto (13/10)
+La scheda del locale con più sedi (`RestaurantLocationsNote`) dice solo **dove
+trovarlo**: "Le 4 sedi a Torino e dintorni", una riga per sede che apre Google
+Maps su quella sede (link del locale per la principale, "Nome, indirizzo" per
+le altre). **Non parla di sconti**: prima diceva "lo sconto vale in entrambe"
+anche su Taco Bang, che uno sconto non l'aveva ancora (deciso dal proprietario).
+- In quali sedi vale **lo dice lo sconto**: `discounts.valid_location_ids`
+  (NULL = tutte, se no `'primary'` per la principale e gli id di
+  `restaurant_locations`). SQL `supabase/discount-locations-2026-10-13.sql`,
+  **eseguito** il 13/10. Nell'editor sconti, blocco 04 Regole, "In quali sedi
+  vale" (tutte / solo alcune), solo per i locali con più sedi.
+- Lo si legge nel blocco **"Dove vale"** di `DiscountRules` (sedi accese/spente
+  come i giorni) e, se vale solo in alcune, sul QR ("📍 Vale solo nella sede
+  …"). Regole e parole in `src/lib/utils/restaurantLocations.js`
+  (`discountLocationScope`, test in `tests/restaurant-locations.test.mjs`).
+- **Gli id delle sedi non cambiano più**: dal 13/10 `EditRestaurant` aggiorna le
+  sedi al loro posto invece di cancellarle e reinserirle a ogni salvataggio. Non
+  rimettere il delete + insert: lo sconto perderebbe la sua sede.
+
 ## Convenzioni contenuti sconti (per riferimento futuro)
 - **Offerte "paghi X prendi Y"** (es. 3 al posto di 2): scrivere sempre in formato `AxB` (es. `3x2`, `2x1`), mai per esteso ("Paghi 2 prendi 3 Veneziane"). Vale per `title` e `discount_value` del record in `discounts`.
 - **Sticker/badge sconto** (percentuale o importo fisso su foto/card): devono sempre avere il segno meno davanti al valore, es. `-20%`, `-1€`. Gestito centralmente da `formatDiscountBadge()` / `formatDiscountBadgeShort()` in `src/lib/utils/discountFormat.js` — quando si aggiunge un nuovo punto che mostra uno sticker sconto, usare sempre queste funzioni (mai `formatDiscountValue()` da solo, che non mette il segno).

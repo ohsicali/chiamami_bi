@@ -379,9 +379,9 @@ export default function DesktopRestaurantSheet({
               </div>
             )}
 
-            {/* Due sedi — solo se il locale ne ha più di una */}
+            {/* Le sedi — solo se il locale ne ha più di una */}
             {hasMultipleLocations(restaurant) && (
-              <div style={{ marginBottom: 18, maxWidth: 380 }}>
+              <div style={{ marginBottom: 18, maxWidth: 440 }}>
                 <RestaurantLocationsNote restaurant={restaurant} />
               </div>
             )}
@@ -783,6 +783,7 @@ export default function DesktopRestaurantSheet({
             onClaim={handleClaim}
             onClose={() => { setPopupOpen(false); setBlockedMessage(null) }}
             {...passHeaderFromRestaurant(restaurant)}
+            restaurant={restaurant}
           />
         )}
       </AnimatePresence>

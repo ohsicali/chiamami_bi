@@ -8,6 +8,7 @@ import { proxyImg } from '../../lib/supabase'
 import { toLocalInput, fromLocalInput, defaultPublishInput, formatPublishAt } from '../../lib/scheduledPublish'
 import { formatDays, formatSlots } from '../../lib/validity'
 import { DEFAULT_CLAIM_WINDOW_DAYS } from '../../lib/dropClaim'
+import { getAllLocations, locationName, locationStreet } from '../../lib/utils/restaurantLocations'
 
 /**
  * L'editor di uno sconto, a tutto schermo (30/09).
@@ -66,8 +67,11 @@ export default function DiscountEditor({
   const restaurant = useMemo(() => restaurants.find((r) => r.id === restId) || null, [restaurants, restId])
   const set = (patch) => setForm((f) => ({ ...f, ...(typeof patch === 'function' ? patch(f) : patch) }))
 
+  const sedi = useMemo(() => getAllLocations(restaurant), [restaurant])
+  const multiSede = sedi.length > 1
   const missing = [
     !restId && 'il locale',
+    multiSede && form.location_mode === 'some' && !(form.valid_location_ids || []).length && 'la sede in cui vale',
     !String(form.discount_value || '').trim() && 'il valore',
     !String(form.title || '').trim() && 'il titolo',
   ].filter(Boolean)
@@ -122,9 +126,9 @@ export default function DiscountEditor({
                   partnerIds={partnerIds}
                   value={form.restaurant_id}
                   newPartner={newPartner}
-                  onPick={(id) => { set({ restaurant_id: id }); setNewPartner(null) }}
-                  onPickNewPartner={(r) => { set({ restaurant_id: '' }); setNewPartner({ id: r.id, name: r.name }) }}
-                  onClear={() => { set({ restaurant_id: '' }); setNewPartner(null) }}
+                  onPick={(id) => { set({ restaurant_id: id, ...NO_SCOPE }); setNewPartner(null) }}
+                  onPickNewPartner={(r) => { set({ restaurant_id: '', ...NO_SCOPE }); setNewPartner({ id: r.id, name: r.name }) }}
+                  onClear={() => { set({ restaurant_id: '', ...NO_SCOPE }); setNewPartner(null) }}
                 />
               </Card>
 
@@ -208,6 +212,17 @@ export default function DiscountEditor({
                     onChange={(patch) => set(patch)}
                   />
                 </Field>
+                {multiSede && (
+                  <Field label="In quali sedi vale" hint={`il locale ha ${sedi.length} sedi`}>
+                    <LocationScopePicker
+                      sedi={sedi}
+                      city={restaurant?.city}
+                      mode={form.location_mode || 'all'}
+                      ids={form.valid_location_ids || []}
+                      onChange={(patch) => set(patch)}
+                    />
+                  </Field>
+                )}
                 <Field label="Su cosa vale" hint="foto dei prodotti">
                   <ProductsEditor
                     products={form.products}
@@ -493,6 +508,69 @@ function Summary({ form, mode, editing }) {
  * con foto e indirizzo. Sotto, per chi non ha ancora il PIN, la strada
  * vecchia: lo si aggiunge come partner e il PIN nasce al salvataggio.
  */
+/** Cambiando locale le sedi scelte non valgono più: si torna a "tutte". */
+const NO_SCOPE = { location_mode: 'all', valid_location_ids: [] }
+
+/**
+ * "In quali sedi vale" (13/10): tutte, o solo quelle spuntate. Esce solo per
+ * i locali con più sedi. Tutte spuntate a mano = "tutte" (si salva NULL, vedi
+ * `scopedLocationIds` in DiscountManager).
+ */
+function LocationScopePicker({ sedi, city, mode, ids, onChange }) {
+  const chosen = new Set(ids.map(String))
+  const toggle = (id) => {
+    const next = chosen.has(id) ? ids.filter((x) => String(x) !== id) : [...ids, id]
+    onChange({ valid_location_ids: next })
+  }
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <Choices
+        label="In quali sedi vale"
+        cols={2}
+        colsSm={2}
+        value={mode}
+        onChange={(m) => onChange(m === 'all'
+          ? { location_mode: 'all' }
+          // "Solo alcune" parte dalla sede principale: quasi sempre è lei.
+          : { location_mode: 'some', valid_location_ids: ids.length ? ids : [String(sedi[0].id)] })}
+        options={[
+          { id: 'all', emoji: '📍', title: 'In tutte le sedi', hint: `Vale in tutte e ${sedi.length}.` },
+          { id: 'some', emoji: '🎯', title: 'Solo in alcune', hint: 'Scegli dove, qui sotto.' },
+        ]}
+      />
+      {mode === 'some' && (
+        <div className="adm-sedi" role="group" aria-label="Sedi in cui vale lo sconto">
+          {sedi.map((l, i) => {
+            const id = String(l.id)
+            const on = chosen.has(id)
+            return (
+              <button
+                key={id}
+                type="button"
+                className="adm-sede"
+                aria-pressed={on}
+                onClick={() => toggle(id)}
+              >
+                <span className="adm-sede__num" aria-hidden>{i + 1}</span>
+                <span className="adm-sede__txt">
+                  <b>{locationName(l, i)}</b>
+                  <span>{locationStreet(l.address, city)}</span>
+                </span>
+                <span className="adm-sede__check" aria-hidden>✓</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+      <p className="adm-help" style={{ margin: 0 }}>
+        {mode === 'some'
+          ? 'Chi lo sblocca legge «Vale solo nella sede…» nello sconto e sul QR.'
+          : 'Nello sconto si legge «In tutte le sedi del locale».'}
+      </p>
+    </div>
+  )
+}
+
 function RestaurantPicker({ editing, restaurants, partnerIds, value, newPartner, onPick, onPickNewPartner, onClear }) {
   const [q, setQ] = useState('')
   const [showOthers, setShowOthers] = useState(false)

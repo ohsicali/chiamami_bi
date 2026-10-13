@@ -52,6 +52,9 @@ export default function DiscountQuickPopup({
   restaurantName,
   restaurantSubtitle,
   photoUrl,
+  // Il locale intero, per le sue sedi: "Dove vale" e "Solo nella sede…"
+  // (13/10). Facoltativo: senza, si guarda `deal.restaurant`.
+  restaurant = null,
 }) {
   const [unlocked, setUnlocked] = useState(initialUnlocked)
   const [redemption, setRedemption] = useState(initialRedemption)
@@ -147,7 +150,7 @@ export default function DiscountQuickPopup({
             {/* Su cosa vale, quando, cos'altro c'è da sapere — invisibile
                 da sé se lo sconto non ha niente di questo da dire
                 (DiscountRules non renderizza nulla in quel caso). */}
-            <DiscountRules deal={deal} className="mb-5" />
+            <DiscountRules deal={deal} restaurant={restaurant} className="mb-5" />
 
             <motion.button
               onClick={handleUnlock}
@@ -172,13 +175,14 @@ export default function DiscountQuickPopup({
             restaurantName={restaurantName}
             subtitle={restaurantSubtitle}
             photoUrl={photoUrl}
+            restaurant={restaurant}
             justUnlocked={justUnlocked}
             onClose={onClose}
           >
             {description && (
               <p className="text-sm text-secondary mb-3" style={{ lineHeight: 1.5 }}>{description}</p>
             )}
-            <DiscountRules deal={deal} />
+            <DiscountRules deal={deal} restaurant={restaurant} />
           </QRPassSheet>
         )}
       </motion.div>

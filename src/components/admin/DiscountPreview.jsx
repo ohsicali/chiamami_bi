@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { formatDiscountBadge, pickPerk, formatDiscountValue } from '../../lib/utils/discountFormat'
 import { conventionValidity } from '../../../api/_email/content.js'
 import { proxyImg } from '../../lib/supabase'
+import { discountLocationScope, discountLocationLine } from '../../lib/utils/restaurantLocations'
 
 /**
  * L'anteprima dello sconto nell'editor admin: come lo vedrà chi apre il sito,
@@ -43,6 +44,11 @@ export default function DiscountPreview({ form, restaurant }) {
     conditions: form.conditions,
   }, now)
   const seats = parseInt(form.max_uses, 10) || 0
+  // Le sedi (13/10): la riga che il cliente legge nello sconto e sul QR.
+  const sede = discountLocationLine(discountLocationScope(
+    { valid_location_ids: form.location_mode === 'some' ? form.valid_location_ids : null },
+    restaurant,
+  ))
 
   return (
     <div className="adm-preview">
@@ -101,6 +107,7 @@ export default function DiscountPreview({ form, restaurant }) {
         </div>
       )}
 
+      {sede && <p className="adm-preview__rule">📍 {sede}</p>}
       {firstRule && <p className="adm-preview__rule">📌 {firstRule}</p>}
     </div>
   )

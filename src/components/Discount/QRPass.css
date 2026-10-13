@@ -203,6 +203,11 @@
   border-radius: 2px;
   background: currentColor;
 }
+.qrp-sede {
+  font-weight: 700;
+  color: var(--qrp-ink, #22181C);
+}
+
 .qrp-note {
   margin: 0;
   max-width: 100%;

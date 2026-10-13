@@ -410,7 +410,7 @@ export function useMyDiscounts(userId) {
     const load = () => {
       supabase
         .from('discount_redemptions')
-        .select('*, discount:discounts(*, products:discount_products(id, name, note, photo_url, thumb_url, sort_order), restaurant:restaurants(id, name, slug, city, cuisine_type, category, price_range, tagline, photos:restaurant_photos(id, photo_url, thumb_url, sort_order)))')
+        .select('*, discount:discounts(*, products:discount_products(id, name, note, photo_url, thumb_url, sort_order), restaurant:restaurants(id, name, slug, city, address, location_label, google_maps_url, cuisine_type, category, price_range, tagline, photos:restaurant_photos(id, photo_url, thumb_url, sort_order), restaurant_locations(id, label, address, latitude, longitude, sort_order)))')
         .eq('user_id', userId)
         .order('generated_at', { ascending: false })
         .then(({ data }) => {

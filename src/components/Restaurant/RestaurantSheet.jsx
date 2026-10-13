@@ -320,6 +320,7 @@ function FloatingDiscountBar({ discounts: discountsFromParent, restaurantId, res
             onClaim={handleClaim}
             onClose={() => { setPopupOpen(false); setBlockedMessage(null) }}
             {...passHeaderFromRestaurant(restaurant)}
+            restaurant={restaurant}
           />
         )}
       </AnimatePresence>
@@ -809,7 +810,7 @@ export default function RestaurantSheet({
                 )}
               </motion.div>
 
-              {/* Due sedi — solo se il locale ne ha più di una */}
+              {/* Le sedi — solo se il locale ne ha più di una */}
               {hasMultipleLocations(restaurant) && (
                 <motion.div variants={itemVariants} style={{ marginBottom: 16 }}>
                   <RestaurantLocationsNote restaurant={restaurant} />

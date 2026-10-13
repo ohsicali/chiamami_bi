@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-10-12 (Drop coi giorni contati e lista d'attesa)
+Ultima modifica: 2026-10-13 (Sedi del locale e in quali vale lo sconto)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -41,6 +41,7 @@ dove siamo. Aggiorna a ogni step importante.
 | Drop coi giorni contati — 7 giorni per usarlo, lista d'attesa, email a tappe | — | 🚧 In review | PR #340, branch `claude/drop-giorni-contati`. SQL `supabase/drop-claim-window-2026-10-12.sql` **eseguito il 12/10** dal connettore, tranne REVOKE/DROP (il connettore vuole una conferma che non arriva): quelli sono in `supabase/drop-claim-window-permessi-2026-10-12.sql`, **eseguito dal proprietario nel SQL Editor il 12/10** (verificato: giro solo service role, lista scritta solo dalle RPC, `my_claim_rank` con `expires_at`). Dopo il deploy: `supabase/drop-claims-cron-2026-10-12.sql`. Vedi CLAUDE.md "Drop coi giorni contati" e EMAIL-FLOWS §7f. |
 | Feedback dopo la convalida (festa, stelle, Bi che ringrazia, email 30 min / 1 giorno, recensioni in /verify) | #320 | ✅ Merged (9d3cf06) | SQL `redemption-feedback-2026-09-29.sql`, `verify-feedback-list-2026-09-29.sql` e `redemption-feedback-cron-2026-09-29.sql` **tutti eseguiti** il 29/09. Giro email attivo (pg_cron `chiamamibi-feedback-asks`, ogni 10 min; prima chiamata: 200). Vedi sezione "29/09 — feedback" sotto e CLAUDE.md. |
 | Drop: chi l'ha preso e chi è in lista in /verify e nel pannello, «sei il n° 134» | — | 🚧 In review | PR #344, branch `claude/drop-lista-verify`. SQL `supabase/verify-drops-overview-2026-10-12.sql` e `supabase/drop-claims-open-until-2026-10-12.sql` **eseguiti il 12/10** col connettore (provato come anon in transazione annullata con un device token finto di Piadora: 23/50 presi, 0 usati, 23 da usare, 0 in lista; token sbagliato → `unauthorized`). Vedi sezione "12/10 — lista d'attesa" sotto e CLAUDE.md "Drop coi giorni contati". |
+| Sedi del locale sulla scheda (senza sconto) + "in quali sedi vale" nello sconto | — | 🚧 In review | Branch `claude/jolly-fermat-0uj06u`. SQL `supabase/discount-locations-2026-10-13.sql` **eseguito il 13/10** col connettore (colonna `discounts.valid_location_ids`, NULL = tutte; provato da anon: la select degli sconti con le sedi del locale risponde). Vedi CLAUDE.md "Sedi del locale e in quali vale lo sconto". |
 
 ## 12/10 — lista d'attesa: i numeri al locale e all'admin, il posto in grande
 
