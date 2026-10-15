@@ -58,6 +58,12 @@ export default function SuccessResult({ data, onReset, onClose }) {
         </div>
       ))}
 
+      {/* Sconto a fasce (15/10): il locale applica la cifra di oggi, e la
+          cassa l'ha già scelta. Lo diciamo, se no "ieri era il 30" diventa
+          una discussione al bancone. */}
+      {data?.tiered && (
+        <p className="ris-conditions">È la cifra di oggi: questo sconto cambia coi giorni.</p>
+      )}
       {conditions && (
         <p className="ris-conditions">{conditions}</p>
       )}

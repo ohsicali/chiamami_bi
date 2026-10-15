@@ -30,6 +30,8 @@ import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { formatShortCode, isShortCode } from './_short-code.js'
 import { formatDays, formatSlots } from '../src/lib/validity.js'
+import { tierChips } from '../src/lib/utils/discountFormat.js'
+import { usedDeal } from '../src/lib/dayTiers.js'
 
 export const config = { maxDuration: 30 }
 
@@ -144,7 +146,12 @@ function formatExpiryLabel(deal) {
 function formatValidityLine(deal) {
   const days = Array.isArray(deal?.valid_days) ? deal.valid_days : []
   const hasDayLimit = days.length > 0 && days.length < 7
-  const dayPart = hasDayLimit ? formatDays(days) : 'Tutti i giorni'
+  // Sconto a fasce: ogni cifra coi suoi giorni, e la regola ("vale la cifra
+  // del giorno") — è la carta che il locale ha in mano.
+  const tiers = tierChips(deal)
+  const dayPart = tiers.length
+    ? `${tiers.map((c) => `${c.badge} ${c.daysShort}`).join(' · ')} (vale la cifra del giorno)`
+    : hasDayLimit ? formatDays(days) : 'Tutti i giorni'
 
   const slots = Array.isArray(deal?.valid_meal_slots) ? deal.valid_meal_slots : []
   let timePart = null
@@ -509,9 +516,9 @@ export default async function handler(req, res) {
   const { data: redemption, error: redErr } = await adminClient
     .from('discount_redemptions')
     .select(`
-      id, qr_code, short_code, status, generated_at, redeemed_at, user_id,
+      id, qr_code, short_code, status, generated_at, redeemed_at, user_id, applied_value,
       discount:discounts(
-        id, title, description, discount_type, discount_value, conditions,
+        id, title, description, discount_type, discount_value, day_tiers, conditions,
         valid_until, drop_ends_at, is_drop,
         valid_days, valid_meal_slots, valid_time_from, valid_time_to,
         restaurant:restaurants(
@@ -528,7 +535,8 @@ export default async function handler(req, res) {
     return
   }
 
-  const deal = redemption.discount
+  // Già usato: la cifra applicata alla cassa (sconto a fasce: quella del giorno).
+  const deal = usedDeal(redemption, redemption.discount)
   const restaurant = deal?.restaurant
   if (!deal || !restaurant) {
     res.status(404).json({ error: 'Dati sconto incompleti' })
@@ -557,7 +565,9 @@ export default async function handler(req, res) {
     locale_nome: restaurant.name || 'Ristorante',
     locale_categoria: cuisine,
     locale_indirizzo: shortAddress(restaurant.address),
-    percentuale: pctText(deal),
+    // Sconto a fasce (15/10): il coupon si stampa oggi e si usa un altro
+    // giorno, quindi porta tutte le cifre ("−30% / −15%") coi loro giorni.
+    percentuale: tierChips(deal).length ? tierChips(deal).map((c) => c.badge).join(' / ') : pctText(deal),
     is_drop: !!deal.is_drop,
     descrizione_sconto: deal.title || deal.description || 'Valido alla cassa',
     validita: formatValidityLine(deal),

@@ -17,6 +17,8 @@ import SconteSchemaOrg from '../../components/Discount/SconteSchemaOrg'
 import ValidityPill from '../../components/Discount/ValidityPill'
 import QRBlockedView from '../../components/Discount/QRBlockedView'
 import DiscountDetailPopup from '../../components/Discount/DiscountDetailPopup'
+import DayTiers from '../../components/Discount/DayTiers'
+import { hasDayTiers, usedDeal } from '../../lib/dayTiers'
 import { checkValidity, formatShortPill, formatDays } from '../../lib/validity'
 import { filterActiveDrops, filterShownDrops, filterActiveConventions, sortByExpiry, msUntilEnd, isSoldOut, claimRefusal } from '../../lib/discounts'
 import DropCard from '../../components/Discount/DropCard'
@@ -1145,6 +1147,7 @@ function ConvCard({ deal, claiming, locked = true, onClaim, onInfo, onOpenQR }) 
   const daysShort = (Array.isArray(deal?.valid_days) && deal.valid_days.length > 0 && deal.valid_days.length < 7)
     ? formatDays(deal.valid_days)
     : null
+  const tiered = hasDayTiers(deal)
 
   const primaryAction = locked ? onInfo : onOpenQR
 
@@ -1176,9 +1179,14 @@ function ConvCard({ deal, claiming, locked = true, onClaim, onInfo, onOpenQR }) 
                 doverlo aprire. Prendono il posto della riga dei giorni, che
                 dentro la scheda è comunque scritta molto meglio: la riga
                 della card non cresce di un pixel. */}
-            {productItems.length > 0
-              ? <ProductDots items={productItems} />
-              : daysShort ? <span className="sc-when">{daysShort}</span> : null}
+            {/* Sconto a fasce (15/10): le cifre coi loro giorni vincono su
+                tutto il resto della riga — senza, il badge sulla foto dice
+                solo quella di oggi. */}
+            {tiered
+              ? <DayTiers deal={deal} variant="chips" className="sc-tiers" />
+              : productItems.length > 0
+                ? <ProductDots items={productItems} />
+                : daysShort ? <span className="sc-when">{daysShort}</span> : null}
           </div>
         </div>
         <button
@@ -1415,7 +1423,9 @@ function relativeDays(iso) {
 }
 
 function UsedRow({ redemption, isDesktop, onClick }) {
-  const deal = redemption.discount
+  // Usato: la cifra applicata alla cassa (sconto a fasce: quella del giorno
+  // in cui l'hai usato), non quella di oggi.
+  const deal = usedDeal(redemption)
   const r = deal?.restaurant
   const photo = getPhoto(r)
   const cuisine = r?.cuisine_type || r?.category?.[0]

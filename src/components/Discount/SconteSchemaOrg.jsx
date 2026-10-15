@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { formatTierSummary } from '../../lib/utils/discountFormat'
 
 const SCRIPT_ID = 'json-ld-bi-club-sconti'
 
@@ -10,6 +11,8 @@ function dealDescription(deal) {
   if (!deal) return ''
   const parts = []
   if (deal.title) parts.push(deal.title)
+  // Sconto a fasce (15/10): le cifre coi loro giorni.
+  if (formatTierSummary(deal)) parts.push(formatTierSummary(deal))
   if (deal.description) parts.push(deal.description)
   return parts.join(' — ')
 }

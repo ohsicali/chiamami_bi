@@ -14,6 +14,8 @@ import { useVerifyDrops } from '../../lib/hooks/useVerifyDrops'
 import { dropPeopleSummary } from '../../lib/dropStats'
 import { claimedCount } from '../../lib/discounts'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
+import { hasDayTiers } from '../../lib/dayTiers'
+import DayTiers from '../../components/Discount/DayTiers'
 import { SHORT_CODE_LENGTH, isShortCode, normalizeShortCode } from '../../lib/shortCode'
 import MetaTags from '../../components/SEO/MetaTags'
 
@@ -1207,6 +1209,9 @@ function ScannerOverlay({ restaurant, onClose, initialCode = null, onInitialCode
       const payload = resp.data || {}
       const normalized = {
         ...payload,
+        // Sconto a fasce (15/10): `discount_value` è già la cifra di oggi,
+        // scelta dalla RPC. Le fasce servono solo a dirlo al locale.
+        tiered: Array.isArray(payload.day_tiers),
         discount: {
           title: payload.discount_title ?? null,
           discount_value: payload.discount_value ?? null,
@@ -2169,7 +2174,7 @@ function ResultCard({ tone, icon, title, description, children, onReset, resetLa
 /* ------------------------------------------------------------------ */
 /*  Dashboard tab — stats + sconto attivo + funnel + attivita         */
 /* ------------------------------------------------------------------ */
-const VERIFY_DISCOUNT_COLS = 'id, title, description, discount_type, discount_value, valid_from, valid_until, max_redemptions, total_redeemed, is_active, is_drop, drop_starts_at, drop_ends_at, max_quantity, claimed_count, claim_window_days, valid_days, valid_meal_slots, valid_time_from, valid_time_to, conditions, created_at'
+const VERIFY_DISCOUNT_COLS = 'id, title, description, discount_type, discount_value, valid_from, valid_until, max_redemptions, total_redeemed, is_active, is_drop, drop_starts_at, drop_ends_at, max_quantity, claimed_count, claim_window_days, valid_days, day_tiers, valid_meal_slots, valid_time_from, valid_time_to, conditions, created_at'
 
 // Gli sconti attivi del locale (lettura pubblica: le prove non arrivano).
 function fetchActiveDiscounts(restaurantId) {
@@ -2430,7 +2435,9 @@ function ScontoHero({ discount, people = null }) {
   const startIso = isDrop ? discount.drop_starts_at : discount.valid_from
   const endIso   = isDrop ? discount.drop_ends_at   : discount.valid_until
   const validityLine = formatValidity(startIso, endIso)
-  const daysLine = formatValidDays(discount.valid_days)
+  // Sconto a fasce (15/10): i giorni li dicono le pillole sotto la cifra.
+  const tiered = hasDayTiers(discount)
+  const daysLine = tiered ? null : formatValidDays(discount.valid_days)
   const slotLine = formatTimeSlots(discount.valid_time_from, discount.valid_time_to, discount.valid_meal_slots)
 
   const conditionsList = (discount.conditions || '')
@@ -2447,7 +2454,13 @@ function ScontoHero({ discount, people = null }) {
         <div className="lab">{isDrop ? '◉' : '●'} {typeLabel}</div>
         {soldOut && <span className="v4-sconto-soldout">Sold out</span>}
       </div>
-      <div className="val">{value}</div>
+      <div className="val">{value}{tiered && <small className="v4-sconto-oggi">oggi</small>}</div>
+      {tiered && (
+        <div className="v4-sconto-tiers">
+          <DayTiers deal={discount} variant="chips" tone="green" />
+          <p>La cifra cambia coi giorni: quando scansioni il codice, la schermata ti dice quella da applicare.</p>
+        </div>
+      )}
       {discount.title && <div className="ttl">{discount.title}</div>}
       {discount.description && <div className="cond">{discount.description}</div>}
 

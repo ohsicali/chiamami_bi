@@ -19,6 +19,7 @@ import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { getPublicCategoryNames, getDietCategoryNames } from '../../lib/hooks/useCategories'
 import { useActiveDiscounts, useRestaurantDiscount, useUserRedemption } from '../../lib/hooks/useDiscounts'
 import { claimRefusal, activeDiscountsFor, isActiveDiscount } from '../../lib/discounts'
+import { formatTierTeaser } from '../../lib/utils/discountFormat'
 import { captureError } from '../../lib/posthog'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
@@ -193,7 +194,9 @@ function FloatingDiscountBar({ discounts: discountsFromParent, restaurantId, res
 
   const displayTitle = discount.title || discount.discount_value
 
-  const displaySub = isRedeemed ? t('discount.alreadyUsed') : 'Sconto attivo'
+  // Sconto a fasce (15/10): sotto il titolo le cifre coi loro giorni, quella
+  // di oggi per prima ("Oggi −15% · −30% lun–gio").
+  const displaySub = isRedeemed ? t('discount.alreadyUsed') : (formatTierTeaser(discount) || 'Sconto attivo')
 
   return (
     <>
@@ -674,7 +677,7 @@ export default function RestaurantSheet({
                     boxShadow: '0 0 0 3px rgba(143,220,166,.25)',
                   }} />
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {discount.title || discount.discount_value}
+                    {formatTierTeaser(discount) || discount.title || discount.discount_value}
                   </span>
                 </span>
               )}

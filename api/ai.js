@@ -65,6 +65,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { rateLimit, maybeCleanup } from './_rate-limit.js'
 import { applyCors } from './_cors.js'
+import { dealToday } from '../src/lib/dayTiers.js'
+import { formatTierSummary } from '../src/lib/utils/discountFormat.js'
 
 // Sonnet 5: italiano piu naturale e latenza piu bassa di 4.6, che era il
 // motivo per cui le risposte suonavano da assistente e arrivavano lente.
@@ -1225,7 +1227,7 @@ async function attachDiscounts(admin, candidates) {
   const nowIso = new Date().toISOString()
   const { data, error } = await admin
     .from('discounts')
-    .select('restaurant_id, title, discount_type, discount_value, valid_until')
+    .select('restaurant_id, title, discount_type, discount_value, day_tiers, valid_until')
     .eq('is_active', true)
     .eq('is_test', false) // sconti di prova: mai raccontati da Bi
     .or(`valid_until.is.null,valid_until.gt.${nowIso}`)
@@ -1247,6 +1249,9 @@ async function attachDiscounts(admin, candidates) {
         percent: discountPercent(d),
         title: d.title || null,
         ends_at: d.valid_until || null,
+        // Sconto a fasce (15/10): "−30% lun–gio · −15% ven–dom". `percent`
+        // è già quella di oggi; qui le altre, per non promettere il 30 di sabato.
+        ...(formatTierSummary(d) ? { by_day: formatTierSummary(d) } : {}),
       }
     }
   }
@@ -1255,7 +1260,8 @@ async function attachDiscounts(admin, candidates) {
 /** Percentuale dello sconto, o null se è a importo fisso o illeggibile. */
 function discountPercent(d) {
   if (d?.discount_type !== 'percentage') return null
-  const n = Number(d.discount_value)
+  // A fasce: la percentuale di oggi (src/lib/dayTiers.js), non la prima.
+  const n = Number(dealToday(d).discount_value)
   return Number.isFinite(n) && n > 0 ? Math.round(n) : null
 }
 
@@ -1513,7 +1519,7 @@ B) CHIAMATA al tool present_picks con i tuoi 1-3 picks. Ogni pick deve avere:
 - out_of_city: \`true\` = il locale non è nella città attiva. Vedi regola ferrea 7.
 - price: \`null\` significa che non ho la fascia di prezzo. Non inventarla.
 - walk_minutes + distance_km: minuti a piedi e km. Disponibili solo con posizione utente. Usa minuti, non km: "a 7 minuti a piedi" suona meglio di "a 0.5 km".
-- active_discount: { percent, title, ends_at }. Indica che il locale ha uno sconto live ora.
+- active_discount: { percent, title, ends_at, by_day? }. Indica che il locale ha uno sconto live ora. Se c'è by_day lo sconto cambia coi giorni ("−30% lun–gio · −15% ven–dom"): percent è quello di oggi, e se ne parli non promettere la cifra di un altro giorno.
 - near_me: filtro che ordina per distanza e tiene solo ≤2 km. Attiva quando l'utente cita "vicino", "qui", "intorno a me", "a piedi", "in zona", "a 5 minuti". MAI da solo: combina con almeno una categoria/momento/recommended_for se hanno citato anche quello.
 
 # CASO ZERO RISULTATI

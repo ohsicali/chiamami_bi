@@ -1,0 +1,192 @@
+/* ============================================================================
+   DayTiers — lo sconto a fasce ("−30% lun–gio · −15% ven–dom")
+   Stesse regole di colore di DiscountRules:
+   - verde (`--gradient-sconto`) = la cifra che vale OGGI;
+   - crema = una cifra vera, ma di un altro giorno ("non è il suo turno");
+   - tratteggio = un giorno in cui lo sconto non vale (locale chiuso);
+   - niente corallo: una fascia non è un drop, non ha urgenza.
+   ============================================================================ */
+
+.dtier-chips,
+.dtier-week-wrap {
+  --dtier-ink: #22181C;
+  --dtier-ink-55: rgba(34, 24, 28, 0.55);
+  --dtier-ink-40: rgba(34, 24, 28, 0.42);
+  --dtier-cream: #F6F1E7;
+  --dtier-green-ink: var(--color-sconto-ink, #1A4731);
+  --dtier-green: var(--gradient-sconto, linear-gradient(135deg, #A3E635 0%, #4ADE80 100%));
+}
+
+/* ── Pillole ─────────────────────────────────────────────────────────────── */
+
+.dtier-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+}
+
+.dtier-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: var(--dtier-cream);
+  color: var(--dtier-ink-55);
+  font-family: var(--font-sans, 'Poppins', system-ui, sans-serif);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+.dtier-chip b {
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--dtier-ink);
+}
+.dtier-chip.is-today {
+  background: var(--dtier-green);
+  color: var(--dtier-green-ink);
+}
+.dtier-chip.is-today b { color: var(--dtier-green-ink); }
+/* "oggi": la parola, non solo il colore — chi non distingue il verde
+   dalla crema lo legge lo stesso. */
+.dtier-chip i {
+  font-style: normal;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 5px;
+  margin-right: -4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+/* Sopra il verde (barra in fondo alla scheda del locale, banner desktop):
+   oggi diventa inchiostro su bianco, le altre un velo di bianco. */
+.dtier--green .dtier-chip {
+  background: rgba(255, 255, 255, 0.45);
+  color: rgba(34, 24, 28, 0.72);
+}
+.dtier--green .dtier-chip b { color: var(--dtier-ink); }
+.dtier--green .dtier-chip.is-today {
+  background: var(--dtier-ink);
+  color: #fff;
+}
+.dtier--green .dtier-chip.is-today b { color: #fff; }
+.dtier--green .dtier-chip.is-today i { background: rgba(255, 255, 255, 0.18); }
+
+/* Sulla card scura (home da computer, convenzione in vetrina). */
+.dtier--dark .dtier-chip {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+}
+.dtier--dark .dtier-chip b { color: #fff; }
+.dtier--dark .dtier-chip.is-today {
+  background: var(--dtier-green);
+  color: var(--dtier-green-ink);
+}
+.dtier--dark .dtier-chip.is-today b { color: var(--dtier-green-ink); }
+
+/* ── La settimana ────────────────────────────────────────────────────────── */
+
+.dtier-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+}
+
+.dtier-run {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 5px;
+  padding: 8px 0 7px;
+  border-radius: 12px;
+  background: var(--dtier-cream);
+  color: var(--dtier-ink-55);
+  min-width: 0;
+}
+.dtier-run.is-today {
+  background: var(--dtier-green);
+  color: var(--dtier-green-ink);
+  box-shadow: 0 6px 16px -10px rgba(26, 71, 49, 0.55);
+}
+.dtier-run.is-off {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px rgba(34, 24, 28, 0.12);
+  color: var(--dtier-ink-40);
+}
+
+.dtier-run-val {
+  text-align: center;
+  font-family: var(--font-sans, 'Poppins', system-ui, sans-serif);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--dtier-ink);
+  white-space: nowrap;
+}
+.dtier-run.is-today .dtier-run-val { color: var(--dtier-green-ink); }
+.dtier-run.is-off .dtier-run-val { color: var(--dtier-ink-40); font-weight: 600; }
+/* Un giorno solo è stretto (un settimo della card): la cifra scende di un
+   punto per starci anche a 320px. */
+.dtier-run.is-single .dtier-run-val { font-size: 12.5px; }
+
+.dtier-run-days {
+  display: grid;
+  grid-template-columns: repeat(var(--dtier-n, 1), 1fr);
+}
+.dtier-run-day {
+  position: relative;
+  text-align: center;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+}
+/* Oggi: la lettera sottolineata, come nel QR. Il colore dice quanto vale,
+   il segno dice dove sei. */
+.dtier-run-day.is-now { opacity: 1; font-weight: 800; }
+.dtier-run-day.is-now::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  width: 10px;
+  height: 2px;
+  margin-left: -5px;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+.dtier-line {
+  margin: 10px 0 0;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--dtier-ink-55);
+}
+.dtier-line strong {
+  font-weight: 800;
+  color: var(--dtier-ink);
+}
+.dtier-note {
+  margin: 3px 0 0;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--dtier-ink-40);
+}
+
+@media (min-width: 768px) {
+  .dtier-run { padding: 9px 0 8px; }
+  .dtier-run-val { font-size: 16px; }
+  .dtier-run-day { font-size: 11px; }
+}

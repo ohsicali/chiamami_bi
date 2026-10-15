@@ -9,6 +9,10 @@ import { toLocalInput, fromLocalInput, defaultPublishInput, formatPublishAt } fr
 import { formatDays, formatSlots } from '../../lib/validity'
 import { DEFAULT_CLAIM_WINDOW_DAYS } from '../../lib/dropClaim'
 import { getAllLocations, locationName, locationStreet } from '../../lib/utils/restaurantLocations'
+import {
+  DAY_TIER_TYPES, formUsesDayTiers, presetDayTiers, dayTierProblems, tierDaysLong, normalizeDayTiers,
+} from '../../lib/dayTiers'
+import { formatTierSummary } from '../../lib/utils/discountFormat'
 
 /**
  * L'editor di uno sconto, a tutto schermo (30/09).
@@ -69,10 +73,14 @@ export default function DiscountEditor({
 
   const sedi = useMemo(() => getAllLocations(restaurant), [restaurant])
   const multiSede = sedi.length > 1
+  // Sconto a fasce (15/10): il valore sta nelle fasce, e le fasce devono
+  // tornare (due almeno, ognuna coi suoi giorni e la sua cifra).
+  const tiered = formUsesDayTiers(form)
+  const tierProblems = tiered ? dayTierProblems(form.day_tiers, { type: form.discount_type }) : []
   const missing = [
     !restId && 'il locale',
     multiSede && form.location_mode === 'some' && !(form.valid_location_ids || []).length && 'la sede in cui vale',
-    !String(form.discount_value || '').trim() && 'il valore',
+    tiered ? (tierProblems.length > 0 && 'le fasce') : (!String(form.discount_value || '').trim() && 'il valore'),
     !String(form.title || '').trim() && 'il titolo',
   ].filter(Boolean)
   const canSave = missing.length === 0 && !saving
@@ -169,7 +177,30 @@ export default function DiscountEditor({
                   </div>
                 </Field>
 
-                <div className="adm-grid-2" style={{ marginTop: 16 }}>
+                {/* Cambia coi giorni (15/10): solo convenzioni in % o €. */}
+                {form.kind !== 'drop' && DAY_TIER_TYPES.includes(form.discount_type) && (
+                  <div style={{ marginTop: 16 }}>
+                    <ToggleRow
+                      icon="📅"
+                      title="Cambia coi giorni"
+                      text="Es. 30% in settimana e 15% nel weekend. Resta uno sconto solo: si usa una volta, e alla cassa vale la cifra del giorno."
+                      checked={tiered}
+                      onChange={(on) => set((f) => toggleTiers(f, on))}
+                    />
+                  </div>
+                )}
+
+                {tiered && (
+                  <DayTiersField
+                    tiers={form.day_tiers}
+                    type={form.discount_type}
+                    problems={tierProblems}
+                    onChange={(day_tiers) => set({ day_tiers })}
+                  />
+                )}
+
+                <div className={tiered ? undefined : 'adm-grid-2'} style={{ marginTop: 16 }}>
+                  {!tiered && (
                   <Field label={valueLabel(form.discount_type)} htmlFor="de-value" help={valueHelp(form.discount_type)}>
                     <div className="adm-affix">
                       <input
@@ -184,7 +215,8 @@ export default function DiscountEditor({
                       {unitFor(form.discount_type) && <span>{unitFor(form.discount_type)}</span>}
                     </div>
                   </Field>
-                  <Field label="Titolo" htmlFor="de-title-input" help="Offerte «paghi X prendi Y»: scrivi 3x2, 2x1.">
+                  )}
+                  <Field label="Titolo" htmlFor="de-title-input" help={tiered ? 'Senza cifre: le cifre le dicono le fasce, giorno per giorno.' : 'Offerte «paghi X prendi Y»: scrivi 3x2, 2x1.'}>
                     <input
                       id="de-title-input"
                       className="adm-input adm-input--big"
@@ -210,6 +242,7 @@ export default function DiscountEditor({
                     days={form.valid_days}
                     slots={form.valid_meal_slots}
                     onChange={(patch) => set(patch)}
+                    hideDays={tiered}
                   />
                 </Field>
                 {multiSede && (
@@ -492,7 +525,9 @@ function Summary({ form, mode, editing }) {
   return (
     <div className="adm-card adm-card--flat adm-editor__summary">
       <dl>
-        <dt>Giorni</dt><dd>{formatDays(form.valid_days) || 'Tutti'}</dd>
+        <dt>Giorni</dt><dd>{formUsesDayTiers(form)
+          ? (formatTierSummary({ discount_type: form.discount_type, day_tiers: normalizeDayTiers(form.day_tiers) }) || 'Fasce da completare')
+          : (formatDays(form.valid_days) || 'Tutti')}</dd>
         <dt>Fasce</dt><dd>{formatSlots(form.valid_meal_slots)}</dd>
         <dt>Scade</dt><dd>{end}</dd>
         <dt>{form.kind === 'drop' ? 'Posti' : 'Utilizzi'}</dt><dd>{Number.isFinite(uses) && uses > 0 ? uses : 'Illimitati'}</dd>
@@ -758,6 +793,8 @@ const titlePlaceholder = (t) => ({
 }[t] || '')
 
 function suggestTitle(form) {
+  // A fasce: niente cifre nel titolo (cambierebbero coi giorni).
+  if (formUsesDayTiers(form)) return form.discount_type === 'fixed' ? 'Euro di sconto sul conto' : 'Sconto sul conto'
   const v = String(form.discount_value || '').replace(/[%€\s-−]/g, '').trim()
   if (!v || !/^\d+([.,]\d+)?$/.test(v)) return ''
   if (form.discount_type === 'percentage') return `${v}% sul conto`
@@ -787,6 +824,8 @@ function switchKind(f, kind) {
   if (toDrop && f.claim_window_days == null) next.claim_window_days = String(DEFAULT_CLAIM_WINDOW_DAYS)
   if (fromDrop && !toDrop && f.starts_at?.includes('T')) next.starts_at = f.starts_at.split('T')[0]
   if (fromDrop && !toDrop && f.ends_at?.includes('T')) next.ends_at = f.ends_at.split('T')[0]
+  // Un drop non è a fasce (ha già posti e countdown): si torna a una cifra.
+  if (toDrop && f.tiers_on) return toggleTiers(next, false)
   return next
 }
 
@@ -819,4 +858,122 @@ function switchMode(f, mode, { editing, readLastTesters }) {
     }
   }
   return f
+}
+
+/* ------------------------------------------------------------------ */
+/*  Sconto a fasce (15/10) — src/lib/dayTiers.js                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Accendere le fasce parte dalla richiesta che le ha fatte nascere (lun–gio
+ * e ven–dom), con la cifra già scritta nella prima; spegnerle torna a una
+ * cifra sola, quella della prima fascia, e a tutti i giorni.
+ */
+function toggleTiers(f, on) {
+  if (on) {
+    const tiers = Array.isArray(f.day_tiers) && f.day_tiers.length >= 2 ? f.day_tiers : presetDayTiers(f.discount_value)
+    return { ...f, tiers_on: true, day_tiers: tiers }
+  }
+  const first = normalizeDayTiers(f.day_tiers)[0]
+  return { ...f, tiers_on: false, discount_value: f.discount_value || first?.value || '', valid_days: [] }
+}
+
+const TIER_DAYS = ['L', 'M', 'M', 'G', 'V', 'S', 'D']
+
+/**
+ * Le fasce: una riga per cifra, ognuna coi suoi giorni. Toccare un giorno
+ * lo mette in quella fascia (e lo toglie dall'altra): un giorno sta in una
+ * fascia sola, come vuole il trigger del DB. I giorni che non stanno in
+ * nessuna fascia sono i giorni in cui lo sconto non vale.
+ */
+function DayTiersField({ tiers, type, problems, onChange }) {
+  const list = Array.isArray(tiers) ? tiers : []
+  const unit = unitFor(type)
+  const owner = (dow) => list.findIndex((t) => (t.days || []).includes(dow))
+  const used = new Set(list.flatMap((t) => t.days || []))
+  const free = [1, 2, 3, 4, 5, 6, 7].filter((d) => !used.has(d))
+
+  const patch = (i, p) => onChange(list.map((t, j) => (j === i ? { ...t, ...p } : t)))
+  const toggleDay = (i, dow) => {
+    const mine = (list[i].days || []).includes(dow)
+    onChange(list.map((t, j) => {
+      const days = (t.days || []).filter((d) => d !== dow)
+      if (j === i && !mine) days.push(dow)
+      return { ...t, days: days.sort((a, b) => a - b) }
+    }))
+  }
+  const add = () => onChange([...list, { days: free.slice(0, 1), value: '' }])
+  const remove = (i) => onChange(list.filter((_, j) => j !== i))
+
+  return (
+    <div className="adm-tiers" style={{ marginTop: 12 }}>
+      {list.map((t, i) => {
+        const days = t.days || []
+        return (
+          <div className="adm-tier" key={i}>
+            <div className="adm-tier__head">
+              <span className="adm-tier__num" aria-hidden>{i + 1}</span>
+              <div className="adm-affix adm-tier__value">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={t.value}
+                  onChange={(e) => patch(i, { value: e.target.value })}
+                  placeholder={i === 0 ? '30' : '15'}
+                  aria-label={`Cifra della fascia ${i + 1}`}
+                  autoComplete="off"
+                />
+                {unit && <span>{unit}</span>}
+              </div>
+              <span className="adm-tier__words">{tierDaysLong(days) || 'scegli i giorni'}</span>
+              {list.length > 2 && (
+                <button type="button" className="adm-btn adm-btn--icon adm-btn--sm" onClick={() => remove(i)} aria-label={`Togli la fascia ${i + 1}`}>✕</button>
+              )}
+            </div>
+            <div className="adm-tier__days" role="group" aria-label={`Giorni della fascia ${i + 1}`}>
+              {TIER_DAYS.map((letter, k) => {
+                const dow = k + 1
+                const mine = days.includes(dow)
+                const other = !mine ? owner(dow) : -1
+                return (
+                  <button
+                    key={dow}
+                    type="button"
+                    className={`adm-tier__day${other >= 0 ? ' is-elsewhere' : ''}`}
+                    aria-pressed={mine}
+                    onClick={() => toggleDay(i, dow)}
+                    title={other >= 0 ? `Ora è nella fascia ${other + 1}: toccalo per spostarlo qui` : undefined}
+                  >
+                    {letter}
+                    {other >= 0 && <small aria-hidden>{other + 1}</small>}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })}
+
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        {list.length < 7 && (
+          <button type="button" className="adm-chip" onClick={add}>＋ Aggiungi una fascia</button>
+        )}
+        {free.length > 0 && (
+          <span className="adm-help">
+            {free.length === 7 ? 'Nessun giorno scelto.' : `${tierDaysLong(free).replace(/^./, (c) => c.toUpperCase())}: lo sconto non vale.`}
+          </span>
+        )}
+      </div>
+
+      {problems.length > 0 ? (
+        <div className="adm-note adm-note--warn" role="status" style={{ flexDirection: 'column', gap: 4 }}>
+          {problems.map((p) => <span key={p}>{p}</span>)}
+        </div>
+      ) : (
+        <p className="adm-help">
+          Sul sito si leggono tutte le cifre, con quella di oggi accesa; pin e card piccole dicono quella di oggi.
+        </p>
+      )}
+    </div>
+  )
 }

@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-10-13 (Sedi del locale e in quali vale lo sconto)
+Ultima modifica: 2026-10-15 (Sconto a fasce: 30% in settimana, 15% nel weekend)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -42,6 +42,48 @@ dove siamo. Aggiorna a ogni step importante.
 | Feedback dopo la convalida (festa, stelle, Bi che ringrazia, email 30 min / 1 giorno, recensioni in /verify) | #320 | ✅ Merged (9d3cf06) | SQL `redemption-feedback-2026-09-29.sql`, `verify-feedback-list-2026-09-29.sql` e `redemption-feedback-cron-2026-09-29.sql` **tutti eseguiti** il 29/09. Giro email attivo (pg_cron `chiamamibi-feedback-asks`, ogni 10 min; prima chiamata: 200). Vedi sezione "29/09 — feedback" sotto e CLAUDE.md. |
 | Drop: chi l'ha preso e chi è in lista in /verify e nel pannello, «sei il n° 134» | — | 🚧 In review | PR #344, branch `claude/drop-lista-verify`. SQL `supabase/verify-drops-overview-2026-10-12.sql` e `supabase/drop-claims-open-until-2026-10-12.sql` **eseguiti il 12/10** col connettore (provato come anon in transazione annullata con un device token finto di Piadora: 23/50 presi, 0 usati, 23 da usare, 0 in lista; token sbagliato → `unauthorized`). Vedi sezione "12/10 — lista d'attesa" sotto e CLAUDE.md "Drop coi giorni contati". |
 | Sedi del locale sulla scheda (senza sconto) + "in quali sedi vale" nello sconto | — | 🚧 In review | Branch `claude/jolly-fermat-0uj06u`. SQL `supabase/discount-locations-2026-10-13.sql` **eseguito il 13/10** col connettore (colonna `discounts.valid_location_ids`, NULL = tutte; provato da anon: la select degli sconti con le sedi del locale risponde). Vedi CLAUDE.md "Sedi del locale e in quali vale lo sconto". |
+| Sconto a fasce — "30% lun–gio, 15% ven–dom", uno sconto solo, si usa una volta | — | 🚧 In review | Branch `claude/sconto-a-fasce`. SQL `supabase/discount-day-tiers-2026-10-15.sql` **eseguito il 15/10** col connettore (provato prima in transazione annullata). Vedi sezione "15/10 — sconto a fasce" sotto e CLAUDE.md. |
+
+## 15/10 — sconto a fasce: 30% in settimana, 15% nel weekend
+
+Richiesta del proprietario: un cliente vuole il 30% in settimana e il 15% dal
+venerdì alla domenica. Due sconti separati confondevano (due card, due QR, di
+sabato il −30% rifiutato alla cassa); uno sconto che cambia valore senza dirlo
+sembra un trucco. Deciso: **uno sconto solo, si usa una volta**, che dice
+sempre tutte le cifre con quella di oggi accesa. Dettagli e regole in
+CLAUDE.md "Sconto a fasce".
+
+- **Scelta tecnica**: una riga sola con `discounts.day_tiers` (jsonb), non due
+  righe collegate. Con due righe ogni azione del pannello (pausa, uscita
+  programmata, prova, vetrina, megafono, cancellazione) andava fatta su due, e
+  "si usa una volta" andava inventato. Con una riga restano tutte uguali e il
+  limite di un riscatto per persona c'è già.
+- **SQL** `supabase/discount-day-tiers-2026-10-15.sql`, **eseguito il 15/10**
+  col connettore. Prima provato in una transazione che fallisce apposta (niente
+  resta): le fasce si mettono in ordine e i valori si puliscono ("−30%" → "30");
+  rifiutati drop, giorni sovrapposti, omaggio, una fascia sola, valore non
+  numerico, giorno 1.5; modificare a mano `valid_days`/`discount_value` li
+  riallinea; dal browser `applied_value` torna NULL e il secondo sblocco è
+  `already_claimed`; giovedì la cassa ha applicato la fascia di giovedì e l'ha
+  scritta, la seconda scansione dice `already_redeemed` con la stessa cifra,
+  `feedback_get` e `verify_activity_list` la leggono; un giorno senza fascia →
+  `invalid_now/valid_other_day` con le fasce nella risposta; uno sconto normale
+  scrive `applied_value` = il suo valore. Dopo l'esecuzione: uno sconto normale
+  aggiornato resta identico.
+- **App**: `src/lib/dayTiers.js` + `formatDiscountBadge` con la cifra di oggi;
+  `DayTiers.jsx` (settimana e pillole) in DiscountRules, QR, Bi Club, popup,
+  scheda del locale (telefono: pillola sulla foto e barra in basso; computer:
+  banner verde), home (card in vetrina telefono e computer), /verify
+  (dashboard: cifra di oggi + pillole; cassa: "È la cifra di oggi"), pannello
+  (editor "Cambia coi giorni" con anteprima, card, scheda del locale, attività,
+  in diretta, recensioni). Chiedi a Bi riceve `by_day`. PDF ed email: tutte le
+  cifre.
+- **Home dal telefono, convenzione in vetrina** (chiesto dal proprietario lo
+  stesso giorno): la card era corallo come un drop. Ora `DropCard` con una
+  convenzione è scura come la card da computer (`dropcard--conv`: inchiostro,
+  "SCONTO BI CLUB" senza pallino, bottone corallo); i drop non cambiano.
+- **Anteprime** con Playwright e Supabase simulato (giovedì e sabato): vedi la PR.
+- `npm test` 367/367, build pulita, lint invariato sui file toccati.
 
 ## 12/10 — lista d'attesa: i numeri al locale e all'admin, il posto in grande
 

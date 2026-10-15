@@ -17,6 +17,7 @@ const TEMPLATES = [
   { key: 'welcome', label: 'Registrazione completata', hint: 'Quando qualcuno crea l’account.' },
   { key: 'new-discount', label: 'Nuovo drop', hint: 'Parte da sola quando pubblichi un drop: card corallo, barra dei posti.' },
   { key: 'new-convention', label: 'Nuova convenzione', hint: 'Lo sconto che non scade: crema e oro, senza countdown.' },
+  { key: 'new-convention-tiers', label: 'Nuova convenzione a fasce', hint: 'Lo sconto che cambia coi giorni (30% lun–gio, 15% ven–dom): tutte le cifre, nessuna "di oggi".' },
   { key: 'new-place', label: 'Nuovo locale', hint: 'Parte da sola quando pubblichi un locale.' },
   { key: 'discount-claimed', label: 'Sconto preso (col codice)', hint: 'Quando l’utente sblocca uno sconto.' },
   { key: 'discount-used', label: 'Sconto usato', hint: 'Quando il locale scansiona il QR.' },

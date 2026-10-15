@@ -189,7 +189,10 @@ export function feedbackAskProps(item, { unsubUrl = null } = {}) {
   return {
     name: firstName,
     restaurantName: row.restaurant?.name || 'il locale',
-    value: row.discount ? formatDiscountBadge(row.discount) : '',
+    // La cifra applicata alla cassa (sconto a fasce: quella del giorno).
+    value: row.discount
+      ? formatDiscountBadge(row.redemption?.applied_value ? { ...row.discount, discount_value: row.redemption.applied_value, day_tiers: null } : row.discount)
+      : '',
     rating: row.rating ?? null,
     round: item.round,
     city: row.restaurant?.city,
@@ -199,7 +202,7 @@ export function feedbackAskProps(item, { unsubUrl = null } = {}) {
   }
 }
 
-const ROW_FIELDS = 'redemption_id, user_id, token, redeemed_at, rating, completed_at, restaurant:restaurants(name, city), discount:discounts(discount_type, discount_value, title)'
+const ROW_FIELDS = 'redemption_id, user_id, token, redeemed_at, rating, completed_at, restaurant:restaurants(name, city), discount:discounts(discount_type, discount_value, day_tiers, title), redemption:discount_redemptions(applied_value)'
 const DONE_FIELDS = 'redemption_id, user_id, rating, answers, comment, completed_at, restaurant:restaurants(name, city)'
 
 /** Chi ha lo switch "I miei sconti" acceso, fra questi utenti. */

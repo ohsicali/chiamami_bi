@@ -465,21 +465,38 @@ export function dropCard({
  * Il bottone sotto resta corallo come nel drop: il corallo è il colore
  * dell'azione, cambia il blocco dello sconto, non la chiamata.
  */
-export function conventionOffer({ value, perk, conditions, validity = '' }) {
+export function conventionOffer({ value, perk, conditions, validity = '', tiers = null }) {
+  // Sconto a fasce (15/10): al posto della cifra sola, una riga per cifra coi
+  // suoi giorni, tutte uguali. In un'email "oggi" non vuol dire niente (si
+  // legge un altro giorno): nessuna è accesa, e sotto si dice la regola.
+  const fasce = Array.isArray(tiers) && tiers.length >= 2
+  const head = fasce
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0">
+          ${tiers.map((t, i) => `<tr>
+            <td valign="middle" style="padding:${i ? '9px' : '0'} 12px 0 0;font-family:${FONT_DISPLAY};font-size:30px;line-height:1;font-weight:800;letter-spacing:-1px;color:${COLORS.ink};white-space:nowrap;">${esc(t.badge)}</td>
+            <td valign="middle" style="padding:${i ? '9px' : '0'} 0 0;font-family:${FONT_BODY};font-size:13.5px;line-height:1.3;font-weight:700;color:${COLORS.ink};">${esc(t.days)}</td>
+          </tr>`).join('')}
+        </table>
+        ${perk || conditions ? `<div style="font-family:${FONT_BODY};font-size:14px;line-height:1.35;font-weight:700;color:${COLORS.ink};padding-top:13px;">${esc(perk || conditions)}${perk && conditions ? `<span style="display:block;font-size:11.5px;font-weight:500;color:${COLORS.ink70};margin-top:2px;">${esc(conditions)}</span>` : ''}</div>` : ''}`
+    : `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+          ${value ? `<td valign="middle" style="font-family:${FONT_DISPLAY};font-size:38px;line-height:1;font-weight:800;letter-spacing:-1.5px;color:${COLORS.ink};padding-right:12px;white-space:nowrap;">${esc(value)}</td>` : ''}
+          <td valign="middle" style="font-family:${FONT_BODY};font-size:14px;line-height:1.35;font-weight:700;color:${COLORS.ink};">${esc(perk || conditions || '')}${perk && conditions ? `<span style="display:block;font-size:11.5px;font-weight:500;color:${COLORS.ink70};margin-top:2px;">${esc(conditions)}</span>` : ''}</td>
+        </tr></table>`
   return `<tr><td style="padding:16px 20px 0;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;background-color:${COLORS.cream};border-radius:12px;border-left:4px solid ${COLORS.oroDeep};">
       <tr><td style="padding:16px 18px;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-          ${value ? `<td valign="middle" style="font-family:${FONT_DISPLAY};font-size:38px;line-height:1;font-weight:800;letter-spacing:-1.5px;color:${COLORS.ink};padding-right:12px;white-space:nowrap;">${esc(value)}</td>` : ''}
-          <td valign="middle" style="font-family:${FONT_BODY};font-size:14px;line-height:1.35;font-weight:700;color:${COLORS.ink};">${esc(perk || conditions || '')}${perk && conditions ? `<span style="display:block;font-size:11.5px;font-weight:500;color:${COLORS.ink70};margin-top:2px;">${esc(conditions)}</span>` : ''}</td>
-        </tr></table>
+        ${head}
         ${validity ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:13px 0 0;"><tr>
           <td style="background-color:${COLORS.mint};border-radius:999px;padding:5px 12px;font-family:${FONT_BODY};font-size:10.5px;line-height:1.35;font-weight:800;letter-spacing:.06em;color:${COLORS.ink};">✓ ${esc(String(validity).toLocaleUpperCase('it-IT'))}</td>
-        </tr></table>` : ''}
+        </tr></table>` : ''}${fasce ? `
+        <div style="font-family:${FONT_BODY};font-size:11.5px;line-height:1.45;font-weight:500;color:${COLORS.ink70};padding-top:10px;">${esc(TIER_RULE)}</div>` : ''}
       </td></tr>
     </table>
   </td></tr>`
 }
+
+/** La regola dello sconto a fasce, la stessa sul sito (DayTiers) e in posta. */
+export const TIER_RULE = 'Si usa una volta: alla cassa vale la cifra del giorno in cui lo usi.'
 
 /**
  * Il drop preso e non usato in tempo (12/10). Niente corallo: il corallo è

@@ -20,6 +20,7 @@ import RestaurantCard from './RestaurantCard'
 import DiscountQuickPopup from '../Discount/DiscountQuickPopup'
 import { passHeaderFromRestaurant } from '../../lib/utils/passHeader'
 import OtherDiscountsSheet from '../Discount/OtherDiscountsSheet'
+import DayTiers from '../Discount/DayTiers'
 import SconteAuthGate from '../Discount/SconteAuthGate'
 import { checkValidity, computeNextValidWindow } from '../../lib/validity'
 import AdSlot from '../Ads/AdBanner'
@@ -518,6 +519,8 @@ export default function DesktopRestaurantSheet({
                   <div style={{ fontWeight: 800, fontSize: 15.5, letterSpacing: '-.01em' }}>
                     {discountMainText}
                   </div>
+                  {/* Sconto a fasce (15/10): le cifre coi loro giorni, oggi acceso. */}
+                  <DayTiers deal={discount} variant="chips" tone="green" style={{ marginTop: 8 }} />
                 </div>
                 <button
                   onClick={handleDiscountClick}

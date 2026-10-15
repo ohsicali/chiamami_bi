@@ -660,3 +660,50 @@
 
   .dropcard--narrow { border-radius: 19px; }
 }
+
+/* ── Sconto a fasce (15/10) ───────────────────────────────────────────── */
+/* Le pillole delle fasce al posto della pill "SEMPRE VALIDO". Non è un
+   drop: niente pallino che pulsa, e la cifra di oggi è verde come il badge. */
+.dropcard__tiers {
+  align-self: flex-start;
+  margin-bottom: calc(2 * var(--dc-k));
+}
+.dropcard__tiers .dtier-chip {
+  min-height: calc(19 * var(--dc-k));
+  font-size: calc(8.5 * var(--dc-k));
+  padding: 0 calc(8 * var(--dc-k));
+}
+.dropcard__tiers .dtier-chip i { font-size: calc(6.5 * var(--dc-k)); }
+/* Nella mini lo stato di una convenzione a fasce dice le cifre, non
+   un'urgenza: inchiostro, non corallo. */
+.dropcard--mini .dropcard__status--tiers {
+  color: var(--dc-ink);
+  opacity: 0.75;
+}
+
+/* ── Convenzione: scura, non corallo (15/10) ──────────────────────────
+   Il corallo pieno è del drop: scade, i posti finiscono. Una convenzione
+   vestita da drop brucia l'urgenza anche sui drop veri (CLAUDE.md, "il
+   colore dice il tipo di sconto"). Qui la stessa card della home da
+   computer (HeroPromo): inchiostro, "SCONTO BI CLUB" senza pallino, niente
+   countdown né barra. Il bottone diventa corallo: è il colore dell'azione. */
+.dropcard.dropcard--conv {
+  background: linear-gradient(168deg, #33272C 0%, var(--dc-ink) 100%);
+  box-shadow: 0 14px 30px -20px rgba(34, 24, 28, 0.75);
+}
+.dropcard.dropcard--conv:not(.dropcard--mini) .dropcard__photo::after {
+  background: linear-gradient(180deg, transparent 60%, rgba(34, 24, 28, 0.55) 100%);
+}
+.dropcard--conv .dropcard__badge { border-color: var(--dc-ink); }
+.dropcard--conv .dropcard__pill { background: rgba(255, 255, 255, 0.12); }
+.dropcard--conv .dropcard__btn--primary {
+  background: var(--dc-corallo);
+  box-shadow: 0 6px 14px rgba(232, 69, 60, 0.32);
+}
+.dropcard--conv .dropcard__btn--ghost { background: rgba(255, 255, 255, 0.12); }
+
+@container (min-width: 420px) {
+  .dropcard.dropcard--conv:not(.dropcard--mini) .dropcard__photo::after {
+    background: linear-gradient(90deg, rgba(34, 24, 28, 0.6) 0%, transparent 42%);
+  }
+}

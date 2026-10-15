@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../../../lib/supabase'
 import FGroup from './_FGroup'
-import { formatDiscountBadge, formatDiscountBadgeShort } from '../../../lib/utils/discountFormat'
+import { formatDiscountBadge, formatDiscountBadgeShort, formatTierSummary } from '../../../lib/utils/discountFormat'
 import { formatPublishAt } from '../../../lib/scheduledPublish'
 
 /**
@@ -33,7 +33,7 @@ export default function ScontoTab({ form, restaurantId }) {
       setLoading(true)
       const { data } = await supabase
         .from('discounts')
-        .select('id, title, description, conditions, discount_value, discount_type, is_drop, is_active, is_test, publish_at, valid_from, valid_until, drop_ends_at, created_at')
+        .select('id, title, description, conditions, discount_value, discount_type, day_tiers, is_drop, is_active, is_test, publish_at, valid_from, valid_until, drop_ends_at, created_at')
         .eq('restaurant_id', restaurantId)
         .order('created_at', { ascending: false })
       if (cancelled) return
@@ -155,6 +155,7 @@ export default function ScontoTab({ form, restaurantId }) {
                   <b>{d.title || badge}</b>
                   <small>
                     {d.is_drop ? '🔥 Drop' : 'Convenzione'}
+                    {formatTierSummary(d) ? ` · 📅 ${formatTierSummary(d)}` : ''}
                     {d.valid_until || d.drop_ends_at ? ` · fino al ${new Date(d.drop_ends_at || d.valid_until).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}` : ' · senza scadenza'}
                   </small>
                 </span>
