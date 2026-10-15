@@ -298,7 +298,10 @@ proprietario il 12/10). La vetrina della home resta all'ultimo drop uscito.
   suo `drop_starts_at` (o dalla creazione, se più tarda).
 - **Home da computer**: quando in vetrina c'è uno sconto fisso la card è
   scura con "SCONTO BI CLUB", niente corallo/countdown/barra posti (regola
-  del colore, vedi Email).
+  del colore, vedi Email). **Dal 15/10 anche sul telefono**: `DropCard` con
+  una convenzione prende la classe `dropcard--conv` (inchiostro, "SCONTO BI
+  CLUB" senza pallino, bottone corallo); prima la card in vetrina era corallo
+  come un drop. La mini resta bianca per tutti e due.
 - **Bi Club** (`SconteRedesignPage`): la lista drop usa `filterShownDrops`
   (gli attivi più l'ultimo esaurito); il conteggio "N attivi" e il badge del
   tab restano sugli attivi.

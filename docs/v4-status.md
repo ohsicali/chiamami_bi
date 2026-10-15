@@ -78,6 +78,10 @@ CLAUDE.md "Sconto a fasce".
   (editor "Cambia coi giorni" con anteprima, card, scheda del locale, attività,
   in diretta, recensioni). Chiedi a Bi riceve `by_day`. PDF ed email: tutte le
   cifre.
+- **Home dal telefono, convenzione in vetrina** (chiesto dal proprietario lo
+  stesso giorno): la card era corallo come un drop. Ora `DropCard` con una
+  convenzione è scura come la card da computer (`dropcard--conv`: inchiostro,
+  "SCONTO BI CLUB" senza pallino, bottone corallo); i drop non cambiano.
 - **Anteprime** con Playwright e Supabase simulato (giovedì e sabato): vedi la PR.
 - `npm test` 367/367, build pulita, lint invariato sui file toccati.
 

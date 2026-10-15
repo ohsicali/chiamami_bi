@@ -55,6 +55,10 @@ export default function DropCard({
   const classes = [
     'dropcard',
     `dropcard--${size}`,
+    // Convenzione (15/10): scura come la card della home da computer, non
+    // corallo. Il corallo pieno è del drop (CLAUDE.md, "il colore dice il
+    // tipo di sconto"); la mini resta bianca per tutti e due.
+    !isMini && !view.drop ? 'dropcard--conv' : '',
     view.soldOut ? 'dropcard--soldout' : '',
     // Nella taglia larga il titolo è già il vantaggio: quando il vantaggio
     // in parole non dice altro che il valore ("50%" → "50% di sconto") la
@@ -124,7 +128,7 @@ export default function DropCard({
         {view.tiered && <DayTiers deal={deal} variant="chips" tone="dark" className="dropcard__tiers" />}
         {view.pillLabel && (
           <span className={`dropcard__pill ${view.soldOut ? 'dropcard__pill--soldout' : ''}`}>
-            {!view.soldOut && <i aria-hidden />}
+            {!view.soldOut && view.drop && <i aria-hidden />}
             {view.pillLabel}
           </span>
         )}
@@ -237,9 +241,12 @@ function buildView(deal, now, { showAlwaysValid = true } = {}) {
   // posti e dicono quello che sono, senza fingersi urgenti.
   const drop = isDrop(deal)
   const tiered = hasDayTiers(deal)
+  // Convenzione: "SCONTO BI CLUB", come la card della home da computer — non
+  // "sempre valido", che si smentiva coi giorni scritti nelle regole. A
+  // fasce le pillole delle cifre prendono il suo posto.
   const pillLabel = drop
     ? (soldOut ? 'SCONTO ESAURITO' : (countdown ? `DROP LIVE · ${countdown}` : 'DROP LIVE'))
-    : (showAlwaysValid && !tiered ? 'SEMPRE VALIDO' : '')
+    : (tiered ? '' : 'SCONTO BI CLUB')
 
   // La riga piccola: prima la condizione d'uso, poi categoria e indirizzo.
   // La condizione sta QUI e non nel vantaggio — è il vincolo, non il premio.
@@ -274,6 +281,7 @@ function buildView(deal, now, { showAlwaysValid = true } = {}) {
 
   return {
     restaurantName,
+    drop,
     tiered,
     valueLabel,
     badgeLabel: badgeValue(valueLabel),
