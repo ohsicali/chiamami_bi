@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { formatDiscountBadge } from '../../lib/utils/discountFormat'
+import { formatDiscountBadge, formatTierTeaser } from '../../lib/utils/discountFormat'
 
 /**
  * OtherDiscountsSheet — elenco degli altri sconti attivi dello stesso
@@ -56,8 +56,9 @@ export default function OtherDiscountsSheet({ discounts, onSelect, onClose }) {
                 <span className="block text-sm font-bold text-primary truncate">
                   {d.title || formatDiscountBadge(d)}
                 </span>
-                {d.description && (
-                  <span className="block text-xs text-secondary truncate mt-0.5">{d.description}</span>
+                {/* Sconto a fasce: le cifre coi giorni prima della descrizione. */}
+                {(formatTierTeaser(d) || d.description) && (
+                  <span className="block text-xs text-secondary truncate mt-0.5">{formatTierTeaser(d) || d.description}</span>
                 )}
               </span>
               <span className="flex-shrink-0 text-accent font-bold text-sm">{formatDiscountBadge(d)}</span>

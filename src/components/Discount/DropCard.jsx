@@ -1,6 +1,8 @@
 import { useEffect, useState, useMemo } from 'react'
 import { proxyImg, proxyImgSrcSet } from '../../lib/supabase'
-import { formatDiscountValue, pickPerk, normalizeValue } from '../../lib/utils/discountFormat'
+import { formatDiscountValue, pickPerk, normalizeValue, formatTierTeaser } from '../../lib/utils/discountFormat'
+import { hasDayTiers } from '../../lib/dayTiers'
+import DayTiers from './DayTiers'
 import { formatAddress } from '../../lib/utils/formatAddress'
 import { claimedCount, maxQuantity, remainingCount, formatCountdown, isDrop, isSoldOut } from '../../lib/discounts'
 import './DropCard.css'
@@ -82,7 +84,7 @@ export default function DropCard({
           <span className="dropcard__name">{view.restaurantName}</span>
           <span className="dropcard__where">{view.where}</span>
           {view.miniStatus && (
-            <span className={`dropcard__status ${view.soldOut ? 'dropcard__status--soldout' : ''}`}>
+            <span className={`dropcard__status ${view.soldOut ? 'dropcard__status--soldout' : ''} ${view.tiered ? 'dropcard__status--tiers' : ''}`}>
               {view.miniStatus}
             </span>
           )}
@@ -117,6 +119,9 @@ export default function DropCard({
       {view.badgeLabel && <span className="dropcard__badge">{view.badgeLabel}</span>}
 
       <div className="dropcard__body">
+        {/* Sconto a fasce (15/10): al posto di "SEMPRE VALIDO" le cifre coi
+            loro giorni, oggi acceso — il titolo grande dice quella di oggi. */}
+        {view.tiered && <DayTiers deal={deal} variant="chips" tone="dark" className="dropcard__tiers" />}
         {view.pillLabel && (
           <span className={`dropcard__pill ${view.soldOut ? 'dropcard__pill--soldout' : ''}`}>
             {!view.soldOut && <i aria-hidden />}
@@ -231,9 +236,10 @@ function buildView(deal, now, { showAlwaysValid = true } = {}) {
   // "DROP LIVE · 6G 19H" per i drop; le convenzioni non hanno countdown né
   // posti e dicono quello che sono, senza fingersi urgenti.
   const drop = isDrop(deal)
+  const tiered = hasDayTiers(deal)
   const pillLabel = drop
     ? (soldOut ? 'SCONTO ESAURITO' : (countdown ? `DROP LIVE · ${countdown}` : 'DROP LIVE'))
-    : (showAlwaysValid ? 'SEMPRE VALIDO' : '')
+    : (showAlwaysValid && !tiered ? 'SEMPRE VALIDO' : '')
 
   // La riga piccola: prima la condizione d'uso, poi categoria e indirizzo.
   // La condizione sta QUI e non nel vantaggio — è il vincolo, non il premio.
@@ -258,7 +264,9 @@ function buildView(deal, now, { showAlwaysValid = true } = {}) {
     ? 'Esaurito'
     : drop
       ? (countdown ? `Scade tra ${countdown}` : 'Drop live')
-      : (showAlwaysValid ? 'Sempre valido' : '')
+      : tiered
+        ? formatTierTeaser(deal)
+        : (showAlwaysValid ? 'Sempre valido' : '')
 
   const valueLabel = formatDiscountValue(deal)
   const restaurantName = r?.name || deal.title || 'Locale'
@@ -266,6 +274,7 @@ function buildView(deal, now, { showAlwaysValid = true } = {}) {
 
   return {
     restaurantName,
+    tiered,
     valueLabel,
     badgeLabel: badgeValue(valueLabel),
     miniBadgeLabel: miniBadgeValue(valueLabel),

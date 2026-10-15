@@ -40,7 +40,7 @@ const SLOTS = Object.keys(MEAL_SLOTS).map((id) => ({
    Quando vale — giorni e fasce
    ============================================================================ */
 
-export function ValidityPicker({ days, slots, onChange }) {
+export function ValidityPicker({ days, slots, onChange, hideDays = false }) {
   // Lista vuota = nessun limite = tutti i giorni. È la stessa convenzione che
   // legge `effectiveValidDays` lato pubblico: non serve salvare [1..7].
   const allDays = !days || days.length === 0 || days.length === 7
@@ -59,6 +59,10 @@ export function ValidityPicker({ days, slots, onChange }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {/* Sconto a fasce (15/10): i giorni li decidono le fasce, nell'offerta. */}
+      {hideDays ? (
+        <p style={{ ...hintText, marginTop: 0 }}>Giorni: li decidono le fasce, nel blocco 03 «L'offerta».</p>
+      ) : (
       <div>
         <div style={labelRow}>
           <span style={labelText}>Giorni validi</span>
@@ -96,6 +100,7 @@ export function ValidityPicker({ days, slots, onChange }) {
           {allDays ? 'Nessun limite: vale tutti i giorni.' : `Vale solo ${days.map((d) => DAYS[d - 1].label).join(', ')}.`}
         </p>
       </div>
+      )}
 
       <div>
         <div style={labelRow}><span style={labelText}>Fasce orarie</span></div>

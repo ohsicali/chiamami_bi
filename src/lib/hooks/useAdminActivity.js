@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase, isSupabaseConfigured } from '../supabase'
 import { createActivityFeed } from '../activityFeed'
 import { formatDiscountBadge } from '../utils/discountFormat'
+import { usedDeal } from '../dayTiers'
 
 /**
  * Cronologia completa della dashboard admin: tutte le attività, dalla più
@@ -11,7 +12,7 @@ import { formatDiscountBadge } from '../utils/discountFormat'
  * mostrava 8: il resto della storia non si poteva vedere.
  */
 
-const DISCOUNT_COLS = 'title, discount_type, discount_value, restaurants(name)'
+const DISCOUNT_COLS = 'title, discount_type, discount_value, day_tiers, restaurants(name)'
 
 function discountLabel(d) {
   if (!d) return ''
@@ -30,7 +31,7 @@ export const ACTIVITY_SOURCES = {
   used: {
     fetch: (o, n) => range(
       supabase.from('discount_redemptions')
-        .select(`id, redeemed_at, user_name, discounts(${DISCOUNT_COLS})`)
+        .select(`id, redeemed_at, user_name, applied_value, discounts(${DISCOUNT_COLS})`)
         .eq('status', 'redeemed')
         .order('redeemed_at', { ascending: false, nullsFirst: false })
         .order('id', { ascending: false }),
@@ -41,7 +42,8 @@ export const ACTIVITY_SOURCES = {
       type: 'redemption',
       at: r.redeemed_at,
       text: `${r.discounts?.restaurants?.name || 'Un locale'} ha convalidato lo sconto di ${r.user_name?.trim() || 'un utente'}`,
-      value: discountLabel(r.discounts),
+      // La cifra applicata alla cassa (sconto a fasce: quella del giorno).
+      value: discountLabel(usedDeal({ ...r, status: 'redeemed' }, r.discounts)),
     }),
   },
   taken: {

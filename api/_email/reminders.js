@@ -39,6 +39,7 @@ import { discountReminderEmail } from './templates.js'
 import { buildMessage, sendBatch, unsubscribeUrl, BATCH_SIZE } from './send.js'
 import { formatDiscountBadge, pickPerk } from './discount.js'
 import { formatShortCode } from '../_short-code.js'
+import { emailTiers } from './content.js'
 import { SITE_URL } from './theme.js'
 
 export const REMINDER_KIND = 'discount-reminder'
@@ -188,7 +189,7 @@ export function planReminders({
 /* ------------------------------------------------------------------ */
 
 const DISCOUNT_FIELDS =
-  'id, title, description, conditions, discount_type, discount_value, valid_until, valid_days, valid_meal_slots, valid_time_from, valid_time_to, is_drop, drop_ends_at, is_active, restaurant_id'
+  'id, title, description, conditions, discount_type, discount_value, day_tiers, valid_until, valid_days, valid_meal_slots, valid_time_from, valid_time_to, is_drop, drop_ends_at, is_active, restaurant_id'
 const RESTAURANT_FIELDS =
   'id, name, slug, address, neighborhood, city, cuisine_type, price_range, tagline, our_review, is_published'
 
@@ -318,6 +319,8 @@ export function reminderProps(item, { photo = null, unsubUrl = null, now = new D
       timeTo: d.valid_time_to,
       until: d.valid_until,
     },
+    // Sconto a fasce (15/10): tutte le cifre coi loro giorni.
+    tiers: emailTiers(d),
     claimedAt: red.generated_at,
     // Il codice da dettare, mai il qr_code per esteso.
     code: red.short_code ? formatShortCode(red.short_code) : null,

@@ -660,3 +660,23 @@
 
   .dropcard--narrow { border-radius: 19px; }
 }
+
+/* ── Sconto a fasce (15/10) ───────────────────────────────────────────── */
+/* Le pillole delle fasce al posto della pill "SEMPRE VALIDO". Non è un
+   drop: niente pallino che pulsa, e la cifra di oggi è verde come il badge. */
+.dropcard__tiers {
+  align-self: flex-start;
+  margin-bottom: calc(2 * var(--dc-k));
+}
+.dropcard__tiers .dtier-chip {
+  min-height: calc(19 * var(--dc-k));
+  font-size: calc(8.5 * var(--dc-k));
+  padding: 0 calc(8 * var(--dc-k));
+}
+.dropcard__tiers .dtier-chip i { font-size: calc(6.5 * var(--dc-k)); }
+/* Nella mini lo stato di una convenzione a fasce dice le cifre, non
+   un'urgenza: inchiostro, non corallo. */
+.dropcard--mini .dropcard__status--tiers {
+  color: var(--dc-ink);
+  opacity: 0.75;
+}

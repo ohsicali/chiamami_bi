@@ -1717,3 +1717,15 @@
 .sc-lost .sc-ph-mini img { filter: grayscale(1); }
 .sc-lost .sc-info .sc-sub s { color: var(--sc-ink-3); font-weight: 700; }
 .sc-lost .sc-when strong { color: var(--sc-ink-3); }
+
+/* Sconto a fasce sulla card (15/10): le pillole stanno al posto della riga
+   dei giorni e restano alte quanto le pastiglie dei prodotti. */
+.sc-conv .sc-tiers .dtier-chip {
+  min-height: 21px;
+  padding: 0 8px;
+  font-size: 10px;
+}
+.sc-conv .sc-tiers .dtier-chip i { font-size: 7.5px; padding: 2.5px 4px; }
+@media (min-width: 768px) {
+  .sc-conv .sc-tiers .dtier-chip { min-height: 22px; font-size: 10.5px; }
+}

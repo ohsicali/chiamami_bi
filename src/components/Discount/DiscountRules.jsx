@@ -9,6 +9,8 @@ import {
 } from '../../lib/validity'
 import { normalizeProducts } from '../../lib/utils/discountProducts'
 import { discountLocationScope, locationMapsUrl, locationStreet } from '../../lib/utils/restaurantLocations'
+import { hasDayTiers } from '../../lib/dayTiers'
+import DayTiers from './DayTiers'
 import './DiscountRules.css'
 
 /**
@@ -23,7 +25,9 @@ import './DiscountRules.css'
  *
  * Qui diventano tre blocchi con tre forme diverse:
  *   - VALE SU   → le foto dei prodotti coperti (`discount_products`)
- *   - QUANDO    → i sette giorni come pastiglie, quelli buoni accesi
+ *   - QUANDO    → i sette giorni come pastiglie, quelli buoni accesi; per
+ *                 uno sconto a fasce (15/10) la settimana con la cifra sopra
+ *                 ai suoi giorni, quella di oggi accesa (DayTiers)
  *   - DOVE      → per i locali con più sedi, in quali vale (13/10)
  *   - DA SAPERE → le condizioni, una per riga
  *
@@ -44,6 +48,7 @@ export default function DiscountRules({ deal, products, restaurant, className = 
   const place = restaurant || deal?.restaurant || null
   const scope = discountLocationScope(deal, place)
 
+  const tiered = hasDayTiers(deal)
   const days = effectiveValidDays(deal)
   const hasDayLimit = days.length > 0 && days.length < 7
   const slots = Array.isArray(deal?.valid_meal_slots) ? deal.valid_meal_slots : []
@@ -59,7 +64,7 @@ export default function DiscountRules({ deal, products, restaurant, className = 
   // del coupon. Prima "Quando" spariva insieme alla fila dei sette giorni
   // quando non c'era un vincolo, e uno sconto con le foto prodotto ma senza
   // limiti non diceva mai "vale sempre".
-  if (items.length === 0 && !hasDayLimit && !hasWindow && !showConditions && !scope) return null
+  if (items.length === 0 && !tiered && !hasDayLimit && !hasWindow && !showConditions && !scope) return null
 
   return (
     <section className={`dr ${className}`.trim()} aria-label="Regole dello sconto">
@@ -70,6 +75,16 @@ export default function DiscountRules({ deal, products, restaurant, className = 
         </div>
       )}
 
+      {tiered ? (
+        <div className="dr-block">
+          {/* Sconto a fasce: i giorni e le cifre sono la stessa risposta.
+              Sotto, solo l'orario (i giorni li dice già la settimana). */}
+          <h3 className="dr-eyebrow">Quanto vale, giorno per giorno</h3>
+          <DayTiers deal={deal} variant="week">
+            <WindowLine deal={deal} slots={slots} allDays={false} />
+          </DayTiers>
+        </div>
+      ) : (
       <div className="dr-block">
         <h3 className="dr-eyebrow">Quando</h3>
         {/* La fila dei sette giorni esce solo se qualche giorno è escluso.
@@ -81,6 +96,7 @@ export default function DiscountRules({ deal, products, restaurant, className = 
         {hasDayLimit && <DayStrip days={days} />}
         <WindowLine deal={deal} slots={slots} allDays={!hasDayLimit} />
       </div>
+      )}
 
       {scope && (
         <div className="dr-block">

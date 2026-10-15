@@ -1,4 +1,5 @@
 import { DAY_SHORT_LABELS, formatDays, formatSlots } from '../../lib/validity'
+import { formatTierSummary } from '../../lib/utils/discountFormat'
 import './ScanResult.css'
 
 /**
@@ -29,6 +30,9 @@ export default function InvalidNowResult({ data, reason, onReset }) {
     return `Si attiva ${daysText}${slotText}`
   })()
 
+  const tierSummary = data?.day_tiers
+    ? formatTierSummary({ discount_type: data.discount_type, day_tiers: data.day_tiers })
+    : ''
   const todayName = ['lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato', 'domenica'][today - 1] || ''
   const dateStr = new Date().toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })
 
@@ -62,6 +66,8 @@ export default function InvalidNowResult({ data, reason, onReset }) {
           {data.discount_title || data.discount_value} · Tentato {todayName} {dateStr}
         </div>
       )}
+      {/* Sconto a fasce (15/10): quanto vale negli altri giorni. */}
+      {tierSummary && <div className="ris-meta-line">{tierSummary}</div>}
 
       <button type="button" className="ris-cta" onClick={onReset}>Chiudi</button>
     </div>

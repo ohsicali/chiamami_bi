@@ -14,6 +14,10 @@ import { dropPeopleFromRows, dropPeopleNotes, dropPeopleSummary } from '../../li
 import LiveRedemptionsPanel from '../../components/admin/LiveRedemptionsPanel'
 import { toLocalInput, fromLocalInput, publishAtError, formatPublishAt } from '../../lib/scheduledPublish'
 import { getAllLocations } from '../../lib/utils/restaurantLocations'
+import { formatTierSummary } from '../../lib/utils/discountFormat'
+import {
+  hasDayTiers, dayTiers, formUsesDayTiers, normalizeDayTiers, dayTierProblems, dayTiersUnion,
+} from '../../lib/dayTiers'
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -51,6 +55,12 @@ const EMPTY_FORM = {
   conditions: '',
   valid_days: [],          // [] = tutti i giorni
   valid_meal_slots: [],    // [] = qualsiasi ora
+  // Sconto a fasce (15/10, supabase/discount-day-tiers-2026-10-15.sql):
+  // "30% lun–gio, 15% ven–dom". Con `tiers_on` il valore e i giorni stanno
+  // in `day_tiers` (vedi formUsesDayTiers in src/lib/dayTiers.js).
+  tiers_on: false,
+  day_tiers: [],
+  had_tiers: false,
   products: [],            // foto di cosa lo sconto copre
   // Locali con più sedi (13/10, supabase/discount-locations-2026-10-13.sql):
   // 'all' = vale in tutte (salvato come NULL), 'some' = solo nelle sedi di
@@ -232,7 +242,10 @@ function DropCard({ d, testers, people, selected, notifyLog, notifying, active, 
           }}
         >
           {d.restaurant?.name || '—'}
-          <span style={{ color: 'var(--color-corallo, #E8453C)', fontWeight: 900 }}>{d.discount_value}</span>
+          {/* A fasce: tutte le cifre coi loro giorni, in verde (non è un drop). */}
+          {hasDayTiers(d)
+            ? <span style={{ color: '#1A4731', fontWeight: 800, fontSize: 13 }}>📅 {formatTierSummary(d)}</span>
+            : <span style={{ color: 'var(--color-corallo, #E8453C)', fontWeight: 900 }}>{d.discount_value}</span>}
           {!active && d.publish_at && (
             <span
               style={{
@@ -529,7 +542,7 @@ function HomeShowcase({ choice, saving, onUnpin }) {
           In vetrina in home adesso
         </div>
         <div style={{ fontSize: 15, fontWeight: 900, color: 'var(--adm-ink)', marginTop: 2 }}>
-          {d ? <>{d.restaurant?.name || '—'} · <span style={{ color: d.is_drop ? 'var(--adm-coral)' : 'var(--color-oro, #B08954)' }}>{d.discount_value || d.title}</span>{d.is_drop ? ' (drop)' : ''}</> : '—'}
+          {d ? <>{d.restaurant?.name || '—'} · <span style={{ color: d.is_drop ? 'var(--adm-coral)' : 'var(--color-oro, #B08954)' }}>{formatTierSummary(d) || d.discount_value || d.title}</span>{d.is_drop ? ' (drop)' : ''}</> : '—'}
         </div>
         <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--adm-muted)', marginTop: 2 }}>{why}</div>
       </div>
@@ -920,6 +933,9 @@ export default function DiscountManager() {
       conditions: d.conditions || '',
       valid_days: Array.isArray(d.valid_days) ? d.valid_days : [],
       valid_meal_slots: Array.isArray(d.valid_meal_slots) ? d.valid_meal_slots : [],
+      tiers_on: hasDayTiers(d),
+      day_tiers: dayTiers(d).map((t) => ({ days: t.days, value: t.value })),
+      had_tiers: d.day_tiers != null,
       products: [...(d.products || [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
       location_mode: Array.isArray(d.valid_location_ids) && d.valid_location_ids.length ? 'some' : 'all',
       valid_location_ids: Array.isArray(d.valid_location_ids) ? d.valid_location_ids : [],
@@ -1000,7 +1016,19 @@ export default function DiscountManager() {
 
   const handleSave = async () => {
     const restId = form.restaurant_id || newPartner?.id
-    if (!restId || !form.title || !form.discount_value) return
+    // Sconto a fasce: il valore e i giorni vengono dalle fasce (il trigger
+    // del DB li ricontrolla e tiene valid_days/discount_value allineati).
+    const tiered = formUsesDayTiers(form)
+    const tiers = tiered ? normalizeDayTiers(form.day_tiers) : null
+    const discountValue = tiered ? (tiers[0]?.value || '') : form.discount_value
+    if (!restId || !form.title || !discountValue) return
+    if (tiered) {
+      const problems = dayTierProblems(form.day_tiers, { type: form.discount_type })
+      if (problems.length) {
+        setSaveError(problems[0])
+        return
+      }
+    }
 
     // Vincolo: PIN partner attivo è prerequisito per creare uno sconto.
     // newPartner viene creato con un PIN automaticamente, quindi ok.
@@ -1107,12 +1135,15 @@ export default function DiscountManager() {
       title: form.title,
       description: form.description || null,
       discount_type: form.discount_type,
-      discount_value: form.discount_value,
+      discount_value: discountValue,
       conditions: form.conditions || null,
       // Lista vuota → null, non []: `effectiveValidDays` legge "nessun limite"
       // da entrambi, ma null è quello che c'è già sulle righe storiche e
       // tenere due modi di dire la stessa cosa non aiuta nessuno.
-      valid_days: form.valid_days?.length ? form.valid_days : null,
+      valid_days: tiered ? dayTiersUnion(tiers) : (form.valid_days?.length ? form.valid_days : null),
+      // Le fasce solo quando servono (o per toglierle): un salvataggio di uno
+      // sconto normale non dipende dalla colonna.
+      ...(tiered ? { day_tiers: tiers } : form.had_tiers ? { day_tiers: null } : {}),
       valid_meal_slots: form.valid_meal_slots?.length ? form.valid_meal_slots : null,
       valid_location_ids: validLocationIds,
       valid_from: startIso,
@@ -1347,7 +1378,7 @@ export default function DiscountManager() {
     if (homeSaving) return
     const name = d.restaurant?.name || 'questo locale'
     const ok = pin
-      ? window.confirm(`Mettere in vetrina in home "${name} · ${d.discount_value || d.title}"?\n\nPrende il posto del drop nella card grande della home. Il Bi Club non cambia. Quando esce un drop nuovo, torna il drop.`)
+      ? window.confirm(`Mettere in vetrina in home "${name} · ${formatTierSummary(d) || d.discount_value || d.title}"?\n\nPrende il posto del drop nella card grande della home. Il Bi Club non cambia. Quando esce un drop nuovo, torna il drop.`)
       : window.confirm(`Togliere "${name}" dalla vetrina della home?\n\nTorna l'ultimo drop uscito.`)
     if (!ok) return
     setHomeSaving(true)

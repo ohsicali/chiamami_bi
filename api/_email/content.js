@@ -15,6 +15,7 @@ export { formatPrice } from '../../src/lib/utils/price.js'
 
 import { formatAddress } from '../../src/lib/utils/formatAddress.js'
 import { formatPrice } from '../../src/lib/utils/price.js'
+import { tierChips } from '../../src/lib/utils/discountFormat.js'
 
 /**
  * Il testo di Bi tagliato **su una frase intera**, mai a metà parola.
@@ -246,4 +247,16 @@ export function claimedWords(generatedAt, now = new Date()) {
   }).formatToParts(t).map((x) => [x.type, x.value]))
   const art = ['8', '11'].includes(parti.day) ? 'l’' : 'il '
   return `${art}${parti.day === '1' ? '1°' : parti.day} ${parti.month}`
+}
+
+/**
+ * Le fasce di uno sconto a fasce (15/10) pronte per l'email: badge
+ * ("−30%"), valore senza segno per l'oggetto ("30%"), giorni lunghi per il
+ * blocco ("dal lunedì al giovedì") e corti per l'oggetto ("lun–gio"). In
+ * posta nessuna è "di oggi": si legge un altro giorno. Null se non è a fasce.
+ */
+export function emailTiers(discount) {
+  const chips = tierChips(discount)
+  if (chips.length < 2) return null
+  return chips.map((c) => ({ badge: c.badge, value: c.value, days: c.daysLong, daysShort: c.daysShort }))
 }

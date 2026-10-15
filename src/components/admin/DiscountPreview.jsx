@@ -3,6 +3,8 @@ import { formatDiscountBadge, pickPerk, formatDiscountValue } from '../../lib/ut
 import { conventionValidity } from '../../../api/_email/content.js'
 import { proxyImg } from '../../lib/supabase'
 import { discountLocationScope, discountLocationLine } from '../../lib/utils/restaurantLocations'
+import { formUsesDayTiers, normalizeDayTiers, dayTiersUnion } from '../../lib/dayTiers'
+import DayTiers from '../Discount/DayTiers'
 
 /**
  * L'anteprima dello sconto nell'editor admin: come lo vedrà chi apre il sito,
@@ -25,11 +27,15 @@ export default function DiscountPreview({ form, restaurant }) {
   }, [])
 
   const isDrop = form.kind === 'drop'
+  // Sconto a fasce (15/10): la cifra del badge è quella di oggi, come sul sito.
+  const tiers = formUsesDayTiers(form) ? normalizeDayTiers(form.day_tiers) : null
+  const tiered = !!tiers && tiers.length >= 2
   const deal = {
     title: form.title,
     discount_type: form.discount_type,
-    discount_value: form.discount_value,
+    discount_value: tiered ? tiers[0].value : form.discount_value,
     description: form.description,
+    day_tiers: tiered ? tiers : null,
   }
   const badge = formatDiscountBadge(deal) || '−?'
   const perk = pickPerk(deal, formatDiscountValue(deal)) || 'Scrivi il vantaggio…'
@@ -38,7 +44,7 @@ export default function DiscountPreview({ form, restaurant }) {
   const firstRule = String(form.conditions || '').split('\n').map((s) => s.trim()).find(Boolean)
   const endIso = form.no_end_date || !form.ends_at ? null : new Date(form.ends_at).toISOString()
   const validity = conventionValidity({
-    days: form.valid_days,
+    days: tiered ? dayTiersUnion(tiers) : form.valid_days,
     slots: form.valid_meal_slots,
     until: endIso,
     conditions: form.conditions,
@@ -100,13 +106,21 @@ export default function DiscountPreview({ form, restaurant }) {
             </div>
           </div>
           <div className="adm-pv-conv__chips">
-            <span className="adm-pv-conv__chip">{validity.when}</span>
+            {tiered
+              ? <DayTiers deal={deal} variant="chips" now={now} />
+              : <span className="adm-pv-conv__chip">{validity.when}</span>}
             {validity.until && <span className="adm-pv-conv__until">{validity.until}</span>}
           </div>
           <div className="adm-pv-cta">🔓 Sblocca sconto</div>
         </div>
       )}
 
+      {/* Come si legge aperto lo sconto: la settimana con le cifre. */}
+      {tiered && !isDrop && (
+        <div className="adm-preview__week">
+          <DayTiers deal={deal} variant="week" now={now} />
+        </div>
+      )}
       {sede && <p className="adm-preview__rule">📍 {sede}</p>}
       {firstRule && <p className="adm-preview__rule">📌 {firstRule}</p>}
     </div>

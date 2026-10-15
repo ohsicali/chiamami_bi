@@ -15,6 +15,8 @@ import { QR_PASS_EVENT, REDEMPTION_VALIDATED_EVENT } from '../../lib/redemptionF
 import { claimDeadline, formatClaimDeadlineShort } from '../../lib/dropClaim'
 import ClaimTimer from './ClaimTimer'
 import { discountLocationScope, discountLocationLine } from '../../lib/utils/restaurantLocations'
+import { hasDayTiers } from '../../lib/dayTiers'
+import DayTiers from './DayTiers'
 import './QRPass.css'
 
 /**
@@ -125,6 +127,17 @@ function Icon({ name, size = 18, stroke = 2.2 }) {
    adesso?" — e prima la risposta stava solo dentro "Info sconto"; al suo
    posto c'era una pillola "Sempre valido" che non diceva quando. */
 function ValidityLine({ deal }) {
+  // Sconto a fasce (15/10): le cifre coi loro giorni, oggi acceso. La fila
+  // delle sette lettere sarebbe tutta accesa e non direbbe niente.
+  if (hasDayTiers(deal)) {
+    const when = windowText(deal)
+    return (
+      <p className="qrp-when qrp-when--tiers">
+        <DayTiers deal={deal} variant="chips" />
+        {when && <span className="qrp-when-txt">{when}</span>}
+      </p>
+    )
+  }
   const days = effectiveValidDays(deal)
   const today = todayDayOfWeek()
   const allDays = days.length === 7

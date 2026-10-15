@@ -49,7 +49,7 @@ export const ACTIVE_DISCOUNTS_SELECT =
 export const ADS_SELECT = `
   *,
   restaurant:restaurants(id, name, slug, cuisine_type, category, price_range, address, tagline, hours_cache, photos:restaurant_photos(id, photo_url, thumb_url, sort_order)),
-  discount:discounts(id, title, description, discount_type, discount_value, conditions, valid_until)
+  discount:discounts(id, title, description, discount_type, discount_value, day_tiers, conditions, valid_until)
 `.replace(/\s+/g, ' ').trim()
 
 /**

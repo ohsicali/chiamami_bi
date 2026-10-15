@@ -1,6 +1,7 @@
 import { useState, useRef, Fragment } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { formatDiscountBadge } from '../../lib/utils/discountFormat'
+import { usedDeal } from '../../lib/dayTiers'
 import { dayLabel, dayKey } from '../../lib/activityFeed'
 import { useLoadMoreOnScroll } from '../../lib/hooks/useLoadMoreOnScroll'
 
@@ -241,7 +242,9 @@ function EventRow({ ev, fresh, now, discount }) {
   const who = ev.row.user_name?.trim() || 'Un utente'
   const place = discount?.restaurant?.name || 'un locale'
   // Qui c'è spazio: "−20%" per i valori, il titolo ("3x2 Veneziane") per il resto.
-  const value = discount ? (formatDiscountBadge(discount) || discount.title) : null
+  // Usato: la cifra applicata alla cassa (sconto a fasce: quella del giorno).
+  const shown = used ? usedDeal(ev.row, discount) : discount
+  const value = shown ? (formatDiscountBadge(shown) || shown.title) : null
 
   return (
     <MotionLi

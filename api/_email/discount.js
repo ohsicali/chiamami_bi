@@ -14,4 +14,6 @@ export {
   formatDiscountBadgeShort,
   isBareDiscountValue,
   pickPerk,
+  tierChips,
+  formatTierSummary,
 } from '../../src/lib/utils/discountFormat.js'

@@ -213,6 +213,48 @@ anche su Taco Bang, che uno sconto non l'aveva ancora (deciso dal proprietario).
   sedi al loro posto invece di cancellarle e reinserirle a ogni salvataggio. Non
   rimettere il delete + insert: lo sconto perderebbe la sua sede.
 
+## Sconto a fasce — cambia coi giorni (15/10)
+Richiesta del proprietario: "30% in settimana, 15% dal venerdì alla domenica".
+**Uno sconto solo** (una card, un «Sblocca», un QR) che **si usa una volta**:
+in settimana prendi il 30, nel weekend il 15. Si dicono **sempre tutte le
+cifre**, quella di oggi accesa: chi vede 30 lunedì e trova 15 sabato non deve
+sentirsi preso in giro. Mai "fino a −30%".
+- **DB** (`supabase/discount-day-tiers-2026-10-15.sql`, **eseguito il 15/10**
+  col connettore, dopo la prova in transazione annullata):
+  `discounts.day_tiers` = `[{"days":[1,2,3,4],"value":"30"},{"days":[5,6,7],"value":"15"}]`
+  (NULL = sconto normale). Il trigger `tr_discount_day_tiers` le controlla (2–7
+  fasce, un giorno in una fascia sola, valore numerico, **solo convenzioni in %
+  o €**, mai un drop) e tiene `valid_days` = unione dei giorni e
+  `discount_value` = prima fascia, così tutto quello che non sa delle fasce
+  resta giusto. **La cassa sceglie la fascia** col giorno di Roma
+  (`verify_redeem_qr`) e la scrive in `discount_redemptions.applied_value`
+  (per ogni sconto; il browser non può scriverla, la azzera
+  `guard_redemption_insert`). Chi mostra uno sconto **già usato** legge
+  `applied_value`: festa e stelle (`feedback_get`), storico di /verify
+  (`verify_activity_list`), Telegram ("· −15% oggi"), email, pannello.
+- **Regole e parole** in `src/lib/dayTiers.js` (test `tests/day-tiers.test.mjs`,
+  che controlla anche il file SQL): `dayTiers`, `todayTier`, `currentTier`
+  (oggi o la prossima, per il locale chiuso), `tierDeal`, `usedDeal`,
+  `tierDaysShort`/`Long` ("lun–gio", "dal lunedì al giovedì"). `formatDiscountValue`
+  e `formatDiscountBadge` danno già **la cifra di oggi**: pin, card, badge, QR
+  non hanno bisogno d'altro. Tutte le cifre: `tierChips`, `formatTierSummary`
+  ("−30% lun–gio · −15% ven–dom"), `formatTierTeaser` ("Oggi −15% · −30% lun–gio").
+- **Disegno**: `src/components/Discount/DayTiers.jsx`. `variant="week"` = la
+  settimana con la cifra sopra ai suoi giorni (in "Quanto vale, giorno per
+  giorno" di `DiscountRules`, quindi in tutti i popup e in "Info sconto");
+  `variant="chips"` = le pillole, oggi verde con "OGGI", le altre crema (card
+  del Bi Club, QR, home, banner del locale, /verify, pannello). `tone`
+  light/green/dark secondo lo sfondo. Niente corallo: non è un drop.
+- **Pannello**: editor sconti, blocco 03 → **"Cambia coi giorni"** (solo
+  convenzioni in % o €): una riga per fascia con cifra e giorni (toccare un
+  giorno lo sposta in quella fascia). I giorni del blocco 04 li decidono le
+  fasce. Il titolo va **senza cifre** ("Sconto sul conto").
+- **Email**: tutte le cifre alla pari, nessuna "di oggi" (si legge un altro
+  giorno) — vedi `docs/EMAIL-FLOWS.md` §7g. Anche il PDF del coupon le porta tutte.
+- Un punto nuovo che mostra il valore di uno sconto passa da
+  `formatDiscountBadge` (oggi) o da `tierChips` (tutte), mai da
+  `discount_value` nudo; uno sconto già usato passa da `usedDeal`.
+
 ## Convenzioni contenuti sconti (per riferimento futuro)
 - **Offerte "paghi X prendi Y"** (es. 3 al posto di 2): scrivere sempre in formato `AxB` (es. `3x2`, `2x1`), mai per esteso ("Paghi 2 prendi 3 Veneziane"). Vale per `title` e `discount_value` del record in `discounts`.
 - **Sticker/badge sconto** (percentuale o importo fisso su foto/card): devono sempre avere il segno meno davanti al valore, es. `-20%`, `-1€`. Gestito centralmente da `formatDiscountBadge()` / `formatDiscountBadgeShort()` in `src/lib/utils/discountFormat.js` — quando si aggiunge un nuovo punto che mostra uno sticker sconto, usare sempre queste funzioni (mai `formatDiscountValue()` da solo, che non mette il segno).

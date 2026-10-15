@@ -51,6 +51,8 @@ import BiLogoMark from '../../components/UI/BiLogoMark'
 import Reveal from '../../components/UI/Reveal'
 import { STAGGER, staggerDelay } from '../../lib/motion'
 import { formatDiscountBadge } from '../../lib/utils/discountFormat'
+import { hasDayTiers } from '../../lib/dayTiers'
+import DayTiers from '../../components/Discount/DayTiers'
 import { pickFeaturedDeal, isSoldOut, discountByRestaurant as byRestaurant } from '../../lib/discounts'
 import { formatPrice } from '../../lib/utils/price'
 
@@ -370,6 +372,9 @@ function HeroPromo({ featured, onUnlock, ctaLabel, ctaDisabled, ctaTone, ctaNote
           >
             {featured.title}
           </div>
+          {/* Sconto a fasce (15/10): il titolo dice la cifra di oggi, qui
+              tutte le cifre coi loro giorni. Mai sui drop. */}
+          {!isDropDeal && <DayTiers deal={featured.raw} variant="chips" tone="dark" style={{ marginBottom: 10 }} />}
           {/* Mobile-only: sconto 42px + ristorante 24px separati */}
           <div className="hfv4-mob-pct" style={{ display: 'none', fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 42, lineHeight: 0.95, letterSpacing: '-0.025em', marginBottom: 4 }}>
             {featured.discountLabel}
@@ -783,7 +788,8 @@ export default function HomeDesktopClassic() {
       // La riga dello sconto così com'è: serve al bottone (lista d'attesa,
       // giorni contati — src/lib/dropWaitlist.js).
       raw: drop,
-      title: `${label}\nda ${r.name}.`,
+      // A fasce: "−15% oggi" — le altre cifre stanno subito sotto.
+      title: `${label}${hasDayTiers(drop) ? ' oggi' : ''}\nda ${r.name}.`,
       discountLabel: label,
       restaurantName: r.name,
       restLine,

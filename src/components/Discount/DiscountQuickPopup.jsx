@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import DiscountRules from './DiscountRules'
 import { QRPassSheet } from './QRPass'
 import { formatDiscountBadge, formatDiscountValue } from '../../lib/utils/discountFormat'
+import { hasDayTiers } from '../../lib/dayTiers'
 
 /**
  * DiscountQuickPopup — il popup dello sconto sulla pagina del locale.
@@ -77,6 +78,7 @@ export default function DiscountQuickPopup({
   }
 
   const badge = formatDiscountBadge(deal)
+  const tiered = hasDayTiers(deal)
   const valueLabel = formatDiscountValue(deal)
   const description = deal?.description && deal.description !== deal.title ? deal.description : null
   const showPass = unlocked && !blockedMessage
@@ -137,6 +139,9 @@ export default function DiscountQuickPopup({
                   padding: '6px 18px', borderRadius: 14, letterSpacing: '-0.01em',
                 }}>
                   {badge}
+                  {/* Sconto a fasce: la cifra è quella di oggi, le altre nella
+                      settimana qui sotto (DiscountRules). */}
+                  {tiered && <small style={{ fontSize: 10, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase', marginLeft: 6, opacity: 0.75 }}>oggi</small>}
                 </span>
               )}
               <h3 className="text-lg font-bold text-primary" style={{ fontFamily: 'var(--font-sans)', fontWeight: 800, marginTop: 10 }}>

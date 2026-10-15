@@ -276,7 +276,7 @@ export default function AdminRestaurants() {
       const nowIso = new Date().toISOString()
       const { data } = await supabase
         .from('discounts')
-        .select('id, restaurant_id, title, discount_value, discount_type, is_drop, drop_time, is_active, valid_until')
+        .select('id, restaurant_id, title, discount_value, discount_type, day_tiers, is_drop, drop_time, is_active, valid_until')
         .eq('is_active', true)
         .or(`valid_until.is.null,valid_until.gt.${nowIso}`)
       if (cancelled) return

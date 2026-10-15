@@ -8,6 +8,7 @@ import {
 } from '../../lib/validity'
 import ValidityPill from './ValidityPill'
 import { formatDiscountBadge } from '../../lib/utils/discountFormat'
+import { hasDayTiers } from '../../lib/dayTiers'
 import './DiscountDetailPopup.css'
 import DiscountRules from './DiscountRules'
 import { QRPassSheet } from './QRPass'
@@ -130,7 +131,9 @@ function DetailLockedView({ deal, status, photoUrl, restaurantUrl, onClose, onUn
   const cuisine = r?.cuisine_type || r?.category?.[0]
   const address = shortAddress(r?.address)
   const numText = pctNum(deal)
-  const labelText = pctLabel(deal)
+  // Sconto a fasce: la cifra grande è quella di oggi, e lo dice. Le altre
+  // stanno subito sotto, nella settimana di DiscountRules.
+  const labelText = hasDayTiers(deal) ? `oggi · ${pctLabel(deal)}` : pctLabel(deal)
   const isDrop = !!deal?.is_drop
   const claimed = deal?.claimed_count || deal?.total_redeemed || 0
   const max = deal?.max_quantity || deal?.max_redemptions || 0

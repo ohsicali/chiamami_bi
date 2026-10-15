@@ -34,7 +34,8 @@ import {
   sendEmail, claimSendSlot, logFailure, tokenForUser,
   unsubscribeUrl, listUnsubscribeHeaders, REPLY_TO,
 } from './_email/send.js'
-import { formatDiscountBadge, pickPerk } from './_email/discount.js'
+import { formatDiscountBadge, pickPerk, tierChips } from './_email/discount.js'
+import { usedDeal } from '../src/lib/dayTiers.js'
 import { formatShortCode, normalizeShortCode } from './_short-code.js'
 import { SITE_URL as PUBLIC_SITE } from './_email/theme.js'
 import {
@@ -228,7 +229,7 @@ async function handleDiscountUsed(req, res) {
   if (!qrCode) return res.status(400).json({ error: 'qrCode required' })
 
   const REDEMPTION_FIELDS =
-    'id, status, redeemed_at, user_id, discount:discounts(*, restaurant:restaurants(name, slug))'
+    'id, status, redeemed_at, user_id, applied_value, discount:discounts(*, restaurant:restaurants(name, slug))'
 
   let { data: red } = await admin
     .from('discount_redemptions')
@@ -309,6 +310,8 @@ async function handlePreview(req, res) {
     'new-convention': () => newDiscountEmail({
       ...SAMPLE.newDiscount, isDrop: false, countdown: null, taken: null, left: null, unsubscribeUrl: u,
     }),
+    // Sconto a fasce (15/10): tutte le cifre coi loro giorni.
+    'new-convention-tiers': () => newDiscountEmail({ ...SAMPLE.tierConvention, unsubscribeUrl: u }),
     'new-place': () => newRestaurantEmail({ ...SAMPLE.newRestaurant, unsubscribeUrl: u }),
     'discount-claimed': () => discountClaimedEmail(SAMPLE.discountClaimed),
     'discount-used': () => discountUsedEmail(SAMPLE.discountUsed),
@@ -360,8 +363,12 @@ function discountClaimedProps(red) {
   const d = red.discount || {}
   const r = d.restaurant || {}
   const deadline = hasClaimWindow(d) ? claimDeadline(red, d) : null
+  // Sconto a fasce (15/10): la ricevuta si legge oggi e si usa un altro
+  // giorno, quindi dice tutte le cifre ("−30% / −15%") e i loro giorni.
+  const tiers = tierChips(d)
   return {
-    value: formatDiscountBadge(d),
+    value: tiers.length ? tiers.map((c) => c.badge).join(' / ') : formatDiscountBadge(d),
+    tiers: tiers.length ? tiers.map((c) => `${c.badge} ${c.daysLong}`).join(', ') : null,
     restaurantName: r.name || 'il locale',
     perk: pickPerk(d),
     conditions: (d.conditions || '').trim() || null,
@@ -383,7 +390,8 @@ function discountUsedProps(red) {
   const d = red.discount || {}
   const r = d.restaurant || {}
   return {
-    value: formatDiscountBadge(d),
+    // La cifra applicata alla cassa (sconto a fasce: quella del giorno).
+    value: formatDiscountBadge(usedDeal({ ...red, status: 'redeemed' }, d)),
     restaurantName: r.name || 'il locale',
     whenLabel: red.redeemed_at ? formatWhen(red.redeemed_at) : null,
     href: `${PUBLIC_SITE}/sconti`,

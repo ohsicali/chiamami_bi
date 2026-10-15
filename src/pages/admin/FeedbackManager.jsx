@@ -62,7 +62,7 @@ export default function FeedbackManager() {
     let cancelled = false
     supabase
       .from('redemption_feedback')
-      .select('redemption_id, redeemed_at, rating, answers, comment, completed_at, source, profile:profiles(full_name, email), restaurant:restaurants(name, slug), discount:discounts(title, discount_type, discount_value)')
+      .select('redemption_id, redeemed_at, rating, answers, comment, completed_at, source, profile:profiles(full_name, email), restaurant:restaurants(name, slug), discount:discounts(title, discount_type, discount_value), redemption:discount_redemptions(applied_value)')
       .order('redeemed_at', { ascending: false })
       .limit(1000)
       .then(({ data, error: err }) => {
@@ -192,7 +192,10 @@ export default function FeedbackManager() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {filtered.map((r) => {
               const a = r.answers || {}
-              const badge = r.discount ? formatDiscountBadge(r.discount) : ''
+              // La cifra applicata alla cassa (sconto a fasce: quella del giorno).
+              const badge = r.discount
+                ? formatDiscountBadge(r.redemption?.applied_value ? { ...r.discount, discount_value: r.redemption.applied_value } : r.discount)
+                : ''
               return (
                 <div key={r.redemption_id} style={{ background: '#fff', border: '1px solid #eee', borderRadius: 12, padding: '14px 16px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>

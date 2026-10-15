@@ -251,3 +251,6 @@
   .dr-prods--strip { margin: 0 -17px; padding: 0 17px 2px; }
   .dr-day { height: 34px; font-size: 11.5px; }
 }
+
+/* Sconto a fasce: l'orario sta fra la frase di oggi e la regola d'uso. */
+.dtier-week-wrap .dr-when { margin-top: 2px; }

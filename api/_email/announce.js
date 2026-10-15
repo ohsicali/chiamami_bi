@@ -12,7 +12,7 @@
 import { newDiscountEmail, newRestaurantEmail } from './templates.js'
 import { sendBatch, buildMessage, recipientsFor, unsubscribeUrl } from './send.js'
 import { formatDiscountBadge, pickPerk } from './discount.js'
-import { countdownWords } from './content.js'
+import { countdownWords, emailTiers } from './content.js'
 import { claimedCount, remainingCount, discountEndsAt, isExpired } from '../../src/lib/discounts.js'
 
 const SITE_URL = 'https://chiamamibi.com'
@@ -118,7 +118,7 @@ export async function loadPayload(admin, type, id) {
   if (type === 'discount' || type === 'drop') {
     const { data: d, error } = await admin
       .from('discounts')
-      .select('id, title, description, conditions, discount_type, discount_value, valid_until, valid_days, valid_meal_slots, valid_time_from, valid_time_to, is_drop, drop_starts_at, drop_ends_at, max_quantity, max_redemptions, claimed_count, total_redeemed, restaurant_id, is_active, is_test')
+      .select('id, title, description, conditions, discount_type, discount_value, day_tiers, valid_until, valid_days, valid_meal_slots, valid_time_from, valid_time_to, is_drop, drop_starts_at, drop_ends_at, max_quantity, max_redemptions, claimed_count, total_redeemed, restaurant_id, is_active, is_test')
       .eq('id', id)
       .single()
     if (error || !d) throw new Error('Discount not found')
@@ -245,6 +245,8 @@ function buildMail(type, p, unsubUrl) {
       timeTo: d.valid_time_to,
       until: d.valid_until,
     },
+    // Sconto a fasce (15/10): tutte le cifre coi loro giorni.
+    tiers: emailTiers(d),
     unsubscribeUrl: unsubUrl,
   })
 }

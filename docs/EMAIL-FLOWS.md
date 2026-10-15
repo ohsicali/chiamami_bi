@@ -295,6 +295,24 @@ Le email, una volta sola ciascuna per riscatto e mai fuori ordine:
   /verify) e, dopo il deploy, `supabase/drop-claims-cron-2026-10-12.sql`. Per
   spegnere: `SELECT cron.unschedule('chiamamibi-drop-claims');`
 
+### 7g. Sconto a fasce — "30% lun–gio, 15% ven–dom" (15/10/2026)
+
+Non è un flusso nuovo: sono le stesse email della convenzione, che per uno
+sconto a fasce (`discounts.day_tiers`, vedi CLAUDE.md "Sconto a fasce")
+dicono **tutte le cifre coi loro giorni, alla pari**. In posta nessuna è
+"di oggi": l'email si legge un giorno e lo sconto si usa un altro.
+
+| Email | Cosa cambia |
+|---|---|
+| Annuncio convenzione (§7) | oggetto `{Locale}: 30% lun–gio, 15% ven–dom`; nel blocco crema una riga per cifra (`conventionOffer({ tiers })`) e sotto la regola «Si usa una volta: alla cassa vale la cifra del giorno in cui lo usi.» (`TIER_RULE` in `blocks.js`, la stessa frase del sito) |
+| Promemoria (§7c) | stesso blocco a righe; l'oggetto non cambia |
+| Ricevuta col codice (§6) | il valore grande è `−30% / −15%`, i giorni nella riga sotto |
+| Sconto usato, com'è andata, grazie | la cifra **applicata alla cassa** (`discount_redemptions.applied_value`), non quella di oggi |
+
+Le fasce per l'email le prepara `emailTiers()` in `_email/content.js`.
+Anteprime: `docs/email-preview/convenzione-fasce.html`, `promemoria-fasce.html`,
+`codice-fasce.html`; in `/admin/settings` → "Nuova convenzione a fasce".
+
 ### ~~8. Newsletter standalone (edge function Supabase)~~ · RIMOSSA il 21/09/2026
 
 `supabase/functions/send-newsletter/index.ts` non esiste più. Perché, in

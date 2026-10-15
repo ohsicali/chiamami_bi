@@ -23,7 +23,7 @@ import { BRAND, CLAIM, COLORS, SITE_URL } from './theme.js'
 import { renderEmail } from './render.js'
 import {
   h1, h2, p, lede, eyebrow, metaLine, divider, button, offerCard, codeBlock,
-  successBox, photoMosaic, dropCard, conventionOffer, microNote,
+  successBox, photoMosaic, dropCard, conventionOffer, microNote, TIER_RULE,
   textLink, signature, checklist, checkRows, steps, note, dataTable, spacer,
   starRow, biSays, heroIllustration, quoteBlock, expiredClaim, esc, SIGN,
 } from './blocks.js'
@@ -173,6 +173,7 @@ export function newDiscountEmail({
   value, restaurantName, perk, conditions, city, cuisine, review,
   address, neighborhood, priceRange, photoUrl, photos, photoCount,
   href, scheda, isDrop, countdown, taken = null, left = null, validity, unsubscribeUrl,
+  tiers = null,
 }) {
   const phrase = offerPhrase(value)
   const plain = String(value || '').replace(/^[−-]\s*/, '').trim()
@@ -240,16 +241,24 @@ export function newDiscountEmail({
   }
 
   /* ── Convenzione ──────────────────────────────────────────────── */
-  const soggetto = plain && isBareDiscountValue(plain)
-    ? `Da oggi hai il ${plain} da ${restaurantName}`
-    : (phrase ? `Da oggi da ${restaurantName}: ${phrase}` : `Uno sconto nuovo da ${restaurantName}`)
+  // Sconto a fasce (15/10): tutte le cifre, nell'oggetto e nel blocco. Mai
+  // una sola: chi legge "30%" e il sabato trova 15 si sente preso in giro.
+  const fasce = Array.isArray(tiers) && tiers.length >= 2 ? tiers : null
+  const soggetto = fasce
+    ? `${restaurantName}: ${fasce.map((t) => `${t.value} ${t.daysShort}`).join(', ')}`
+    : plain && isBareDiscountValue(plain)
+      ? `Da oggi hai il ${plain} da ${restaurantName}`
+      : (phrase ? `Da oggi da ${restaurantName}: ${phrase}` : `Uno sconto nuovo da ${restaurantName}`)
 
   const scadenza = quando.until || 'nessuna scadenza'
+  const righeFasce = fasce ? fasce.map((t) => `${t.badge} ${t.days}`).join(', ') : ''
 
   return {
     subject: soggetto,
     ...renderEmail({
-      preheader: `${quando.when}, ogni volta che ci vai. ${scadenza.charAt(0).toUpperCase()}${scadenza.slice(1)}.`,
+      preheader: fasce
+        ? `${righeFasce}. ${TIER_RULE}`
+        : `${quando.when}, ogni volta che ci vai. ${scadenza.charAt(0).toUpperCase()}${scadenza.slice(1)}.`,
       reason: MOTIVO.sconti,
       unsubscribeUrl,
       city,
@@ -258,7 +267,13 @@ export function newDiscountEmail({
         eyebrow('Nuova convenzione', { color: COLORS.oroDeep }),
         h1(restaurantName),
         metaLine(meta),
-        conventionOffer({ value: plain, perk: vantaggio, conditions, validity: `${quando.when} · ${scadenza}` }),
+        conventionOffer({
+          value: plain,
+          perk: fasce ? perk : vantaggio,
+          conditions,
+          validity: `${quando.when} · ${scadenza}`,
+          tiers: fasce && fasce.map((t) => ({ badge: t.badge, days: t.days })),
+        }),
         button('Aggiungilo ai tuoi sconti →', link, { padding: '18px 20px 0', block: true }),
         microNote('Resta nel tuo Bi Club. Lo mostri alla cassa ogni volta che ci vai.'),
         testo ? p(`${esc(testo)}${SIGN}`, { padding: '18px 20px 0' }) : '',
@@ -268,7 +283,8 @@ export function newDiscountEmail({
         soggetto,
         meta,
         '',
-        [plain, vantaggio].filter(Boolean).join(' — '),
+        fasce ? [righeFasce, perk].filter(Boolean).join(' — ') : [plain, vantaggio].filter(Boolean).join(' — '),
+        fasce ? TIER_RULE : '',
         conditions || '',
         `${quando.when}, ${scadenza}.`,
         '',
@@ -334,7 +350,7 @@ export function newRestaurantEmail({
  * disiscrizione: è una ricevuta, non un annuncio. Toglierla di mezzo
  * significherebbe lasciare qualcuno senza il proprio codice.
  */
-export function discountClaimedEmail({ value, restaurantName, perk, conditions, address, code, expiryLabel, href, claimWindow = null }) {
+export function discountClaimedEmail({ value, restaurantName, perk, conditions, address, code, expiryLabel, href, claimWindow = null, tiers = null }) {
   // Drop coi giorni contati (12/10): la ricevuta è anche il "hai 7 giorni",
   // con la data precisa — il giro delle email non ne manda un'altra.
   const tempo = claimWindow
@@ -356,7 +372,8 @@ export function discountClaimedEmail({ value, restaurantName, perk, conditions, 
           value,
           restaurantName: `da ${restaurantName}`,
           perk,
-          meta: [conditions, address].filter(Boolean).join(' · '),
+          // Sconto a fasce (15/10): i giorni di ogni cifra, prima di tutto.
+          meta: [tiers ? `${tiers}. Vale la cifra del giorno in cui lo usi` : '', conditions, address].filter(Boolean).join(' · '),
           countdown: expiryLabel,
         }),
         codeBlock({
@@ -379,6 +396,7 @@ export function discountClaimedEmail({ value, restaurantName, perk, conditions, 
         '',
         `${value} da ${restaurantName}`,
         perk || '',
+        tiers ? `${tiers}. Vale la cifra del giorno in cui lo usi.` : '',
         [conditions, address].filter(Boolean).join(' · '),
         expiryLabel || '',
         tempo,
@@ -489,9 +507,12 @@ export function discountUsedEmail({ value, restaurantName, whenLabel, href = `${
 export function discountReminderEmail({
   value, restaurantName, perk, conditions, review, city, cuisine, priceRange,
   address, neighborhood, photos, isDrop, endsAt, validity, claimedAt, code,
-  href, others = 0, othersHref, unsubscribeUrl, now = new Date(),
+  href, others = 0, othersHref, unsubscribeUrl, now = new Date(), tiers = null,
 }) {
   const plain = String(value || '').replace(/^[−-]\s*/, '').trim()
+  // Sconto a fasce (15/10): tutte le cifre coi loro giorni (vedi newDiscountEmail).
+  const fasce = !isDrop && Array.isArray(tiers) && tiers.length >= 2 ? tiers : null
+  const righeFasce = fasce ? fasce.map((t) => `${t.badge} ${t.days}`).join(', ') : ''
   const meta = metaFor({ cuisine, priceRange, address, neighborhood, city })
   const testo = clip(review)
   const vantaggio = perkBeyondValue(perk, plain)
@@ -580,7 +601,13 @@ export function discountReminderEmail({
         h1(restaurantName),
         metaLine(meta),
         lede(`L’hai preso ${quando} e non l’hai ancora usato. È ancora tuo: quando passi, mostri il QR alla cassa e lo scalano loro.`),
-        conventionOffer({ value: plain, perk: vantaggio, conditions, validity: `${validita.when} · ${scadenza}` }),
+        conventionOffer({
+          value: plain,
+          perk: fasce ? perk : vantaggio,
+          conditions,
+          validity: `${validita.when} · ${scadenza}`,
+          tiers: fasce && fasce.map((t) => ({ badge: t.badge, days: t.days })),
+        }),
         button('Apri il QR →', link, { padding: '18px 20px 0', block: true }),
         microNote(codice),
         testo ? p(`${esc(testo)}${SIGN}`, { padding: '18px 20px 0' }) : '',
@@ -592,7 +619,8 @@ export function discountReminderEmail({
         `L’hai preso ${quando} e non l’hai ancora usato: lo sconto da ${restaurantName}.`,
         meta,
         '',
-        [plain, vantaggio].filter(Boolean).join(' — '),
+        fasce ? [righeFasce, perk].filter(Boolean).join(' — ') : [plain, vantaggio].filter(Boolean).join(' — '),
+        fasce ? TIER_RULE : '',
         conditions || '',
         `${validita.when}, ${scadenza}.`,
         '',
@@ -1166,8 +1194,27 @@ export function internalPartnerApplicationEmail({
 /* ================================================================== */
 
 /** Dati finti coerenti, per l'anteprima e per il bottone "mandami una prova". */
+// Lo sconto a fasce di prova (15/10): la richiesta che le ha fatte nascere.
+const SAMPLE_TIERS = [
+  { badge: '−30%', value: '30%', days: 'dal lunedì al giovedì', daysShort: 'lun–gio' },
+  { badge: '−15%', value: '15%', days: 'dal venerdì alla domenica', daysShort: 'ven–dom' },
+]
+
 export const SAMPLE = {
   welcome: { name: 'Giulia Rossi', attivi: 6 },
+  // Convenzione a fasce: si costruisce da newDiscount (isDrop: false) + queste.
+  tiers: SAMPLE_TIERS,
+  tierConvention: {
+    value: '−30%', restaurantName: 'Osteria del Borgo', perk: 'Sconto sul conto',
+    conditions: null,
+    city: 'Torino', cuisine: 'Piemontese', priceRange: 2,
+    address: 'Via Mazzini 12, 10123 Torino TO, Italy',
+    review: 'Agnolotti al sugo d’arrosto come li faceva mia nonna, e un bonet che da solo vale la strada. In settimana è più tranquillo, ed è lì che conviene andarci.',
+    href: `${SITE_URL}/sconti`, scheda: `${SITE_URL}/restaurant/osteria-del-borgo`,
+    isDrop: false, countdown: null, taken: null, left: null,
+    validity: { days: [1, 2, 3, 4, 5, 6, 7], slots: ['cena'] },
+    tiers: SAMPLE_TIERS,
+  },
   newDiscount: {
     value: '−50%', restaurantName: 'Bar Stampa', perk: '50% su tutto il conto',
     conditions: 'Valido solo sull’acquisto del tramezzino base',
