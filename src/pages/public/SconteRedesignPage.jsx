@@ -36,6 +36,9 @@ import { slugify } from '../../lib/utils/slug'
 
 /* ---------- helpers ---------- */
 
+// `thumb_url` è la miniatura da 400 px caricata insieme alla foto: chiederla
+// più larga la ingrandisce e basta (il popup la chiedeva a 1200 e usciva
+// sgranata). Per i popup, dove la foto ora è piccola in testa, basta 320.
 function getPhoto(restaurant, opts) {
   const p = restaurant?.photos?.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))?.[0]
   return proxyImg(p?.thumb_url || p?.photo_url || null, opts || { w: 800 })
@@ -635,7 +638,7 @@ function SconteRedesignPageInner() {
           deal={qrPopup.deal}
           initialUnlocked
           initialRedemption={qrPopup.redemption}
-          photoUrl={getPhoto(qrPopup.deal?.restaurant, { w: 1200 })}
+          photoUrl={getPhoto(qrPopup.deal?.restaurant, { w: 320 })}
           restaurantUrl={qrPopup.deal?.restaurant?.slug
             ? `/restaurant/${qrPopup.deal.restaurant.slug}`
             : `/restaurant/${slugify(qrPopup.deal?.restaurant?.name || '')}`}
@@ -653,7 +656,7 @@ function SconteRedesignPageInner() {
       {infoDeal && (
         <DiscountDetailPopup
           deal={infoDeal}
-          photoUrl={getPhoto(infoDeal.restaurant, { w: 1200 })}
+          photoUrl={getPhoto(infoDeal.restaurant, { w: 320 })}
           restaurantUrl={infoDeal.restaurant?.slug
             ? `/restaurant/${infoDeal.restaurant.slug}`
             : `/restaurant/${slugify(infoDeal.restaurant?.name || '')}`}
@@ -677,7 +680,7 @@ function SconteRedesignPageInner() {
       {qrBlocked && (
         <QRBlockedView
           deal={qrBlocked}
-          photoUrl={getPhoto(qrBlocked.restaurant, { w: 1200 })}
+          photoUrl={getPhoto(qrBlocked.restaurant, { w: 320 })}
           restaurantName={qrBlocked.restaurant?.name || qrBlocked.title}
           restaurantSubtitle={[
             qrBlocked.restaurant?.cuisine_type || qrBlocked.restaurant?.category?.[0],
