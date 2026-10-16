@@ -618,6 +618,16 @@ sottolineato), la fascia o l'orario e la prima condizione. Niente pillola
 Dettagli e ragioni: sezione "18/09 — sbloccare uno sconto digitando il
 codice" in `docs/v4-status.md`.
 
+**Le info dello sconto prima di sbloccarlo (16/10):** il popup del Bi Club
+(`DiscountDetailPopup`, stato bloccato) non ha più la foto a tutta larghezza
+con la cifra sopra: era la miniatura da 400 px (`thumb_url`) ingrandita a
+1200, sgranata, e occupava metà schermo. Ora in testa c'è la foto piccola
+accanto al nome (la stessa testa del pass del QR, così dopo «Sblocca» in alto
+non cambia niente), poi la card dell'offerta — badge verde, cosa ottieni
+(`perkBeyondValue`, mai lo sconto detto due volte), «Valido ora» — e subito
+sotto le regole. Non rimettere la foto grande; e `thumb_url` non va chiesta
+più larga di 400.
+
 ## Sicurezza — tre regole (audit 23/09)
 Resoconto completo: `docs/security-audit-2026-09-23.md`.
 - **`restaurants` non si legge mai con `select('*')`** dal browser: `verify_pin`,

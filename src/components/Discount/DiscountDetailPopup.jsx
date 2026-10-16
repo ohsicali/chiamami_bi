@@ -7,7 +7,8 @@ import {
   computeNextValidWindow,
 } from '../../lib/validity'
 import ValidityPill from './ValidityPill'
-import { formatDiscountBadge } from '../../lib/utils/discountFormat'
+import { formatDiscountBadge, formatDiscountValue, isBareDiscountValue, pickPerk } from '../../lib/utils/discountFormat'
+import { perkBeyondValue } from '../../../api/_email/content.js'
 import { hasDayTiers } from '../../lib/dayTiers'
 import './DiscountDetailPopup.css'
 import DiscountRules from './DiscountRules'
@@ -22,17 +23,30 @@ function shortAddress(addr) {
   return addr.split(',')[0].trim()
 }
 
-function pctNum(deal) {
-  return formatDiscountBadge(deal)
-}
-
-function pctLabel(deal) {
+/**
+ * La riga accanto al badge: cosa ottieni, detto in parole.
+ *
+ * Il titolo solo se aggiunge qualcosa al numero già scritto grande
+ * (`perkBeyondValue`, la stessa regola delle email: "−20%" e sotto
+ * "20% di sconto" dice lo sconto due volte). Se no, "Sconto sul conto":
+ * non "sul totale", che con "bevande escluse" nelle condizioni sarebbe
+ * falso. Uno sconto a fasce prende il titolo solo se è senza cifre, come
+ * vuole la regola delle fasce: le cifre le dice la settimana qui sotto, e
+ * un "fino al 30%" è proprio la frase che non si deve leggere.
+ */
+function offerPerk(deal) {
   if (!deal) return ''
-  if (deal.discount_type === 'percentage') return 'sul totale'
-  if (deal.discount_type === 'fixed') return 'di sconto'
-  if (deal.discount_type === 'freebie') return 'in regalo'
-  if (deal.discount_type === 'special_price') return 'prezzo speciale'
-  return ''
+  const title = String(deal.title || '').trim()
+  if (deal.discount_type === 'freebie' || deal.discount_type === 'special_price') {
+    // Il titolo è già il badge: qui va solo una descrizione diversa.
+    const d = String(deal.description || '').trim()
+    return d && d !== title ? d : ''
+  }
+  const value = formatDiscountValue(deal)
+  const perk = hasDayTiers(deal)
+    ? (/\d/.test(title) ? '' : title)
+    : perkBeyondValue(pickPerk(deal, value), value)
+  return perk || 'Sconto sul conto'
 }
 
 function compactCountdown(targetIso, now = Date.now()) {
@@ -130,10 +144,14 @@ function DetailLockedView({ deal, status, photoUrl, restaurantUrl, onClose, onUn
   const r = deal?.restaurant
   const cuisine = r?.cuisine_type || r?.category?.[0]
   const address = shortAddress(r?.address)
-  const numText = pctNum(deal)
+  const badge = formatDiscountBadge(deal)
   // Sconto a fasce: la cifra grande è quella di oggi, e lo dice. Le altre
   // stanno subito sotto, nella settimana di DiscountRules.
-  const labelText = hasDayTiers(deal) ? `oggi · ${pctLabel(deal)}` : pctLabel(deal)
+  const tiered = hasDayTiers(deal)
+  const perk = offerPerk(deal)
+  // "2x1" o "−20%" stanno grandi; un omaggio scritto in parole
+  // ("Cannolo gratis") a quella misura andrebbe a capo a ogni parola.
+  const longBadge = !isBareDiscountValue(formatDiscountValue(deal)) && badge.length > 5
   const isDrop = !!deal?.is_drop
   const claimed = deal?.claimed_count || deal?.total_redeemed || 0
   const max = deal?.max_quantity || deal?.max_redemptions || 0
@@ -141,7 +159,7 @@ function DetailLockedView({ deal, status, photoUrl, restaurantUrl, onClose, onUn
   const progressPct = max > 0 ? Math.min(100, Math.round((claimed / max) * 100)) : 0
 
   const endIso = deal?.drop_ends_at || deal?.valid_until
-  const [now, setNow] = useState(Date.now())
+  const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
     if (!isDrop) return undefined
     const id = setInterval(() => setNow(Date.now()), 1000)
@@ -193,45 +211,59 @@ function DetailLockedView({ deal, status, photoUrl, restaurantUrl, onClose, onUn
   })()
 
   // La descrizione esce solo se aggiunge qualcosa: quando è uguale al titolo
-  // (o manca, che è il caso di tutti gli sconti a catalogo oggi) ripeterebbe
-  // la riga già stampata sulla foto.
-  const description = deal?.description && deal.description !== deal.title ? deal.description : null
+  // o è già la riga accanto al badge (o manca, che è il caso di quasi tutti
+  // gli sconti a catalogo) ripeterebbe una cosa già scritta.
+  const description = deal?.description && deal.description !== deal.title && deal.description !== perk
+    ? deal.description
+    : null
 
   return (
     <>
-      {/* HERO foto: margine e angoli curvi, come le card della pagina del
-          locale — non più a filo bordo. */}
+      {/* Testa: il locale, con la foto piccola e nitida accanto al nome.
+          Fino al 16/10 qui c'era la foto a tutta larghezza (4:3) con la
+          cifra sopra: era la miniatura da 400 px ingrandita, usciva sgranata,
+          e da sola occupava metà dello schermo spingendo le regole sotto il
+          bordo. Ora la testa è quella del pass del QR (QRPassSheet): dopo
+          "Sblocca sconto" in alto non cambia niente. */}
       <div className="ddp-grip" aria-hidden="true" />
-      <div className="ddp-hero">
-        <div className="ddp-photo">
+      <header className="ddp-head">
+        <div className="ddp-head-photo">
           {photoUrl ? (
-            <img src={photoUrl} alt={r?.name || ''} loading="lazy" decoding="async" />
+            <img src={photoUrl} alt={r?.name || ''} decoding="async" />
           ) : (
-            <div className="ddp-photo-fallback">🍽️</div>
-          )}
-          <div className="ddp-photo-grad" aria-hidden="true" />
-
-          {isDrop && <span className="ddp-live-pill">drop live</span>}
-          <button type="button" className="ddp-close" aria-label="Chiudi" onClick={onClose}>✕</button>
-
-          {numText && (
-            <div className="ddp-pct-overlay">
-              <div className="ddp-pct-num">{numText}</div>
-              {labelText && <div className="ddp-pct-lbl">{labelText}</div>}
-            </div>
+            <span aria-hidden="true">🍽️</span>
           )}
         </div>
-      </div>
+        <div className="ddp-head-txt">
+          {(cuisine || address) && (
+            <div className="ddp-meta">{[cuisine, address].filter(Boolean).join(' · ')}</div>
+          )}
+          <h2 className="ddp-name">{r?.name || deal?.title}</h2>
+        </div>
+        <button type="button" className="ddp-close" aria-label="Chiudi" onClick={onClose}>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+        </button>
+      </header>
 
       {/* BODY scrollable */}
       <div className="ddp-body">
-        <div className="ddp-meta">
-          {[cuisine, address].filter(Boolean).join(' · ')}
-        </div>
-        <h2 className="ddp-name">{r?.name || deal?.title}</h2>
-        <div className="ddp-where">
-          <ValidityPill status={status} text={validityPillText} />
-        </div>
+        {/* L'offerta: il badge verde degli sconti (lo stesso del QR, delle
+            card e della mappa), accanto cosa ottieni e se vale adesso. */}
+        {(badge || perk) && (
+          <section className="ddp-offer" aria-label="L'offerta">
+            {badge && (
+              <span className={`ddp-offer-badge ${longBadge ? 'is-long' : ''}`}>
+                {badge}
+                {tiered && <small>oggi</small>}
+              </span>
+            )}
+            <div className="ddp-offer-txt">
+              {isDrop && <span className="ddp-live-pill">drop live</span>}
+              {perk && <p className="ddp-offer-perk">{perk}</p>}
+              <ValidityPill status={status} text={validityPillText} />
+            </div>
+          </section>
+        )}
 
         {description && <p className="ddp-lead">{description}</p>}
 
@@ -275,11 +307,11 @@ function DetailLockedView({ deal, status, photoUrl, restaurantUrl, onClose, onUn
         {/* Cosa vale · quando · da sapere */}
         <DiscountRules deal={deal} className="ddp-rules" />
 
-        {/* Scopri ristorante */}
+        {/* Scopri ristorante: la foto c'è già in testa, qui basta l'icona. */}
         {restaurantUrl && (
           <Link to={restaurantUrl} className="ddp-restaurant-link" onClick={onClose}>
-            <div className="ddp-rl-thumb">
-              {photoUrl && <img src={photoUrl} alt="" loading="lazy" decoding="async" />}
+            <div className="ddp-rl-thumb is-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 10l1.5-5h13L20 10" /><path d="M4 10a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0" /><path d="M5.5 12.5V20h13v-7.5" /><path d="M10 20v-4h4v4" /></svg>
             </div>
             <div className="ddp-rl-info">
               <strong>Scopri il ristorante</strong>
