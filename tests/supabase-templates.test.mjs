@@ -20,9 +20,9 @@ import { TEMPLATES } from '../supabase/email-templates/build.mjs'
 const letto = (file) =>
   readFileSync(new URL(`../supabase/email-templates/${file}`, import.meta.url), 'utf8')
 
-test('ci sono entrambi i template', () => {
+test('ci sono tutti i template', () => {
   const files = TEMPLATES.map((t) => t.file).sort()
-  assert.deepEqual(files, ['change-email.html', 'conferma-registrazione.html'])
+  assert.deepEqual(files, ['change-email.html', 'conferma-registrazione.html', 'reset-password.html'])
 })
 
 test('ognuno porta il proprio segnaposto di Supabase', () => {
