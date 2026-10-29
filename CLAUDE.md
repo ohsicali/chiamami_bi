@@ -255,6 +255,20 @@ sentirsi preso in giro. Mai "fino a −30%".
   `formatDiscountBadge` (oggi) o da `tierChips` (tutte), mai da
   `discount_value` nudo; uno sconto già usato passa da `usedDeal`.
 
+## Fino a che ora si convalida uno sconto (29/10)
+Il conto si paga alla fine del pasto: la fascia che si legge ("Cena
+19:00–23:30") non è quella in cui la cassa accetta il codice. Il locale
+convalida **colazione 06:30–12:30, brunch 09:30–16:00, pranzo 11:30–17:00,
+aperitivo 17:00–22:00, cena 18:30–02:30**; un orario scritto a mano mezz'ora
+prima e un'ora dopo; senza fascia fino alle 3 di notte. **Dopo mezzanotte
+conta la sera prima** (Bellezia, giovedì 23:33: prima era "non valido").
+Due posti allineati: `private.redeem_windows` / `redeem_service_dow` in
+`supabase/verify-meal-windows-2026-10-29.sql` (**eseguito**, usato da
+`verify_redeem_qr`) e `MEAL_SLOTS.redeemFrom/redeemTo` + `redeemServiceDay` in
+`src/lib/validity.js` (blocca o apre il QR sul telefono, ora di Roma).
+`tests/validity.test.mjs` controlla che non divergano: se cambi una finestra,
+cambiala in tutti e due.
+
 ## Convenzioni contenuti sconti (per riferimento futuro)
 - **Offerte "paghi X prendi Y"** (es. 3 al posto di 2): scrivere sempre in formato `AxB` (es. `3x2`, `2x1`), mai per esteso ("Paghi 2 prendi 3 Veneziane"). Vale per `title` e `discount_value` del record in `discounts`.
 - **Sticker/badge sconto** (percentuale o importo fisso su foto/card): devono sempre avere il segno meno davanti al valore, es. `-20%`, `-1€`. Gestito centralmente da `formatDiscountBadge()` / `formatDiscountBadgeShort()` in `src/lib/utils/discountFormat.js` — quando si aggiunge un nuovo punto che mostra uno sticker sconto, usare sempre queste funzioni (mai `formatDiscountValue()` da solo, che non mette il segno).

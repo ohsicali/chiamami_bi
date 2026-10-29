@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-10-15 (Sconto a fasce: 30% in settimana, 15% nel weekend)
+Ultima modifica: 2026-10-29 (Convalida fino alla fine del pasto)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -43,6 +43,26 @@ dove siamo. Aggiorna a ogni step importante.
 | Drop: chi l'ha preso e chi è in lista in /verify e nel pannello, «sei il n° 134» | — | 🚧 In review | PR #344, branch `claude/drop-lista-verify`. SQL `supabase/verify-drops-overview-2026-10-12.sql` e `supabase/drop-claims-open-until-2026-10-12.sql` **eseguiti il 12/10** col connettore (provato come anon in transazione annullata con un device token finto di Piadora: 23/50 presi, 0 usati, 23 da usare, 0 in lista; token sbagliato → `unauthorized`). Vedi sezione "12/10 — lista d'attesa" sotto e CLAUDE.md "Drop coi giorni contati". |
 | Sedi del locale sulla scheda (senza sconto) + "in quali sedi vale" nello sconto | — | 🚧 In review | Branch `claude/jolly-fermat-0uj06u`. SQL `supabase/discount-locations-2026-10-13.sql` **eseguito il 13/10** col connettore (colonna `discounts.valid_location_ids`, NULL = tutte; provato da anon: la select degli sconti con le sedi del locale risponde). Vedi CLAUDE.md "Sedi del locale e in quali vale lo sconto". |
 | Sconto a fasce — "30% lun–gio, 15% ven–dom", uno sconto solo, si usa una volta | — | 🚧 In review | Branch `claude/sconto-a-fasce`. SQL `supabase/discount-day-tiers-2026-10-15.sql` **eseguito il 15/10** col connettore (provato prima in transazione annullata). Vedi sezione "15/10 — sconto a fasce" sotto e CLAUDE.md. |
+
+## 29/10 — la cassa convalida fino alla fine del pasto
+
+Segnalazione del proprietario: "in tanti ristoranti mi dice che il codice non
+è valido". Caso: Locanda Bellezia, sconto mer–gio **solo a cena**, giovedì
+alle 23:33 → "Non valido". La cena finiva alle 23:30 esatte (il pranzo alle
+15:00) sia in `verify_redeem_qr` sia nell'app, che dopo l'ultima ora bloccava
+anche il QR sul telefono del cliente ("Oggi non puoi usarlo"). Dopo mezzanotte
+era già il giorno dopo.
+- **Finestre di convalida** (l'orario che si legge non cambia):
+  colazione 06:30–12:30, brunch 09:30–16:00, pranzo 11:30–17:00, aperitivo
+  17:00–22:00, cena 18:30–02:30. Orario scritto a mano: −30 min / +60 min.
+  Senza fascia: tutto il giorno e fino alle 3. **Dopo mezzanotte conta la
+  sera prima** (giorni e fascia dello sconto a fasce del giorno prima).
+- SQL `supabase/verify-meal-windows-2026-10-29.sql` (**eseguito il 29/10** col
+  connettore, dopo la prova in transazione annullata): `private.redeem_windows`,
+  `private.redeem_service_dow`, `verify_redeem_qr` che li usa.
+- App: `MEAL_SLOTS.redeemFrom/redeemTo`, `redeemRanges`, `redeemServiceDay` in
+  `src/lib/validity.js`, e `checkValidity` guarda l'ora di **Roma**, non quella
+  del telefono. Test `tests/validity.test.mjs` (controlla anche il SQL).
 
 ## 15/10 — sconto a fasce: 30% in settimana, 15% nel weekend
 
