@@ -5,6 +5,15 @@
 contiene lo stato esatto di PR, SQL eseguiti, env vars, e prossimi step.
 Aggiornalo quando completi un passaggio.
 
+## 🔧 Sito in manutenzione (06/11) — interruttore
+`SITE_MAINTENANCE` in `src/lib/siteMaintenance.js`: con `true` tutti vedono
+solo l'avviso "Stiamo risolvendo alcuni problemi tecnici" (`SiteMaintenance.jsx`),
+anche su /verify e /login. Restano aperti `/admin*` e `/auth/callback`, così
+l'admin entra da **/admin/login** e poi vede tutto il sito, con la pillola
+"Sito in manutenzione · lo vedi solo tu". Per riaprire: `false` e deploy.
+Le API, le email e i giri pg_cron non sono toccati. Test in
+`tests/site-maintenance.test.mjs`.
+
 ## Cos'è
 App web per scoprire ristoranti a Torino (e altre città italiane). Mappa interattiva, schede ristorante, recensioni utenti, sconti con QR code, pannello admin completo.
 **Sito live**: chiamamibi.com | **Deploy**: Vercel | **DB**: Supabase
