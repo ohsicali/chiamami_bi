@@ -19,6 +19,8 @@ import DropWinGate from './components/Discount/DropWinGate'
 import WaitlistJoinedGate from './components/Discount/WaitlistJoinedGate'
 import MetaTags from './components/SEO/MetaTags'
 import { seoMeta } from './lib/seoPages'
+import { SITE_MAINTENANCE, isSiteLocked } from './lib/siteMaintenance'
+import SiteMaintenance, { SiteMaintenanceAdminBadge } from './components/Layout/SiteMaintenance'
 
 // CookieConsent is rendered after first paint via requestIdleCallback so it
 // doesn't compete with the LCP. The library + its CSS adds ~20 kB to the
@@ -126,8 +128,12 @@ export default function App() {
 
   // PostHog: lega gli eventi all'account dopo il login (solo con consenso),
   // e torna anonimo al logout. Vedi src/lib/posthog.js.
-  const { user } = useAuth()
+  const { user, isAdmin: userIsAdmin } = useAuth()
   const userId = user?.id ?? null
+
+  // Sito in manutenzione: solo l'avviso, tranne che per l'admin e il pannello
+  // (interruttore e regole in src/lib/siteMaintenance.js).
+  const siteLocked = isSiteLocked({ pathname: location.pathname, isAdmin: userIsAdmin })
   useEffect(() => {
     posthogIdentify(userId)
   }, [userId])
@@ -144,10 +150,11 @@ export default function App() {
   // (dal telefono dopo 3 s senza tocchi); non dalle pagine di admin e
   // ristoratori, che la mappa non la usano.
   useEffect(() => {
+    if (siteLocked) return
     const p = location.pathname
     if (p === '/esplora') prewarmExplore()
     else if (!p.startsWith('/admin') && p !== '/verify' && p !== '/partner' && p !== '/feedback') scheduleExplorePrewarm()
-  }, [location.pathname])
+  }, [location.pathname, siteLocked])
 
   // Defer the cookie banner until the browser is idle. If the user has already
   // chosen, the lib short-circuits internally and renders nothing.
@@ -238,6 +245,9 @@ export default function App() {
   const showTabBar = !isAdmin && !isRestaurantDetail && !isPartner && !isVerify && !isLogin && !isChiedi && !isFeedback
   const showDesktopNav = !isAdmin && !isVerify && !isLogin && !isFeedback
 
+  // Niente sito, niente popup, niente banner dei cookie: solo l'avviso.
+  if (siteLocked) return <SiteMaintenance />
+
   return (
     <>
     <ErrorBoundary>
@@ -311,6 +321,7 @@ export default function App() {
       )}
     {/* Mobile Tab Bar */}
     {showTabBar && <MobileTabBar />}
+    {SITE_MAINTENANCE && userIsAdmin && !isAdmin && <SiteMaintenanceAdminBadge />}
     </Suspense>
 
     {/* Tutorial di benvenuto: una volta sola, dopo la registrazione
